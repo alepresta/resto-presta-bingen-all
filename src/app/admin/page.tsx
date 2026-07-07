@@ -115,3 +115,12 @@ export default async function AdminDashboardPage() {
     </div>
   );
 }
+
+<a
+  href="/admin/lista-compras"
+  className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-blue-500"
+>
+  <div className="text-3xl mb-2">🛒</div>
+  <h3 className="font-bold text-gray-800">Lista de Compras</h3>
+  <p className="text-sm text-gray-600 mt-1">Generar desde pedidos</p>
+</a>
