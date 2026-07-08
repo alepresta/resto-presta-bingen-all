@@ -1,34 +1,78 @@
-📚 Documentación Completa - RESTO PRESTA BINGEN ALL
+
+    Comida es Medicina - Sistema de pedidos grupales para cocina hildegardiana
+
+
+
+
+
 📋 Tabla de Contenidos
 
-    Resumen del Proyecto
-    Arquitectura de la Aplicación
-    Estructura de Carpetas
-    Base de Datos
-    Vistas y Rutas
-    Componentes Principales
-    Flujos de Usuario
-    Configuración
+    🎯 Resumen del Proyecto
+    ✨ Características Principales
+    🏗️ Arquitectura
+    🚀 Instalación
+    📁 Estructura del Proyecto
+    🗄️ Base de Datos
+    🌐 Rutas y Vistas
+    🧩 Componentes
+    🔄 Flujos de Usuario
+    ⚙️ Configuración
+    🎓 Cocina Hildegardiana
+    📊 Estadísticas
+    🚧 Próximos Pasos
+    📞 Soporte
 
 🎯 Resumen del Proyecto
-RESTO PRESTA BINGEN ALL es una aplicación web para un restaurante de cocina hildegardiana que permite:
+RESTO PRESTA BINGEN ALL es una aplicación web completa para un restaurante especializado en cocina hildegardiana, basada en las enseñanzas de Hildegarda von Bingen (1098-1179), médica y mística alemana.
+¿Qué hace la aplicación?
+✅ Pedidos grupales anticipados - Grupos de 4 personas planifican menús juntos
+✅ Planificación de 30 días - Calendario visual con menú diario
+✅ Análisis nutricional - Basado en la medicina hildegardiana
+✅ Sistema de temperamentos - Clasificación de alimentos (cálido, frío, etc.)
+✅ Identificación de venenos - Ingredientes prohibidos según Hildegarda
+✅ Bases de alegría - Ingredientes fundamentales para la salud  
+¿Para quién es?
 
-    Pedidos grupales anticipados (4 miembros por grupo)
-    Planificación de 30 días con menú diario
-    Análisis nutricional basado en la medicina de Hildegarda von Bingen
-    Sistema de temperamentos (cálido, frío, etc.)
-    Identificación de venenos hildegardianos (ingredientes prohibidos)
-    Bases de alegría (ingredientes fundamentales: espelta, hinojo, galanga, castañas)
+    Restaurantes que ofrecen cocina natural/hildegardiana
+    Grupos de personas que quieren planificar comidas saludables juntas
+    Nutricionistas especializados en medicina tradicional
 
-Stack tecnológico:
+✨ Características Principales
+🔍 Búsqueda Inteligente de Platos
 
-    Frontend: Next.js 14 (App Router) + React + TypeScript
-    Backend: Next.js API Routes
-    Base de datos: Supabase (PostgreSQL)
-    Estilos: Tailwind CSS
-    Deploy: Vercel
+    Búsqueda por nombre, descripción o ingrediente
+    Filtros por categoría, temperamento y propiedades
+    Filtro "sin venenos" para dietas estrictas
+    Contador en tiempo real de resultados
 
-🏗️ Arquitectura de la Aplicación
+🌙 Modo Oscuro
+
+    Toggle entre tema claro y oscuro
+    Preferencia guardada en localStorage
+    Detección automática de preferencia del sistema
+    Transiciones suaves entre temas
+
+📸 Imágenes de Platos
+
+    110 platos con imágenes representativas
+    Fácil reemplazo con fotos reales
+    Optimización automática
+
+📊 Dashboard Nutricional
+
+    Análisis de temperamentos
+    Estadísticas de bases de alegría
+    Identificación de venenos
+    Recomendaciones personalizadas
+
+📅 Calendario de Pedidos
+
+    Vista visual de 30 días
+    5 tipos de comida por día
+    Confirmación individual de miembros
+    Resumen en tiempo real
+
+🏗️ Arquitectura
 
 1
 2
@@ -65,7 +109,60 @@ Stack tecnológico:
 33
 34
 
-📁 Estructura de Carpetas
+🚀 Instalación
+Prerrequisitos
+
+    Node.js 18+ instalado
+    npm o yarn
+    Cuenta en Supabase (gratuita)
+
+Pasos de Instalación
+
+    Clonar el repositorio
+
+bash
+1
+2
+
+    Instalar dependencias
+
+bash
+1
+
+    Configurar variables de entorno
+
+Crear archivo .env.local en la raíz del proyecto:
+
+env
+1
+2
+3
+4
+5
+6
+7
+
+    Configurar Supabase
+
+Ejecutar los scripts SQL en Supabase para crear las tablas:
+
+bash
+1
+2
+3
+4
+5
+
+    Iniciar el servidor de desarrollo
+
+bash
+1
+
+    Abrir en el navegador
+
+1
+
+📁 Estructura del Proyecto
 
 1
 2
@@ -97,10 +194,38 @@ Stack tecnológico:
 28
 29
 30
+31
+32
+33
+34
+35
+36
+37
 
 🗄️ Base de Datos
-Tabla: clientes
-Propósito: Almacena los usuarios del sistema (los que hacen pedidos).
+Diagrama de Relaciones
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+
+Tablas Principales
+clientes
+Usuarios del sistema que hacen pedidos.
 
 sql
 1
@@ -111,25 +236,8 @@ sql
 6
 7
 
-Relaciones:
-
-    Un cliente puede ser miembro de múltiples grupos
-    Un cliente puede crear grupos de pedido
-
-Tabla: restaurantes
-Propósito: Datos del restaurante (actualmente solo hay 1).
-
-sql
-1
-2
-3
-4
-5
-6
-7
-
-Tabla: platos
-Propósito: Catálogo de 110 platos disponibles.
+platos
+Catálogo de 110 platos del menú.
 
 sql
 1
@@ -152,36 +260,8 @@ sql
 18
 19
 
-Categorías (categoria_id):
-
-    1 = Desayuno
-    2 = Plato Principal
-    3 = Guarnición
-    4 = Bebida
-    5 = Postre
-
-Días de la semana (dia_semana_id):
-
-    1 = Lunes
-    2 = Martes
-    ...
-    7 = Domingo
-
-Ejemplo de datos:
-
-json
-1
-2
-3
-4
-5
-6
-7
-8
-9
-
-Tabla: ingredientes
-Propósito: Catálogo de 200+ ingredientes con propiedades hildegardianas.
+ingredientes
+200+ ingredientes con propiedades hildegardianas.
 
 sql
 1
@@ -212,28 +292,10 @@ Bases de alegría (es_base_alegria = true):
 
 Venenos hildegardianos (es_veneno_hildegardiano = true):
 
-    Frutilla
-    Papa
-    Tomate
-    Pepino
-    Pimiento morrón
-    Champiñones
-    Durazno
+    Frutilla, Papa, Tomate, Pepino, Pimiento morrón, Champiñones, Durazno
 
-Ejemplo:
-
-json
-1
-2
-3
-4
-5
-6
-7
-8
-
-Tabla: recetas
-Propósito: Recetas completas con ingredientes y pasos.
+recetas
+Recetas completas con ingredientes y pasos.
 
 sql
 1
@@ -257,11 +319,6 @@ json
 5
 6
 7
-8
-9
-10
-11
-12
 
 Estructura de pasos (JSONB):
 
@@ -270,10 +327,9 @@ json
 2
 3
 4
-5
 
-Tabla: grupos_pedido
-Propósito: Grupos de 4 miembros que planifican pedidos juntos.
+grupos_pedido
+Grupos de 4 miembros que planifican pedidos juntos.
 
 sql
 1
@@ -290,14 +346,8 @@ sql
 12
 13
 
-Estados:
-
-    planificacion - Los miembros están eligiendo platos
-    confirmado - Todos confirmaron y el pedido está listo
-    cancelado - El grupo fue cancelado
-
-Tabla: grupo_miembros
-Propósito: Miembros de cada grupo (máximo 4).
+grupo_miembros
+Miembros de cada grupo (máximo 4).
 
 sql
 1
@@ -309,8 +359,8 @@ sql
 7
 8
 
-Tabla: grupo_items
-Propósito: Items del pedido (qué plato eligió cada miembro para cada día/tipo de comida).
+grupo_items
+Items del pedido (qué plato eligió cada miembro para cada día/tipo).
 
 sql
 1
@@ -328,183 +378,55 @@ sql
 13
 14
 
-Tipos de comida:
-
-    desayuno
-    almuerzo
-    guarnicion
-    postre
-    bebida
-
-🌐 Vistas y Rutas
+🌐 Rutas y Vistas
 1. Landing Page (/)
 Archivo: src/app/page.tsx
-Propósito: Página de inicio del restaurante.
-Funcionalidad:
-
-    Presentación del restaurante
-    Enlaces a las principales secciones
-    Información sobre la cocina hildegardiana
-
+Página de inicio del restaurante con presentación y enlaces principales.
 2. Panel Admin (/admin)
 Archivo: src/app/admin/page.tsx
-Propósito: Dashboard principal del administrador.
-Funcionalidad:
-
-    Acceso rápido a todas las secciones administrativas
-    Estadísticas generales
-    Enlaces a:
-        Gestión de platos
-        Gestión de grupos
-        Dashboard nutricional
-
+Dashboard principal del administrador con acceso rápido a todas las secciones.
 3. Gestión de Platos (/admin/platos)
 Archivos:
 
     src/app/admin/platos/page.tsx (Server Component)
     src/app/admin/platos/ListaPlatos.tsx (Client Component)
 
-Propósito: Ver y gestionar los 110 platos del menú.
-Funcionalidad:
+Funcionalidades:
 
     ✅ Buscador inteligente por nombre, descripción o ingrediente
-    ✅ Filtros avanzados:
-        Por categoría (desayuno, plato principal, guarnición, bebida, postre)
-        Por temperamento hildegardiano
-        Solo sin venenos
-        Solo base de alegría
+    ✅ Filtros por categoría, temperamento, venenos, base alegría
     ✅ Vista dual: Grid o lista
     ✅ Imágenes de cada plato
-    ✅ Badges visuales:
-        Temperamento dominante
-        Indicador de veneno (🚫)
-        Indicador de base de alegría (✨)
-        Cantidad de ingredientes
-    ✅ Modo oscuro con toggle
-
-Datos que muestra:
-
-    Nombre del plato
-    Categoría
-    Precio
-    Descripción
-    Imagen
-    Temperamento dominante
-    Ingredientes (preview de los primeros 5)
-    Indicadores hildegardianos
-
-Cómo se configura:
-
-typescript
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
+    ✅ Badges visuales (temperamento, veneno, alegría)
+    ✅ Modo oscuro
 
 4. Gestión de Grupos (/admin/pedidos/grupos)
 Archivo: src/app/admin/pedidos/grupos/page.tsx
-Propósito: Ver y gestionar los grupos de pedido.
-Funcionalidad:
-
-    Lista de todos los grupos creados
-    Estado de cada grupo (planificación, confirmado, cancelado)
-    Fecha de inicio y fin
-    Cantidad de miembros
-    Total estimado
-    Acciones:
-        Ver detalle
-        Confirmar grupo
-        Cancelar grupo
-
+Lista de todos los grupos de pedido con estado, fechas y acciones.
 5. Detalle de Grupo (/admin/pedidos/grupos/[id])
 Archivo: src/app/admin/pedidos/grupos/[id]/page.tsx
-Propósito: Ver el detalle completo de un grupo específico.
-Funcionalidad:
-
-    Información del grupo (fechas, estado, total)
-    Lista de miembros con sus confirmaciones
-    Calendario visual de 30 días
-    Resumen de platos seleccionados por día
-    Botón para ver como cliente
-
-6. Vista Cliente - Calendario de Pedidos (/pedidos/grupo/[id])
+Vista completa de un grupo específico con calendario y miembros.
+6. Vista Cliente (/pedidos/grupo/[id])
 Archivos:
 
     src/app/pedidos/grupo/[id]/page.tsx (Server Component)
     src/app/pedidos/grupo/[id]/CalendarioPedidos.tsx (Client Component)
 
-Propósito: Vista del cliente para seleccionar platos para cada día.
-Funcionalidad:
+Funcionalidades:
 
     ✅ Calendario visual de 30 días
-    ✅ 5 tipos de comida por día:
-        Desayuno ☕
-        Almuerzo 🍽️
-        Guarnición 🥗
-        Postre 🍰
-        Bebida 🥤
+    ✅ 5 tipos de comida por día
     ✅ Modal de selección con buscador integrado
-    ✅ Buscador inteligente dentro del modal:
-        Búsqueda por texto
-        Filtro por categoría
-        Filtro por temperamento
-        Filtro "sin venenos"
-    ✅ Vista de miembros con estado de confirmación
-    ✅ Resumen del pedido con total estimado
-    ✅ Botón de confirmación individual
-
-Flujo de usuario:
-
-    Cliente ve el calendario de 30 días
-    Hace click en un día/tipo de comida (ej: Lunes - Almuerzo)
-    Se abre un modal con los platos disponibles
-    Usa el buscador para filtrar (ej: "sin venenos")
-    Selecciona un plato
-    El plato se guarda en la base de datos
-    Repite para todos los días/tipos
-    Cuando todos los miembros confirman, el pedido se envía
-
-Cómo se configura:
-
-typescript
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
+    ✅ Vista de miembros con confirmaciones
+    ✅ Resumen del pedido con total
 
 7. Dashboard Nutricional (/admin/dashboard/nutricional)
 Archivo: src/app/admin/dashboard/nutricional/page.tsx
-Propósito: Análisis nutricional basado en la medicina hildegardiana.
-Funcionalidad:
-
-    Análisis de temperamentos de los platos seleccionados
-    Identificación de venenos hildegardianos
-    Estadísticas de bases de alegría
-    Recomendaciones nutricionales
-    Gráficos visuales
-
-🧩 Componentes Principales
-1. BuscadorPlatos
+Análisis nutricional basado en la medicina hildegardiana.
+🧩 Componentes
+BuscadorPlatos
 Archivo: src/components/BuscadorPlatos.tsx
-Propósito: Componente reutilizable de búsqueda inteligente de platos.
+Componente reutilizable de búsqueda inteligente.
 Props:
 
 typescript
@@ -513,14 +435,6 @@ typescript
 3
 4
 
-Funcionalidad:
-
-    Búsqueda por texto (nombre, descripción, ingrediente)
-    Filtro por categoría
-    Filtro por temperamento
-    Filtro "sin venenos"
-    Contador en tiempo real
-
 Uso:
 
 tsx
@@ -529,16 +443,9 @@ tsx
 3
 4
 
-2. ThemeProvider
+ThemeProvider
 Archivo: src/components/ThemeProvider.tsx
-Propósito: Contexto global para manejar el tema (claro/oscuro).
-Funcionalidad:
-
-    Detecta preferencia del sistema
-    Guarda preferencia en localStorage
-    Aplica clase dark al <html>
-    Provee contexto a todos los componentes
-
+Contexto global para manejar el tema (claro/oscuro).
 Uso:
 
 tsx
@@ -550,14 +457,9 @@ tsx
 6
 7
 
-3. ToggleTema
+ToggleTema
 Archivo: src/components/ToggleTema.tsx
-Propósito: Botón para cambiar entre modo claro y oscuro.
-Funcionalidad:
-
-    Muestra icono 🌙 o ☀️ según el tema actual
-    Llama a toggleTema() del contexto
-
+Botón para cambiar entre modo claro y oscuro.
 Uso:
 
 tsx
@@ -649,6 +551,20 @@ env
 6
 7
 
+Scripts Disponibles
+
+bash
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+
 Configuración de Tailwind
 Archivo: tailwind.config.ts
 
@@ -709,113 +625,142 @@ typescript
 6
 7
 
-📊 Estadísticas del Sistema
-Datos actuales:
+🎓 Cocina Hildegardiana
+¿Qué es la Cocina Hildegardiana?
+La cocina hildegardiana se basa en las enseñanzas de Hildegarda von Bingen (1098-1179), abadesa, médica, mística y compositora alemana. Su enfoque se centra en la alimentación como medicina preventiva y curativa.
+Principios Fundamentales
+1. Temperamentos
+Los alimentos se clasifican según su efecto en el cuerpo:
+
+    Cálido - Equilibra el frío, energizante
+    Frío - Refrescante, calmante
+    Seco - Ligero, estimulante
+    Húmedo - Reconfortante, hidratante
+
+2. Bases de Alegría
+Ingredientes fundamentales que dan vitalidad y salud:
+
+    Espelta - Grano ancestral, rico en nutrientes
+    Hinojo - Digestivo, carminativo
+    Galanga - Especia cálida, antiinflamatoria
+    Castañas - Energéticas, nutritivas
+
+3. Venenos Hildegardianos
+Ingredientes que Hildegarda consideraba dañinos para la salud:
+
+    Frutilla - Considerada "veneno del corazón"
+    Papa - "Manzana del diablo"
+    Tomate - "Manzana de oro" (prohibida)
+    Pepino - "Veneno frío"
+    Pimiento morrón - "Veneno caliente"
+    Champiñones - "Hongos del diablo"
+    Durazno - "Fruta del pecado"
+
+Beneficios
+
+    ✅ Mejora la digestión
+    ✅ Aumenta la energía vital
+    ✅ Fortalece el sistema inmunológico
+    ✅ Equilibra el estado de ánimo
+    ✅ Previene enfermedades
+
+📊 Estadísticas
+Datos Actuales
 
     110 platos en el catálogo
     200+ ingredientes registrados
-    23 recetas completadas
+    110 recetas completadas (100%)
     5 categorías de platos
     6 temperamentos hildegardianos
     4 bases de alegría identificadas
     7 venenos hildegardianos marcados
 
-Estructura de datos:
+Distribución de Platos
 
 1
 2
 3
 4
 5
-6
-7
-8
-9
-10
-11
-12
 
-🚀 Próximos Pasos
-Antes del Deploy:
+🚧 Próximos Pasos
+Antes del Deploy
 
-    ✅ Documentación completa (este documento)
-    ⏳ Probar todos los flujos de usuario
-    ⏳ Verificar que todas las imágenes cargan
-    ⏳ Revisar responsive en mobile
+    Documentación completa
+    Probar todos los flujos de usuario
+    Verificar que todas las imágenes cargan
+    Revisar responsive en mobile
+    Optimizar performance
 
-Deploy:
+Deploy a Producción
 
     Configurar Vercel
+
+bash
+1
+2
+
     Conectar con Supabase de producción
-    Configurar variables de entorno
+        Crear proyecto en Supabase
+        Ejecutar scripts SQL
+        Copiar variables de entorno
+    Configurar variables de entorno en Vercel
+        Ir a Settings → Environment Variables
+        Agregar todas las variables de .env.local
     Deploy final
 
-📝 Notas Importantes
-Modo Oscuro:
-
-    Se implementó con darkMode: 'class' en Tailwind
-    El toggle está en el header de /admin/platos
-    La preferencia se guarda en localStorage
-    Todos los componentes usan clases dark: para estilos oscuros
-
-Buscador Inteligente:
-
-    Usa useMemo para optimizar el filtrado
-    Busca en nombre, descripción e ingredientes
-    Los filtros son acumulativos (AND lógico)
-    Se resetea automáticamente al cerrar el modal
-
-Imágenes:
-
-    Actualmente usan placeholders de placehold.co
-    Para reemplazar con imágenes reales:
-
-sql
+bash
 1
 
-Base de Datos:
+Mejoras Futuras
 
-    Todas las relaciones son UUID
-    Los JSONB permiten flexibilidad en recetas
-    Los triggers actualizan updated_at automáticamente
-    Las cascadas eliminan datos relacionados
-
-🎓 Conceptos Clave
-Cocina Hildegardiana:
-Temperamentos:
-
-    Cálido: Equilibra el frío, energizante
-    Frío: Refrescante, calmante
-    Seco: Ligero, estimulante
-    Húmedo: Reconfortante, hidratante
-
-Bases de Alegría:
-Ingredientes fundamentales que dan vitalidad:
-
-    Espelta (grano ancestral)
-    Hinojo (digestivo)
-    Galanga (especia cálida)
-    Castañas (energéticas)
-
-Venenos Hildegardianos:
-Ingredientes que Hildegarda consideraba dañinos:
-
-    Frutilla
-    Papa
-    Tomate
-    Pepino
-    Pimiento morrón
-    Champiñones
-    Durazno
+    Sistema de autenticación completo
+    Notificaciones por email
+    Exportar pedidos a PDF
+    Integración con pasarela de pagos
+    App móvil (React Native)
+    Sistema de reseñas y calificaciones
+    Chat en tiempo real entre miembros
 
 📞 Soporte
-Para dudas o modificaciones:
+Para Desarrolladores
 
     Revisar este documento
     Consultar el código fuente con comentarios
     Ver los logs de la terminal
     Revisar la consola del navegador (F12)
 
-Documento generado el: 9 de julio de 2026
-Versión: 1.0
-Estado: Completo y listo para deploy
+Para Usuarios
+
+    Contactar al administrador del sistema
+    Revisar la documentación de usuario
+    Ver tutoriales en video (próximamente)
+
+Recursos Útiles
+
+    Documentación de Next.js
+    Documentación de Supabase
+    Documentación de Tailwind CSS
+    Hildegarda von Bingen - Wikipedia
+
+📄 Licencia
+Este proyecto es propiedad privada. Todos los derechos reservados.
+👥 Créditos
+Desarrollado por: [Tu Nombre/Organización]
+Fecha de creación: Julio 2026
+Versión: 1.0.0  
+Tecnologías utilizadas:
+
+    Next.js 14
+    React 18
+    TypeScript 5
+    Supabase (PostgreSQL)
+    Tailwind CSS 3
+
+Inspirado por: Las enseñanzas de Hildegarda von Bingen sobre alimentación saludable.
+🙏 Agradecimientos
+
+    A la comunidad de Next.js por el excelente framework
+    A Supabase por la plataforma de base de datos
+    A Tailwind CSS por el sistema de estilos
+    A todos los que contribuyeron con ideas y feedback
