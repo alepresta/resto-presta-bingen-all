@@ -74,7 +74,8 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Accesos rápidos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h3 className="text-lg font-bold text-gray-800 mb-4">🚀 Accesos rápidos</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <a
             href="/admin/platos"
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-amber-500"
@@ -88,23 +89,50 @@ export default async function AdminDashboardPage() {
             href="/admin/recetas"
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-green-500"
           >
-            <div className="text-3xl mb-2"></div>
+            <div className="text-3xl mb-2">📖</div>
             <h3 className="font-bold text-gray-800">Gestionar Recetas</h3>
             <p className="text-sm text-gray-600 mt-1">Crear y editar recetas</p>
           </a>
 
           <a
-            href="/admin/pedidos"
+            href="/admin/ingredientes"
+            className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-emerald-500"
+          >
+            <div className="text-3xl mb-2">🥕</div>
+            <h3 className="font-bold text-gray-800">Ingredientes</h3>
+            <p className="text-sm text-gray-600 mt-1">Catálogo nutricional</p>
+          </a>
+
+          <a
+            href="/admin/lista-compras"
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-blue-500"
           >
             <div className="text-3xl mb-2">🛒</div>
+            <h3 className="font-bold text-gray-800">Lista de Compras</h3>
+            <p className="text-sm text-gray-600 mt-1">Generar desde pedidos</p>
+          </a>
+
+          <a
+            href="/admin/analisis-nutricional"
+            className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-purple-500"
+          >
+            <div className="text-3xl mb-2">📊</div>
+            <h3 className="font-bold text-gray-800">Análisis Nutricional</h3>
+            <p className="text-sm text-gray-600 mt-1">Balance del menú</p>
+          </a>
+
+          <a
+            href="/admin/pedidos"
+            className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-indigo-500"
+          >
+            <div className="text-3xl mb-2">📦</div>
             <h3 className="font-bold text-gray-800">Ver Pedidos</h3>
             <p className="text-sm text-gray-600 mt-1">Gestionar órdenes</p>
           </a>
 
           <a
             href="/admin/configuracion"
-            className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-purple-500"
+            className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-gray-500"
           >
             <div className="text-3xl mb-2">⚙️</div>
             <h3 className="font-bold text-gray-800">Configuración</h3>
@@ -115,20 +143,3 @@ export default async function AdminDashboardPage() {
     </div>
   );
 }
-
-<a
-  href="/admin/lista-compras"
-  className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-blue-500"
->
-  <div className="text-3xl mb-2">🛒</div>
-  <h3 className="font-bold text-gray-800">Lista de Compras</h3>
-  <p className="text-sm text-gray-600 mt-1">Generar desde pedidos</p>
-</a>
-<a
-  href="/admin/analisis-nutricional"
-  className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-purple-500"
->
-  <div className="text-3xl mb-2"></div>
-  <h3 className="font-bold text-gray-800">Análisis Nutricional</h3>
-  <p className="text-sm text-gray-600 mt-1">Balance del menú</p>
-</a>
