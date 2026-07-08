@@ -124,3 +124,11 @@ export default async function AdminDashboardPage() {
   <h3 className="font-bold text-gray-800">Lista de Compras</h3>
   <p className="text-sm text-gray-600 mt-1">Generar desde pedidos</p>
 </a>
+<a
+  href="/admin/analisis-nutricional"
+  className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-purple-500"
+>
+  <div className="text-3xl mb-2"></div>
+  <h3 className="font-bold text-gray-800">Análisis Nutricional</h3>
+  <p className="text-sm text-gray-600 mt-1">Balance del menú</p>
+</a>
