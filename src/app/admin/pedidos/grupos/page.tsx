@@ -83,25 +83,47 @@ export default async function AdminGruposPage() {
             const totalMiembros = grupo.miembros?.length || 0;
             const totalItems = grupo.items?.length || 0;
 
+            // Colores según estado
+            const estadoColores = {
+              confirmado: {
+                bg: 'bg-green-50',
+                border: 'border-green-500',
+                badge: 'bg-green-500 text-white',
+                icono: '✅',
+                texto: 'CONFIRMADO'
+              },
+              armando: {
+                bg: 'bg-yellow-50',
+                border: 'border-yellow-500',
+                badge: 'bg-yellow-500 text-white',
+                icono: '⏳',
+                texto: 'ARMANDO'
+              },
+              cancelado: {
+                bg: 'bg-red-50',
+                border: 'border-red-500',
+                badge: 'bg-red-500 text-white',
+                icono: '❌',
+                texto: 'CANCELADO'
+              }
+            };
+
+            const colores = estadoColores[grupo.estado as keyof typeof estadoColores] || estadoColores.armando;
+
             return (
               <div
                 key={grupo.id}
-                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all"
+                className={`${colores.bg} rounded-xl shadow-md p-6 border-l-8 ${colores.border} hover:shadow-lg transition-all`}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Info del grupo */}
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-3">
                       <h3 className="font-bold text-gray-800 text-xl">
                         🔐 {grupo.palabra_secreta}
                       </h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        grupo.estado === 'confirmado' ? 'bg-green-100 text-green-700' :
-                        grupo.estado === 'armando' ? 'bg-yellow-100 text-yellow-700' :
-                        grupo.estado === 'cancelado' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {grupo.estado.toUpperCase()}
+                      <span className={`px-4 py-2 rounded-full text-sm font-bold ${colores.badge} shadow-sm`}>
+                        {colores.icono} {colores.texto}
                       </span>
                     </div>
                     

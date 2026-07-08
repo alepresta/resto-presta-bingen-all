@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface AccionesGrupoProps {
   grupoId: string;
@@ -9,12 +8,11 @@ interface AccionesGrupoProps {
 }
 
 export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
-  const router = useRouter();
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
   const confirmarGrupo = async () => {
-    if (!confirm('¿Confirmar este grupo? Esta acción marcará el pedido como confirmado.')) return;
+    if (!confirm('✅ ¿Confirmar este grupo?\n\nEsto marcará el pedido como confirmado y listo para preparar.')) return;
     
     setCargando(true);
     try {
@@ -30,7 +28,33 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
       }
 
       setMensaje('✅ Grupo confirmado');
-      setTimeout(() => router.refresh(), 1000);
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      setMensaje(`❌ ${error.message}`);
+    } finally {
+      setCargando(false);
+      setTimeout(() => setMensaje(''), 3000);
+    }
+  };
+
+  const desconfirmarGrupo = async () => {
+    if (!confirm('⚠️ ¿Desconfirmar este grupo?\n\nEl grupo volverá al estado "armando" y podrá ser modificado.')) return;
+    
+    setCargando(true);
+    try {
+      const res = await fetch(`/api/admin/pedidos/grupos/${grupoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'desconfirmar' }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Error al desconfirmar');
+      }
+
+      setMensaje('↩️ Grupo desconfirmado');
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       setMensaje(`❌ ${error.message}`);
     } finally {
@@ -40,8 +64,8 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
   };
 
   const eliminarGrupo = async () => {
-    if (!confirm('⚠️ ¿Eliminar este grupo? Esta acción NO se puede deshacer.')) return;
-    if (!confirm('¿Estás 100% seguro? Se perderán todos los datos del grupo.')) return;
+    if (!confirm('⚠️ ¿Eliminar este grupo?\n\nEsta acción NO se puede deshacer.')) return;
+    if (!confirm('❌ ¿Estás 100% seguro?\n\nSe perderán todos los datos del grupo.')) return;
     
     setCargando(true);
     try {
@@ -55,7 +79,7 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
       }
 
       setMensaje('🗑️ Grupo eliminado');
-      setTimeout(() => router.refresh(), 1000);
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       setMensaje(`❌ ${error.message}`);
     } finally {
@@ -65,7 +89,7 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
   };
 
   const cancelarGrupo = async () => {
-    if (!confirm('¿Cancelar este grupo? Los miembros serán notificados.')) return;
+    if (!confirm('❌ ¿Cancelar este grupo?\n\nEl grupo quedará cancelado y no se podrá usar.')) return;
     
     setCargando(true);
     try {
@@ -81,7 +105,7 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
       }
 
       setMensaje('❌ Grupo cancelado');
-      setTimeout(() => router.refresh(), 1000);
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       setMensaje(`❌ ${error.message}`);
     } finally {
@@ -93,41 +117,58 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
   return (
     <div className="relative">
       {mensaje && (
-        <div className="absolute top-0 right-0 transform -translate-y-full bg-white border border-gray-200 shadow-lg rounded-lg px-3 py-2 text-sm z-10 mb-2">
+        <div className="absolute top-0 right-0 transform -translate-y-full bg-white border border-gray-200 shadow-lg rounded-lg px-3 py-2 text-sm z-10 mb-2 whitespace-nowrap">
           {mensaje}
         </div>
       )}
       
       <div className="flex gap-2">
+        {/* Si está armando: mostrar confirmar y cancelar */}
         {estado === 'armando' && (
+          <>
+            <button
+              type="button"
+              onClick={confirmarGrupo}
+              disabled={cargando}
+              className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 font-semibold text-sm disabled:opacity-50"
+              title="Confirmar grupo"
+            >
+              ✅ Confirmar
+            </button>
+            <button
+              type="button"
+              onClick={cancelarGrupo}
+              disabled={cargando}
+              className="bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 font-semibold text-sm disabled:opacity-50"
+              title="Cancelar grupo"
+            >
+              ❌ Cancelar
+            </button>
+          </>
+        )}
+
+        {/* Si está confirmado: mostrar desconfirmar */}
+        {estado === 'confirmado' && (
           <button
-            onClick={confirmarGrupo}
+            type="button"
+            onClick={desconfirmarGrupo}
             disabled={cargando}
-            className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 font-semibold text-sm disabled:opacity-50"
-            title="Confirmar grupo"
+            className="bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600 font-semibold text-sm disabled:opacity-50"
+            title="Desconfirmar grupo (volver a armando)"
           >
-            ✅
+            ↩️ Desconfirmar
           </button>
         )}
-        
-        {estado === 'armando' && (
-          <button
-            onClick={cancelarGrupo}
-            disabled={cargando}
-            className="bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 font-semibold text-sm disabled:opacity-50"
-            title="Cancelar grupo"
-          >
-            ❌
-          </button>
-        )}
-        
+
+        {/* Botón eliminar siempre visible */}
         <button
+          type="button"
           onClick={eliminarGrupo}
           disabled={cargando}
           className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 font-semibold text-sm disabled:opacity-50"
           title="Eliminar grupo"
         >
-          🗑️
+          🗑️ Eliminar
         </button>
       </div>
     </div>

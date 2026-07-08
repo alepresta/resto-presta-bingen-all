@@ -31,7 +31,7 @@ export async function GET(
   return NextResponse.json({ grupo });
 }
 
-// PUT: Confirmar o cancelar grupo
+// PUT: Confirmar, desconfirmar o cancelar grupo
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -41,29 +41,29 @@ export async function PUT(
   const { accion } = body;
 
   try {
+    let nuevoEstado = '';
+
     if (accion === 'confirmar') {
-      const { error } = await supabase
-        .from('grupos_pedido')
-        .update({ estado: 'confirmado' })
-        .eq('id', params.id);
-
-      if (error) throw error;
-
-      return NextResponse.json({ mensaje: '✅ Grupo confirmado' });
+      nuevoEstado = 'confirmado';
+    } else if (accion === 'desconfirmar') {
+      nuevoEstado = 'armando';
+    } else if (accion === 'cancelar') {
+      nuevoEstado = 'cancelado';
+    } else {
+      return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
     }
 
-    if (accion === 'cancelar') {
-      const { error } = await supabase
-        .from('grupos_pedido')
-        .update({ estado: 'cancelado' })
-        .eq('id', params.id);
+    const { error } = await supabase
+      .from('grupos_pedido')
+      .update({ estado: nuevoEstado })
+      .eq('id', params.id);
 
-      if (error) throw error;
+    if (error) throw error;
 
-      return NextResponse.json({ mensaje: '❌ Grupo cancelado' });
-    }
-
-    return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
+    return NextResponse.json({ 
+      mensaje: `Grupo ${accion === 'desconfirmar' ? 'desconfirmado' : accion === 'cancelar' ? 'cancelado' : 'confirmado'}`,
+      estado: nuevoEstado
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
