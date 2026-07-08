@@ -1,7 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DIAS_SEMANA, CATEGORIAS_COMIDA } from '@/lib/pedidos';
+
+interface Ingrediente {
+  id: string;
+  nombre: string;
+  temperamento: string | null;
+  es_veneno_hildegardiano: boolean;
+}
 
 interface Plato {
   id: string;
@@ -13,6 +20,12 @@ interface Plato {
   disponible_todos_dias: boolean;
   alergenos: string[];
   tags: string[];
+  receta?: {
+    id: string;
+    ingredientes?: Array<{
+      ingrediente: Ingrediente;
+    }>;
+  } | null;
 }
 
 interface Cliente {
@@ -51,11 +64,28 @@ interface CalendarioPedidosProps {
 }
 
 const TIPOS_COMIDA = [
-  { id: 'desayuno', label: 'Desayuno', icono: '', categoriaId: CATEGORIAS_COMIDA.DESAYUNO },
+  { id: 'desayuno', label: 'Desayuno', icono: '☕', categoriaId: CATEGORIAS_COMIDA.DESAYUNO },
   { id: 'almuerzo', label: 'Almuerzo', icono: '🍽️', categoriaId: CATEGORIAS_COMIDA.PLATO_PRINCIPAL },
   { id: 'guarnicion', label: 'Guarnición', icono: '🥗', categoriaId: CATEGORIAS_COMIDA.GUARNICION },
   { id: 'postre', label: 'Postre', icono: '🍰', categoriaId: CATEGORIAS_COMIDA.POSTRE },
   { id: 'bebida', label: 'Bebida', icono: '🥤', categoriaId: CATEGORIAS_COMIDA.BEBIDA },
+];
+
+const CATEGORIAS_FILTRO = [
+  { id: 1, nombre: 'Desayuno', icono: '☕' },
+  { id: 2, nombre: 'Almuerzo', icono: '🍽️' },
+  { id: 3, nombre: 'Guarnición', icono: '🥗' },
+  { id: 4, nombre: 'Bebida', icono: '🥤' },
+  { id: 5, nombre: 'Postre', icono: '🍰' },
+];
+
+const TEMPERAMENTOS = [
+  { valor: 'calido', nombre: '🌡️ Cálido' },
+  { valor: 'calido_seco', nombre: '🔥 Cálido-Seco' },
+  { valor: 'calido_humedo', nombre: '🌊 Cálido-Húmedo' },
+  { valor: 'frio', nombre: '❄️ Frío' },
+  { valor: 'frio_seco', nombre: '🍃 Frío-Seco' },
+  { valor: 'frio_humedo', nombre: '💧 Frío-Húmedo' },
 ];
 
 export default function CalendarioPedidos({
@@ -74,6 +104,12 @@ export default function CalendarioPedidos({
   const [clienteActualId, setClienteActualId] = useState<string>(clienteActualIdProp);
   const [miembrosState, setMiembrosState] = useState<Miembro[]>(miembros);
 
+  // Estados del buscador (dentro del modal)
+  const [textoBusqueda, setTextoBusqueda] = useState('');
+  const [categoriaFiltro, setCategoriaFiltro] = useState<number | null>(null);
+  const [temperamentoFiltro, setTemperamentoFiltro] = useState<string>('');
+  const [soloSinVenenos, setSoloSinVenenos] = useState(false);
+
   useEffect(() => {
     const clienteGuardado = localStorage.getItem('cliente_actual');
     if (clienteGuardado) {
@@ -90,6 +126,16 @@ export default function CalendarioPedidos({
       console.log('⚠️ No hay cliente en localStorage, usando:', clienteActualIdProp);
     }
   }, []);
+
+  // Limpiar filtros cuando se cierra el modal
+  useEffect(() => {
+    if (!modalAbierto) {
+      setTextoBusqueda('');
+      setCategoriaFiltro(null);
+      setTemperamentoFiltro('');
+      setSoloSinVenenos(false);
+    }
+  }, [modalAbierto]);
 
   const fechas = [];
   const inicio = new Date(fechaInicio);
@@ -109,6 +155,7 @@ export default function CalendarioPedidos({
     return miembro?.cliente.nombre || 'Desconocido';
   };
 
+  // 🔍 Función mejorada con filtros del buscador
   const getPlatosDisponibles = (fecha: string, tipo: string) => {
     const fechaObj = new Date(fecha);
     const diaSemana = fechaObj.getDay() === 0 ? 7 : fechaObj.getDay();
@@ -116,16 +163,47 @@ export default function CalendarioPedidos({
     if (!tipoInfo) return [];
 
     return platos.filter((plato) => {
+      // Filtro base: categoría y día
       if (plato.categoria_id !== tipoInfo.categoriaId) return false;
-      if (plato.disponible_todos_dias) return true;
-      if (plato.dia_semana_id === null) return true;
-      return plato.dia_semana_id === diaSemana;
+      if (!plato.disponible_todos_dias && plato.dia_semana_id !== null && plato.dia_semana_id !== diaSemana) {
+        return false;
+      }
+
+      // Filtro por texto (nombre, descripción o ingrediente)
+      if (textoBusqueda) {
+        const texto = textoBusqueda.toLowerCase();
+        const coincideNombre = plato.nombre.toLowerCase().includes(texto);
+        const coincideDesc = plato.descripcion?.toLowerCase().includes(texto) || false;
+        const coincideIngrediente = plato.receta?.ingredientes?.some(ri =>
+          ri.ingrediente.nombre.toLowerCase().includes(texto)
+        ) || false;
+        if (!coincideNombre && !coincideDesc && !coincideIngrediente) return false;
+      }
+
+      // Filtro por categoría adicional
+      if (categoriaFiltro && plato.categoria_id !== categoriaFiltro) return false;
+
+      // Filtro por temperamento
+      if (temperamentoFiltro && plato.receta?.ingredientes) {
+        const tieneTemperamento = plato.receta.ingredientes.some(ri =>
+          ri.ingrediente.temperamento === temperamentoFiltro
+        );
+        if (!tieneTemperamento) return false;
+      }
+
+      // Filtro sin venenos
+      if (soloSinVenenos && plato.receta?.ingredientes) {
+        const tieneVeneno = plato.receta.ingredientes.some(ri =>
+          ri.ingrediente.es_veneno_hildegardiano
+        );
+        if (tieneVeneno) return false;
+      }
+
+      return true;
     });
   };
 
-  // 🔧 FUNCIÓN CORREGIDA: Agregar el plato al item antes de guardarlo
   const seleccionarPlato = async (fecha: string, tipo: string, platoId: string) => {
-    console.log(' seleccionarPlato llamado:', { fecha, tipo, platoId, clienteActualId });
     setCargando(true);
     setMensaje('');
 
@@ -135,8 +213,6 @@ export default function CalendarioPedidos({
         throw new Error('Plato no encontrado');
       }
 
-      console.log('🌐 Haciendo fetch a /api/grupos/${grupoId}/items');
-      
       const response = await fetch(`/api/grupos/${grupoId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,25 +225,18 @@ export default function CalendarioPedidos({
         }),
       });
 
-      console.log(' Response status:', response.status);
-
       const responseText = await response.text();
-      console.log(' Response body:', responseText);
-
       let data;
       try {
         data = JSON.parse(responseText);
       } catch (e) {
-        throw new Error('Respuesta inválida del servidor: ' + responseText.substring(0, 100));
+        throw new Error('Respuesta inválida del servidor');
       }
 
       if (!response.ok) {
         throw new Error(data.error || `Error ${response.status}`);
       }
 
-      console.log('✅ Plato seleccionado:', data.item);
-
-      // 🔧 AGREGAR LA INFO DEL PLATO AL ITEM (esto es lo que faltaba)
       const itemConPlato = {
         ...data.item,
         plato: plato,
@@ -183,12 +252,10 @@ export default function CalendarioPedidos({
       setMensaje(`✅ ${plato.nombre} seleccionado para ${new Date(fecha).toLocaleDateString('es-AR')}`);
       setTimeout(() => setMensaje(''), 3000);
     } catch (error: any) {
-      console.error('❌ Error en seleccionarPlato:', error);
       setMensaje(`❌ ${error.message}`);
       setTimeout(() => setMensaje(''), 5000);
     } finally {
       setCargando(false);
-      console.log('🔵 seleccionarPlato terminado');
     }
   };
 
@@ -197,8 +264,6 @@ export default function CalendarioPedidos({
     setMensaje('');
 
     try {
-      console.log(' confirmando con cliente_id:', clienteActualId);
-
       const response = await fetch(`/api/grupos/${grupoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -240,6 +305,8 @@ export default function CalendarioPedidos({
   const miembrosConfirmados = miembrosState.filter((m) => m.confirmado_general).length;
   const todosConfirmaron = miembrosConfirmados === miembrosState.length && miembrosState.length === 4;
 
+  const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50">
       <header className="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 text-white shadow-lg">
@@ -253,7 +320,7 @@ export default function CalendarioPedidos({
 
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="bg-white rounded-xl shadow-md p-4">
-          <h2 className="font-bold text-gray-800 mb-3"> Miembros del Grupo</h2>
+          <h2 className="font-bold text-gray-800 mb-3">👥 Miembros del Grupo</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {miembrosState.map((miembro) => (
               <div
@@ -403,18 +470,10 @@ export default function CalendarioPedidos({
               </p>
             </div>
           )}
-
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 bg-gray-100 p-3 rounded text-xs">
-              <p><strong>Debug:</strong></p>
-              <p>Cliente actual: {clienteActualId}</p>
-              <p>Es miembro: {clienteActual ? 'Sí' : 'No'}</p>
-              <p>Ya confirmó: {clienteActual?.confirmado_general ? 'Sí' : 'No'}</p>
-            </div>
-          )}
         </div>
       </div>
 
+      {/* MODAL DE SELECCIÓN DE PLATOS CON BUSCADOR */}
       {modalAbierto && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -424,7 +483,8 @@ export default function CalendarioPedidos({
             className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-gradient-to-r from-amber-700 to-orange-600 text-white p-6 rounded-t-2xl">
+            {/* Header del modal */}
+            <div className="sticky top-0 bg-gradient-to-r from-amber-700 to-orange-600 text-white p-6 rounded-t-2xl z-10">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold">
@@ -447,34 +507,126 @@ export default function CalendarioPedidos({
               </div>
             </div>
 
-            <div className="p-6">
-              <div className="space-y-3">
-                {getPlatosDisponibles(modalAbierto.fecha, modalAbierto.tipo).map((plato) => (
+            {/* 🔍 BUSCADOR INTEGRADO */}
+            <div className="sticky top-[120px] bg-amber-50 border-b border-amber-200 p-4 z-10">
+              {/* Barra de búsqueda */}
+              <div className="flex gap-2 mb-3">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={textoBusqueda}
+                    onChange={(e) => setTextoBusqueda(e.target.value)}
+                    placeholder="🔍 Buscar por nombre o ingrediente..."
+                    className="w-full px-4 py-2 pl-10 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white"
+                  />
+                  <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                </div>
+                {hayFiltros && (
                   <button
-                    key={plato.id}
-                    onClick={() =>
-                      seleccionarPlato(modalAbierto.fecha, modalAbierto.tipo, plato.id)
-                    }
-                    disabled={cargando}
-                    className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-all text-left disabled:opacity-50"
+                    onClick={() => {
+                      setTextoBusqueda('');
+                      setCategoriaFiltro(null);
+                      setTemperamentoFiltro('');
+                      setSoloSinVenenos(false);
+                    }}
+                    className="bg-white text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm font-semibold border border-gray-300"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-800">{plato.nombre}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{plato.descripcion}</p>
-                        {plato.alergenos.length > 0 && (
-                          <p className="text-xs text-red-600 mt-2">
-                            ⚠️ {plato.alergenos.join(', ')}
-                          </p>
-                        )}
-                      </div>
-                      <p className="text-lg font-bold text-amber-600 ml-4">
-                        ${plato.precio.toLocaleString('es-AR')}
-                      </p>
-                    </div>
+                    ✖️ Limpiar
                   </button>
-                ))}
+                )}
               </div>
+
+              {/* Filtros rápidos */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <select
+                  value={categoriaFiltro || ''}
+                  onChange={(e) => setCategoriaFiltro(e.target.value ? Number(e.target.value) : null)}
+                  className="px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
+                >
+                  <option value="">📂 Todas las categorías</option>
+                  {CATEGORIAS_FILTRO.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.icono} {cat.nombre}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={temperamentoFiltro}
+                  onChange={(e) => setTemperamentoFiltro(e.target.value)}
+                  className="px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
+                >
+                  <option value="">🌿 Todos los temperamentos</option>
+                  {TEMPERAMENTOS.map((temp) => (
+                    <option key={temp.valor} value={temp.valor}>
+                      {temp.nombre}
+                    </option>
+                  ))}
+                </select>
+
+                <label className="flex items-center gap-2 px-3 py-2 border border-amber-300 rounded-lg cursor-pointer hover:bg-amber-100 bg-white">
+                  <input
+                    type="checkbox"
+                    checked={soloSinVenenos}
+                    onChange={(e) => setSoloSinVenenos(e.target.checked)}
+                    className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                  />
+                  <span className="text-sm text-gray-700">🚫 Sin venenos</span>
+                </label>
+              </div>
+
+              {/* Resumen de resultados */}
+              <div className="mt-2 text-xs text-amber-800">
+                Mostrando <strong>{getPlatosDisponibles(modalAbierto.fecha, modalAbierto.tipo).length}</strong> platos disponibles
+              </div>
+            </div>
+
+            {/* Lista de platos */}
+            <div className="p-6">
+              {getPlatosDisponibles(modalAbierto.fecha, modalAbierto.tipo).length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 text-lg">😕 No hay platos con estos filtros</p>
+                  <button
+                    onClick={() => {
+                      setTextoBusqueda('');
+                      setCategoriaFiltro(null);
+                      setTemperamentoFiltro('');
+                      setSoloSinVenenos(false);
+                    }}
+                    className="mt-3 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 text-sm font-semibold"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {getPlatosDisponibles(modalAbierto.fecha, modalAbierto.tipo).map((plato) => (
+                    <button
+                      key={plato.id}
+                      onClick={() =>
+                        seleccionarPlato(modalAbierto.fecha, modalAbierto.tipo, plato.id)
+                      }
+                      disabled={cargando}
+                      className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-all text-left disabled:opacity-50"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-800">{plato.nombre}</h3>
+                          <p className="text-sm text-gray-600 mt-1">{plato.descripcion}</p>
+                          {plato.alergenos && plato.alergenos.length > 0 && (
+                            <p className="text-xs text-red-600 mt-2">
+                              ⚠️ {plato.alergenos.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-lg font-bold text-amber-600 ml-4">
+                          ${plato.precio.toLocaleString('es-AR')}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

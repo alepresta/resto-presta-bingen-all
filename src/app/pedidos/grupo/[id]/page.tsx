@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import CalendarioPedidos from './CalendarioPedidos';
 
 interface PageProps {
@@ -37,16 +37,25 @@ export default async function GrupoPage({ params }: PageProps) {
     `)
     .eq('grupo_id', params.id);
 
-  // 3. Obtener todos los platos del restaurante
+  // 3. Obtener todos los platos del restaurante CON recetas e ingredientes
   const { data: platos } = await supabase
     .from('platos')
-    .select('*')
+    .select(`
+      *,
+      receta:recetas(
+        id,
+        ingredientes:receta_ingredientes(
+          ingrediente:ingredientes(
+            id, nombre, temperamento, es_veneno_hildegardiano
+          )
+        )
+      )
+    `)
     .eq('restaurante_id', grupo.restaurante_id)
     .eq('disponible', true);
 
-  // 4. Obtener cliente actual del localStorage (simulación)
-  // En producción vendría de autenticación
-  const clienteActualId = grupo.creado_por; // Por defecto, el creador
+  // 4. Cliente actual
+  const clienteActualId = grupo.creado_por;
 
   return (
     <CalendarioPedidos
