@@ -3,14 +3,6 @@ import Link from 'next/link';
 export default function PedidosHomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 text-white shadow-lg">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold font-serif text-center">RESTO PRESTA BINGEN ALL</h1>
-          <p className="text-center italic text-amber-100 mt-2">"Comida es Medicina"</p>
-        </div>
-      </header>
-
       <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-800 mb-4">

@@ -1,25 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function CrearGrupoPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Datos del cliente
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
-  
+  const [clienteId, setClienteId] = useState<string | null>(null);
+  const [logueado, setLogueado] = useState(false);
+
   // Datos del grupo
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
-  
+
   // Resultado
   const [grupoCreado, setGrupoCreado] = useState<any>(null);
+  const [copiadoMsg, setCopiadoMsg] = useState(false);
+
+  // Precargar datos del usuario logueado y saltear el paso de datos
+  useEffect(() => {
+    (async () => {
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('nombre, telefono')
+        .eq('id', user.id)
+        .single();
+
+      setNombre(profile?.nombre || '');
+      setEmail(user.email || '');
+      setTelefono(profile?.telefono || '');
+      setClienteId(user.id);
+      setLogueado(true);
+      setStep(2); // saltar "Tus datos"
+    })();
+  }, []);
 
   // Fecha mínima: hoy + 10 días
   const fechaMinima = new Date();
@@ -48,12 +76,12 @@ export default function CrearGrupoPage() {
         throw new Error('El plan no puede exceder los 30 días');
       }
       
-      // Generar ID de cliente local (en producción vendría de auth)
-      const clienteId = crypto.randomUUID();
+      // Usar el id del usuario logueado; si no, generar uno local
+      const cid = clienteId || crypto.randomUUID();
       
       // Guardar cliente en localStorage para usar después
       localStorage.setItem('cliente_actual', JSON.stringify({
-        id: clienteId,
+        id: cid,
         nombre,
         email,
         telefono
@@ -64,7 +92,7 @@ export default function CrearGrupoPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cliente_id: clienteId,
+          cliente_id: cid,
           restaurante_id: '2fb337bf-301e-4ab2-8179-da9c80cb1e2f',
           fecha_inicio: fechaInicio,
           fecha_fin: fechaFin,
@@ -93,14 +121,16 @@ export default function CrearGrupoPage() {
       <header className="bg-gradient-to-r from-amber-700 to-orange-600 text-white py-6">
         <div className="max-w-2xl mx-auto px-4">
           <h1 className="text-3xl font-bold font-serif">👑 Crear un Grupo</h1>
-          <p className="text-amber-100 mt-1">Paso {step} de 3</p>
+          <p className="text-amber-100 mt-1">
+            {logueado ? `Paso ${step - 1} de 2` : `Paso ${step} de 3`}
+          </p>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8">
         {/* Progreso */}
         <div className="flex justify-between mb-8">
-          {[1, 2, 3].map((s) => (
+          {(logueado ? [2, 3] : [1, 2, 3]).map((s) => (
             <div
               key={s}
               className={`flex-1 h-2 mx-1 rounded-full ${
@@ -232,12 +262,14 @@ export default function CrearGrupoPage() {
             )}
 
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setStep(1)}
-                className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-300"
-              >
-                ← Atrás
-              </button>
+              {!logueado && (
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-300"
+                >
+                  ← Atrás
+                </button>
+              )}
               <button
                 onClick={handleCrearGrupo}
                 disabled={loading}
@@ -250,39 +282,97 @@ export default function CrearGrupoPage() {
         )}
 
         {/* Paso 3: Éxito */}
-        {step === 3 && grupoCreado && (
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">¡Grupo creado!</h2>
-            
-            <div className="bg-gradient-to-r from-amber-100 to-orange-100 p-6 rounded-xl mb-6">
-              <p className="text-sm text-gray-600 mb-2">Tu palabra secreta es:</p>
-              <div className="text-5xl font-bold text-amber-700 tracking-widest">
-                {grupoCreado.palabra_secreta}
+        {step === 3 && grupoCreado && (() => {
+          const origin = typeof window !== 'undefined' ? window.location.origin : '';
+          const grupoUrl = `${origin}/pedidos/grupo/${grupoCreado.id}`;
+
+          const fmtFecha = (s: string) => {
+            const [y, m, d] = s.split('-').map(Number);
+            return new Date(y, (m || 1) - 1, d || 1).toLocaleDateString('es-AR', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            });
+          };
+          const rangoFechas = `${fmtFecha(fechaInicio)} al ${fmtFecha(fechaFin)}`;
+
+          const mensaje =
+            `¡Armé un grupo para pedir comida en Bingen! 🍽️\n\n` +
+            `👤 Creado por: ${nombre}\n` +
+            `📅 Plan: ${rangoFechas}\n\n` +
+            `🔑 Unite con este código: ${grupoCreado.palabra_secreta}\n\n` +
+            `🔗 O entrá directo con este enlace:\n${grupoUrl}`;
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+
+          const copiarMensaje = async () => {
+            try {
+              await navigator.clipboard.writeText(mensaje);
+              setCopiadoMsg(true);
+              setTimeout(() => setCopiadoMsg(false), 2000);
+            } catch {
+              /* noop */
+            }
+          };
+
+          return (
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">¡Grupo creado!</h2>
+
+              <div className="bg-gradient-to-r from-amber-100 to-orange-100 p-6 rounded-xl mb-4">
+                <p className="text-sm text-gray-600 mb-2">Tu código para invitar es:</p>
+                <div className="text-5xl font-bold text-amber-700 tracking-widest">
+                  {grupoCreado.palabra_secreta}
+                </div>
               </div>
+
+              {/* Datos del grupo */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-left space-y-1">
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold">👤 Creado por:</span> {nombre}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold">📅 Fechas del plan:</span> {rangoFechas}
+                </p>
+              </div>
+
+              {/* Mensaje para copiar y pegar / WhatsApp */}
+              <div className="text-left mb-6">
+                <p className="font-semibold text-gray-800 mb-2">📱 Mensaje para compartir:</p>
+                <textarea
+                  readOnly
+                  value={mensaje}
+                  onFocus={(e) => e.target.select()}
+                  rows={8}
+                  className="w-full text-sm px-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 resize-none"
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                  <button
+                    onClick={copiarMensaje}
+                    className="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 rounded-lg"
+                  >
+                    {copiadoMsg ? '✅ Copiado' : '📋 Copiar mensaje'}
+                  </button>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2"
+                  >
+                    <span>💬</span> Enviar por WhatsApp
+                  </a>
+                </div>
+              </div>
+
               <button
-                onClick={() => navigator.clipboard.writeText(grupoCreado.palabra_secreta)}
-                className="mt-3 bg-white px-4 py-2 rounded-lg text-sm font-semibold text-amber-700 hover:bg-amber-50"
+                onClick={() => router.push(`/pedidos/grupo/${grupoCreado.id}`)}
+                className="w-full bg-green-500 text-white font-bold py-3 rounded-lg hover:bg-green-600"
               >
-                📋 Copiar
+                Ir al grupo →
               </button>
             </div>
-            
-            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6 text-left">
-              <p className="font-semibold text-blue-800 mb-2">📱 Compartí con tus amigos:</p>
-              <p className="text-blue-700 text-sm">
-                "¡Armé un grupo para pedir comida en Bingen! Unite con la palabra: <strong>{grupoCreado.palabra_secreta}</strong>"
-              </p>
-            </div>
-
-            <button
-              onClick={() => router.push(`/pedidos/grupo/${grupoCreado.id}`)}
-              className="w-full bg-green-500 text-white font-bold py-3 rounded-lg hover:bg-green-600"
-            >
-              Ir al grupo →
-            </button>
-          </div>
-        )}
+          );
+        })()}
       </main>
     </div>
   );

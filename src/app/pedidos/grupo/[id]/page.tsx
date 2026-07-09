@@ -43,10 +43,16 @@ export default async function GrupoPage({ params }: PageProps) {
     .select(`
       *,
       receta:recetas(
-        id,
+        id, pasos, tiempo_min, porciones, dificultad, notas_hildegardianas, interpretacion_hildegardiana,
         ingredientes:receta_ingredientes(
+          cantidad, unidad,
           ingrediente:ingredientes(
-            id, nombre, temperamento, es_veneno_hildegardiano
+            id, nombre, temperamento, es_veneno_hildegardiano,
+            es_base_alegria, nivel_subtilitat, requiere_coccion,
+            calorias, proteinas_g, carbohidratos_g, grasas_g, grasas_saturadas_g, fibra_g, azucar_g,
+            sodio_mg, calcio_mg, hierro_mg, magnesio_mg, potasio_mg, zinc_mg, fosforo_mg,
+            vitamina_a_mcg, vitamina_c_mg, vitamina_d_mcg, vitamina_e_mg, vitamina_k_mcg,
+            vitamina_b1_mg, vitamina_b2_mg, vitamina_b3_mg, vitamina_b5_mg, vitamina_b6_mg, vitamina_b9_mcg, vitamina_b12_mcg
           )
         )
       )
@@ -60,6 +66,7 @@ export default async function GrupoPage({ params }: PageProps) {
   return (
     <CalendarioPedidos
       grupoId={grupo.id}
+      palabraSecreta={grupo.palabra_secreta}
       fechaInicio={grupo.fecha_inicio}
       fechaFin={grupo.fecha_fin}
       miembros={grupo.miembros || []}

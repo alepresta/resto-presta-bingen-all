@@ -2,12 +2,122 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { DIAS_SEMANA, CATEGORIAS_COMIDA } from '@/lib/pedidos';
+import { evaluarReceta } from '@/lib/hildegarda';
+import AnalisisGrupo from './AnalisisGrupo';
+import InformeCompleto from './InformeCompleto';
+
+// Parseo/format de fechas 'YYYY-MM-DD' de forma estable en cualquier zona horaria
+// (evita desajustes de día entre el render del servidor y la hidratación del cliente).
+function parseFechaLocal(fechaStr: string): Date {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+function formatFechaLocal(fecha: Date): string {
+  const y = fecha.getFullYear();
+  const m = String(fecha.getMonth() + 1).padStart(2, '0');
+  const d = String(fecha.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Conversión a gramos/ml para el cálculo nutricional
+function normalizarAGramos(cantidad: number, unidad: string): number {
+  const u = (unidad || '').toLowerCase();
+  if (u === 'kg' || u === 'kilogramos') return cantidad * 1000;
+  if (u === 'gramos' || u === 'g') return cantidad;
+  if (u === 'litros' || u === 'l') return cantidad * 1000;
+  if (u === 'ml' || u === 'mililitros') return cantidad;
+  if (u === 'tazas') return cantidad * 240;
+  if (u === 'cucharadas') return cantidad * 15;
+  if (u === 'cucharadita') return cantidad * 5;
+  if (u === 'unidades' || u === 'unidad') return cantidad * 100;
+  return cantidad;
+}
+
+// Valores diarios de referencia (aprox.)
+const VDR_DIA: Record<string, number> = {
+  calorias: 2000, proteinas: 50, carbohidratos: 275, grasas: 78, grasas_saturadas: 20,
+  fibra: 25, azucar: 50, sodio: 2300, calcio: 1000, hierro: 18, magnesio: 400, potasio: 3500,
+  zinc: 11, fosforo: 700, vitaminaA: 900, vitaminaC: 90, vitaminaD: 20, vitaminaE: 15, vitaminaK: 120,
+  vitaminaB1: 1.2, vitaminaB2: 1.3, vitaminaB3: 16, vitaminaB5: 5, vitaminaB6: 1.3, vitaminaB9: 400, vitaminaB12: 2.4,
+};
+// Nutrientes cuyo VDR es un máximo recomendado
+const VDR_MAX = new Set(['grasas_saturadas', 'azucar', 'sodio']);
+// Lista completa de nutrientes para la tabla científica
+const NUTRIENTES_LISTA: Array<{ key: string; l: string; u: string }> = [
+  { key: 'calorias', l: 'Calorías', u: 'kcal' },
+  { key: 'proteinas', l: 'Proteínas', u: 'g' },
+  { key: 'carbohidratos', l: 'Carbohidratos', u: 'g' },
+  { key: 'grasas', l: 'Grasas', u: 'g' },
+  { key: 'grasas_saturadas', l: 'Grasas saturadas', u: 'g' },
+  { key: 'fibra', l: 'Fibra', u: 'g' },
+  { key: 'azucar', l: 'Azúcar', u: 'g' },
+  { key: 'sodio', l: 'Sodio', u: 'mg' },
+  { key: 'calcio', l: 'Calcio', u: 'mg' },
+  { key: 'hierro', l: 'Hierro', u: 'mg' },
+  { key: 'magnesio', l: 'Magnesio', u: 'mg' },
+  { key: 'potasio', l: 'Potasio', u: 'mg' },
+  { key: 'zinc', l: 'Zinc', u: 'mg' },
+  { key: 'fosforo', l: 'Fósforo', u: 'mg' },
+  { key: 'vitaminaA', l: 'Vitamina A', u: 'mcg' },
+  { key: 'vitaminaC', l: 'Vitamina C', u: 'mg' },
+  { key: 'vitaminaD', l: 'Vitamina D', u: 'mcg' },
+  { key: 'vitaminaE', l: 'Vitamina E', u: 'mg' },
+  { key: 'vitaminaK', l: 'Vitamina K', u: 'mcg' },
+  { key: 'vitaminaB1', l: 'Vitamina B1', u: 'mg' },
+  { key: 'vitaminaB2', l: 'Vitamina B2', u: 'mg' },
+  { key: 'vitaminaB3', l: 'Vitamina B3', u: 'mg' },
+  { key: 'vitaminaB5', l: 'Vitamina B5', u: 'mg' },
+  { key: 'vitaminaB6', l: 'Vitamina B6', u: 'mg' },
+  { key: 'vitaminaB9', l: 'Vitamina B9', u: 'mcg' },
+  { key: 'vitaminaB12', l: 'Vitamina B12', u: 'mcg' },
+];
+// Pilares de alegría hildegardianos
+const PILARES_ALEGRIA = ['espelta', 'hinojo', 'galanga', 'castaña'];
+
+function obtenerPilarNombre(nombre: string): string {
+  const n = nombre.toLowerCase();
+  if (n.includes('espelta')) return 'Espelta';
+  if (n.includes('hinojo')) return 'Hinojo';
+  if (n.includes('galanga')) return 'Galanga';
+  if (n.includes('castaña') || n.includes('castana')) return 'Castañas';
+  return nombre;
+}
 
 interface Ingrediente {
   id: string;
   nombre: string;
   temperamento: string | null;
   es_veneno_hildegardiano: boolean;
+  es_base_alegria?: boolean;
+  nivel_subtilitat?: number | null;
+  requiere_coccion?: boolean;
+  calorias?: number | null;
+  proteinas_g?: number | null;
+  carbohidratos_g?: number | null;
+  grasas_g?: number | null;
+  grasas_saturadas_g?: number | null;
+  fibra_g?: number | null;
+  azucar_g?: number | null;
+  sodio_mg?: number | null;
+  calcio_mg?: number | null;
+  hierro_mg?: number | null;
+  magnesio_mg?: number | null;
+  potasio_mg?: number | null;
+  zinc_mg?: number | null;
+  fosforo_mg?: number | null;
+  vitamina_a_mcg?: number | null;
+  vitamina_c_mg?: number | null;
+  vitamina_d_mcg?: number | null;
+  vitamina_e_mg?: number | null;
+  vitamina_k_mcg?: number | null;
+  vitamina_b1_mg?: number | null;
+  vitamina_b2_mg?: number | null;
+  vitamina_b3_mg?: number | null;
+  vitamina_b5_mg?: number | null;
+  vitamina_b6_mg?: number | null;
+  vitamina_b9_mcg?: number | null;
+  vitamina_b12_mcg?: number | null;
 }
 
 interface Plato {
@@ -22,7 +132,15 @@ interface Plato {
   tags: string[];
   receta?: {
     id: string;
+    pasos?: string[];
+    tiempo_min?: number | null;
+    porciones?: number | null;
+    dificultad?: string | null;
+    notas_hildegardianas?: string | null;
+    interpretacion_hildegardiana?: string | null;
     ingredientes?: Array<{
+      cantidad?: number;
+      unidad?: string;
       ingrediente: Ingrediente;
     }>;
   } | null;
@@ -55,6 +173,7 @@ interface ItemPedido {
 
 interface CalendarioPedidosProps {
   grupoId: string;
+  palabraSecreta: string;
   fechaInicio: string;
   fechaFin: string;
   miembros: Miembro[];
@@ -90,6 +209,7 @@ const TEMPERAMENTOS = [
 
 export default function CalendarioPedidos({
   grupoId,
+  palabraSecreta,
   fechaInicio,
   fechaFin,
   miembros,
@@ -104,11 +224,35 @@ export default function CalendarioPedidos({
   const [clienteActualId, setClienteActualId] = useState<string>(clienteActualIdProp);
   const [miembrosState, setMiembrosState] = useState<Miembro[]>(miembros);
 
+  // Compartir grupo
+  const [shareUrl, setShareUrl] = useState('');
+  const [copiado, setCopiado] = useState<'url' | 'codigo' | null>(null);
+  // Refresca el análisis nutricional cuando cambian las selecciones
+  const [analisisVersion, setAnalisisVersion] = useState(0);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShareUrl(window.location.href);
+    }
+  }, []);
+
+  const copiar = async (texto: string, tipo: 'url' | 'codigo') => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(tipo);
+      setTimeout(() => setCopiado(null), 2000);
+    } catch {
+      /* noop */
+    }
+  };
+
   // Estados del buscador (dentro del modal)
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<number | null>(null);
   const [temperamentoFiltro, setTemperamentoFiltro] = useState<string>('');
   const [soloSinVenenos, setSoloSinVenenos] = useState(false);
+  // Plato y vista (receta / científico / hildegardiano) desplegada en el modal
+  const [vistaModal, setVistaModal] = useState<{ id: string; tipo: 'receta' | 'cientifico' | 'hildegardiano' } | null>(null);
 
   useEffect(() => {
     const clienteGuardado = localStorage.getItem('cliente_actual');
@@ -134,12 +278,13 @@ export default function CalendarioPedidos({
       setCategoriaFiltro(null);
       setTemperamentoFiltro('');
       setSoloSinVenenos(false);
+      setVistaModal(null);
     }
   }, [modalAbierto]);
 
   const fechas = [];
-  const inicio = new Date(fechaInicio);
-  const fin = new Date(fechaFin);
+  const inicio = parseFechaLocal(fechaInicio);
+  const fin = parseFechaLocal(fechaFin);
   const actual = new Date(inicio);
   while (actual <= fin) {
     fechas.push(new Date(actual));
@@ -155,9 +300,103 @@ export default function CalendarioPedidos({
     return miembro?.cliente.nombre || 'Desconocido';
   };
 
+  // Análisis nutricional + hildegardiano de un plato (por porción)
+  const analizarPlato = (plato: Plato) => {
+    const receta = plato.receta;
+    if (!receta || !receta.ingredientes || receta.ingredientes.length === 0) return null;
+
+    const porciones = receta.porciones || 1;
+    const n: Record<string, number> = {
+      calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0, grasas_saturadas: 0, fibra: 0, azucar: 0,
+      sodio: 0, calcio: 0, hierro: 0, magnesio: 0, potasio: 0, zinc: 0, fosforo: 0,
+      vitaminaA: 0, vitaminaC: 0, vitaminaD: 0, vitaminaE: 0, vitaminaK: 0,
+      vitaminaB1: 0, vitaminaB2: 0, vitaminaB3: 0, vitaminaB5: 0, vitaminaB6: 0, vitaminaB9: 0, vitaminaB12: 0,
+    };
+    const temp: Record<string, number> = {};
+    const venenos: string[] = [];
+    const pilares = new Set<string>();
+    let peso = 0;
+    let subtilitatPond = 0;
+    let pesoCocido = 0;
+    let pesoCrudo = 0;
+
+    receta.ingredientes.forEach((ri) => {
+      const ing = ri.ingrediente;
+      if (!ing) return;
+      const gramos = normalizarAGramos(ri.cantidad || 0, ri.unidad || '') / porciones;
+      const f = gramos / 100;
+
+      n.calorias += (ing.calorias || 0) * f;
+      n.proteinas += (ing.proteinas_g || 0) * f;
+      n.carbohidratos += (ing.carbohidratos_g || 0) * f;
+      n.grasas += (ing.grasas_g || 0) * f;
+      n.grasas_saturadas += (ing.grasas_saturadas_g || 0) * f;
+      n.fibra += (ing.fibra_g || 0) * f;
+      n.azucar += (ing.azucar_g || 0) * f;
+      n.sodio += (ing.sodio_mg || 0) * f;
+      n.calcio += (ing.calcio_mg || 0) * f;
+      n.hierro += (ing.hierro_mg || 0) * f;
+      n.magnesio += (ing.magnesio_mg || 0) * f;
+      n.potasio += (ing.potasio_mg || 0) * f;
+      n.zinc += (ing.zinc_mg || 0) * f;
+      n.fosforo += (ing.fosforo_mg || 0) * f;
+      n.vitaminaA += (ing.vitamina_a_mcg || 0) * f;
+      n.vitaminaC += (ing.vitamina_c_mg || 0) * f;
+      n.vitaminaD += (ing.vitamina_d_mcg || 0) * f;
+      n.vitaminaE += (ing.vitamina_e_mg || 0) * f;
+      n.vitaminaK += (ing.vitamina_k_mcg || 0) * f;
+      n.vitaminaB1 += (ing.vitamina_b1_mg || 0) * f;
+      n.vitaminaB2 += (ing.vitamina_b2_mg || 0) * f;
+      n.vitaminaB3 += (ing.vitamina_b3_mg || 0) * f;
+      n.vitaminaB5 += (ing.vitamina_b5_mg || 0) * f;
+      n.vitaminaB6 += (ing.vitamina_b6_mg || 0) * f;
+      n.vitaminaB9 += (ing.vitamina_b9_mcg || 0) * f;
+      n.vitaminaB12 += (ing.vitamina_b12_mcg || 0) * f;
+
+      peso += gramos;
+      subtilitatPond += (ing.nivel_subtilitat ?? 5) * gramos;
+      if (ing.requiere_coccion) pesoCocido += gramos;
+      else pesoCrudo += gramos;
+
+      if (ing.temperamento) temp[ing.temperamento] = (temp[ing.temperamento] || 0) + (ing.calorias || 0) * f;
+      if (ing.es_veneno_hildegardiano) venenos.push(ing.nombre);
+      if (ing.es_base_alegria) pilares.add(obtenerPilarNombre(ing.nombre));
+      else {
+        const nl = ing.nombre.toLowerCase();
+        PILARES_ALEGRIA.forEach((p) => {
+          if (nl.includes(p)) pilares.add(obtenerPilarNombre(ing.nombre));
+        });
+      }
+    });
+
+    const calido = (temp.calido || 0) + (temp.calido_seco || 0) + (temp.calido_humedo || 0);
+    const frio = (temp.frio || 0) + (temp.frio_seco || 0) + (temp.frio_humedo || 0);
+    const seco = (temp.calido_seco || 0) + (temp.frio_seco || 0);
+    const humedo = (temp.calido_humedo || 0) + (temp.frio_humedo || 0);
+    const tot = calido + frio;
+    const pesoTot = pesoCocido + pesoCrudo;
+
+    // Evaluación por reglas hildegardianas (según nombres de ingredientes)
+    const nombres = receta.ingredientes.map((ri) => ri.ingrediente?.nombre || '').filter(Boolean);
+    const evaluacion = evaluarReceta(nombres);
+
+    return {
+      n,
+      porcCalido: tot ? (calido / tot) * 100 : 0,
+      porcFrio: tot ? (frio / tot) * 100 : 0,
+      porcSeco: tot ? (seco / tot) * 100 : 0,
+      porcHumedo: tot ? (humedo / tot) * 100 : 0,
+      viriditas: peso ? subtilitatPond / peso : 0,
+      porcCocido: pesoTot ? (pesoCocido / pesoTot) * 100 : 0,
+      venenos,
+      pilares: Array.from(pilares),
+      evaluacion,
+    };
+  };
+
   // 🔍 Función mejorada con filtros del buscador
   const getPlatosDisponibles = (fecha: string, tipo: string) => {
-    const fechaObj = new Date(fecha);
+    const fechaObj = parseFechaLocal(fecha);
     const diaSemana = fechaObj.getDay() === 0 ? 7 : fechaObj.getDay();
     const tipoInfo = TIPOS_COMIDA.find((t) => t.id === tipo);
     if (!tipoInfo) return [];
@@ -247,6 +486,7 @@ export default function CalendarioPedidos({
       );
       nuevosItems.push(itemConPlato);
       setItems(nuevosItems);
+      setAnalisisVersion((v) => v + 1);
 
       setModalAbierto(null);
       setMensaje(`✅ ${plato.nombre} seleccionado para ${new Date(fecha).toLocaleDateString('es-AR')}`);
@@ -308,15 +548,67 @@ export default function CalendarioPedidos({
   const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50">
-      <header className="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 text-white shadow-lg">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50">
+      <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold font-serif">📅 Plan de 30 Días</h1>
-          <p className="text-amber-100 mt-1">
+          <p className="text-teal-100 mt-1">
             {fechas.length} días · {miembrosState.length}/4 miembros · {items.length} platos seleccionados
           </p>
         </div>
       </header>
+
+      {/* Compartir grupo */}
+      <div className="max-w-6xl mx-auto px-4 pt-4">
+        {(() => {
+          const creador = miembrosState.find((m) => m.rol === 'creador')?.cliente.nombre || 'Desconocido';
+          const rangoFechas =
+            `${parseFechaLocal(fechaInicio).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}` +
+            ` al ${parseFechaLocal(fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+          const mensajeCompartir =
+            `¡Sumate a nuestro grupo para pedir comida en Bingen! 🍽️\n\n` +
+            `👤 Creado por: ${creador}\n` +
+            `📅 Plan: ${rangoFechas}\n\n` +
+            `🔑 Código para unirse: ${palabraSecreta}\n\n` +
+            `🔗 O entrá directo con este enlace:\n${shareUrl}`;
+
+          return (
+            <div className="bg-white rounded-xl shadow-md border-l-4 border-emerald-500 p-4">
+              <h2 className="font-bold text-gray-800 mb-1">🔗 Invitá a tu grupo</h2>
+              <p className="text-sm text-gray-600 mb-3">
+                <span className="font-semibold">📅 Plan:</span> {rangoFechas}
+                {' · '}
+                <span className="font-semibold">👤 Creado por:</span> {creador}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">Código para unirse</p>
+                  <span className="text-2xl font-bold tracking-widest text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg inline-block">
+                    {palabraSecreta}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-[200px]">
+                  <p className="text-xs font-semibold text-gray-500 mb-1">Enlace</p>
+                  <input
+                    readOnly
+                    value={shareUrl}
+                    onFocus={(e) => e.target.select()}
+                    className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={() => copiar(mensajeCompartir, 'url')}
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg"
+              >
+                {copiado === 'url' ? '✅ Datos copiados' : '📤 Compartir (copiar datos)'}
+              </button>
+            </div>
+          );
+        })()}
+      </div>
 
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="bg-white rounded-xl shadow-md p-4">
@@ -362,7 +654,7 @@ export default function CalendarioPedidos({
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="space-y-4">
           {fechas.map((fecha) => {
-            const fechaStr = fecha.toISOString().split('T')[0];
+            const fechaStr = formatFechaLocal(fecha);
             const diaSemana = fecha.getDay() === 0 ? 7 : fecha.getDay();
             const diaInfo = DIAS_SEMANA.find((d) => d.id === diaSemana);
 
@@ -471,6 +763,16 @@ export default function CalendarioPedidos({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Análisis nutricional e hildegardiano (en la misma página) */}
+      <div className="max-w-6xl mx-auto px-4 pb-4">
+        <AnalisisGrupo grupoId={grupoId} refreshKey={analisisVersion} />
+      </div>
+
+      {/* Informe completo (hildegardiano detallado + científico) */}
+      <div className="max-w-6xl mx-auto px-4 pb-8">
+        <InformeCompleto grupoId={grupoId} refreshKey={analisisVersion} />
       </div>
 
       {/* MODAL DE SELECCIÓN DE PLATOS CON BUSCADOR */}
@@ -600,31 +902,247 @@ export default function CalendarioPedidos({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {getPlatosDisponibles(modalAbierto.fecha, modalAbierto.tipo).map((plato) => (
-                    <button
-                      key={plato.id}
-                      onClick={() =>
-                        seleccionarPlato(modalAbierto.fecha, modalAbierto.tipo, plato.id)
-                      }
-                      disabled={cargando}
-                      className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-all text-left disabled:opacity-50"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-gray-800">{plato.nombre}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{plato.descripcion}</p>
-                          {plato.alergenos && plato.alergenos.length > 0 && (
-                            <p className="text-xs text-red-600 mt-2">
-                              ⚠️ {plato.alergenos.join(', ')}
-                            </p>
+                  {getPlatosDisponibles(modalAbierto.fecha, modalAbierto.tipo).map((plato) => {
+                    const vista = vistaModal?.id === plato.id ? vistaModal.tipo : null;
+                    const abrir = (tipo: 'receta' | 'cientifico' | 'hildegardiano') =>
+                      setVistaModal(vista === tipo ? null : { id: plato.id, tipo });
+                    const a = vista === 'cientifico' || vista === 'hildegardiano' ? analizarPlato(plato) : null;
+                    return (
+                      <div key={plato.id} className="p-4 border-2 border-gray-200 rounded-lg">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-gray-800">{plato.nombre}</h3>
+                            <p className="text-sm text-gray-600 mt-1">{plato.descripcion}</p>
+                            {plato.alergenos && plato.alergenos.length > 0 && (
+                              <p className="text-xs text-red-600 mt-2">⚠️ {plato.alergenos.join(', ')}</p>
+                            )}
+                          </div>
+                          <p className="text-lg font-bold text-amber-600 whitespace-nowrap">
+                            ${plato.precio.toLocaleString('es-AR')}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                          <button
+                            onClick={() => seleccionarPlato(modalAbierto.fecha, modalAbierto.tipo, plato.id)}
+                            disabled={cargando}
+                            className="bg-amber-500 text-white font-semibold py-2 rounded-lg text-xs sm:text-sm hover:bg-amber-600 disabled:opacity-50"
+                          >
+                            ✅ Seleccionar
+                          </button>
+                          {plato.receta && (
+                            <button
+                              onClick={() => abrir('receta')}
+                              className={`font-semibold py-2 rounded-lg text-xs sm:text-sm ${vista === 'receta' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                            >
+                              📖 Receta
+                            </button>
+                          )}
+                          {plato.receta && (
+                            <button
+                              onClick={() => abrir('cientifico')}
+                              className={`font-semibold py-2 rounded-lg text-xs sm:text-sm ${vista === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}
+                            >
+                              🔬 Científico
+                            </button>
+                          )}
+                          {plato.receta && (
+                            <button
+                              onClick={() => abrir('hildegardiano')}
+                              className={`font-semibold py-2 rounded-lg text-xs sm:text-sm ${vista === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+                            >
+                              🌿 Hildegardiano
+                            </button>
                           )}
                         </div>
-                        <p className="text-lg font-bold text-amber-600 ml-4">
-                          ${plato.precio.toLocaleString('es-AR')}
-                        </p>
+
+                        {/* Sección: Receta */}
+                        {vista === 'receta' && plato.receta && (
+                          <div className="mt-3 bg-gray-50 rounded-lg p-3">
+                            <p className="text-xs text-gray-500 mb-2">
+                              {plato.receta.porciones ? `${plato.receta.porciones} porciones` : ''}
+                              {plato.receta.tiempo_min ? ` · ${plato.receta.tiempo_min} min` : ''}
+                              {plato.receta.dificultad ? ` · ${plato.receta.dificultad}` : ''}
+                            </p>
+                            {plato.receta.ingredientes && plato.receta.ingredientes.length > 0 && (
+                              <>
+                                <p className="text-xs font-semibold text-gray-700 mb-1">Ingredientes</p>
+                                <ul className="text-xs text-gray-700 space-y-0.5 mb-2">
+                                  {plato.receta.ingredientes.map((ri, i) => (
+                                    <li key={i} className="flex justify-between gap-2">
+                                      <span>
+                                        {ri.ingrediente?.nombre}
+                                        {ri.ingrediente?.es_veneno_hildegardiano && (
+                                          <span className="text-red-600 ml-1" title="Veneno hildegardiano">⚠️</span>
+                                        )}
+                                      </span>
+                                      {(ri.cantidad || ri.unidad) && (
+                                        <span className="text-gray-500 whitespace-nowrap">{ri.cantidad} {ri.unidad}</span>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                            {plato.receta.pasos && plato.receta.pasos.length > 0 && (
+                              <>
+                                <p className="text-xs font-semibold text-gray-700 mb-1">Preparación</p>
+                                <ol className="text-xs text-gray-700 list-decimal list-inside space-y-0.5">
+                                  {plato.receta.pasos.map((paso, i) => (
+                                    <li key={i}>{paso}</li>
+                                  ))}
+                                </ol>
+                              </>
+                            )}
+                            {plato.receta.notas_hildegardianas && (
+                              <p className="text-xs text-emerald-700 mt-2 italic">🌿 {plato.receta.notas_hildegardianas}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Sección: Análisis científico completo (por porción) */}
+                        {vista === 'cientifico' && a && (
+                          <div className="mt-3 bg-blue-50 rounded-lg p-3">
+                            <p className="text-xs font-semibold text-gray-700 mb-2">🔬 Análisis nutricional científico (por porción)</p>
+                            <div className="overflow-x-auto -mx-1 px-1">
+                              <table className="w-full text-xs min-w-[300px] text-gray-800">
+                                <thead>
+                                  <tr className="text-left text-gray-600 border-b border-gray-300">
+                                    <th className="py-1 pr-2 font-semibold">Nutriente</th>
+                                    <th className="py-1 pr-2 font-semibold">Cantidad</th>
+                                    <th className="py-1 font-semibold">% VDR</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {NUTRIENTES_LISTA.map((nut) => {
+                                    const val = a.n[nut.key] || 0;
+                                    const vdr = VDR_DIA[nut.key] || 0;
+                                    const pct = vdr ? (val / vdr) * 100 : 0;
+                                    return (
+                                      <tr key={nut.key} className="border-b border-gray-200 last:border-0">
+                                        <td className="py-1 pr-2 text-gray-700">{nut.l}</td>
+                                        <td className="py-1 pr-2 whitespace-nowrap font-semibold text-gray-900">
+                                          {val.toLocaleString('es-AR', { maximumFractionDigits: 1 })} {nut.u}
+                                        </td>
+                                        <td className="py-1 whitespace-nowrap font-semibold text-blue-700">
+                                          {pct.toFixed(0)}%{VDR_MAX.has(nut.key) ? ' (máx)' : ''}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Sección: Análisis hildegardiano completo (por porción) */}
+                        {vista === 'hildegardiano' && a && (
+                          <div className="mt-3 bg-emerald-50 rounded-lg p-3 space-y-2">
+                            <p className="text-xs font-semibold text-gray-700">🌿 Análisis hildegardiano (por porción)</p>
+
+                            {/* Interpretación editorial (cargada por el admin) */}
+                            {plato.receta?.interpretacion_hildegardiana && (
+                              <div className="bg-white border border-emerald-200 rounded-lg p-3 text-[11px] text-gray-700 whitespace-pre-line">
+                                {plato.receta.interpretacion_hildegardiana}
+                              </div>
+                            )}
+
+                            {/* Veredicto según reglas */}
+                            <div
+                              className={`rounded-lg px-3 py-2 text-xs font-semibold ${
+                                a.evaluacion.nivel === 'no_hildegardiano'
+                                  ? 'bg-red-100 text-red-800'
+                                  : a.evaluacion.nivel === 'con_precaucion'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : a.evaluacion.nivel === 'excelente'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}
+                            >
+                              {a.evaluacion.veredicto} · {a.evaluacion.puntaje}/100
+                            </div>
+
+                            {(a.porcCalido > 0 || a.porcFrio > 0) ? (
+                              <div className="w-full h-4 rounded-full overflow-hidden flex bg-gray-100">
+                                <div className="bg-orange-500 h-full flex items-center justify-center text-[9px] text-white" style={{ width: `${a.porcCalido}%` }}>
+                                  {a.porcCalido > 15 ? `🔥 ${a.porcCalido.toFixed(0)}%` : ''}
+                                </div>
+                                <div className="bg-blue-500 h-full flex items-center justify-center text-[9px] text-white" style={{ width: `${a.porcFrio}%` }}>
+                                  {a.porcFrio > 15 ? `❄️ ${a.porcFrio.toFixed(0)}%` : ''}
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-gray-400">Sin datos de temperamento</p>
+                            )}
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700">
+                              <span>🟢 Viriditas: <strong>{a.viriditas.toFixed(1)}</strong>/10</span>
+                              <span>🔥 Cocido: <strong>{a.porcCocido.toFixed(0)}%</strong></span>
+                              <span>☀️ Seco: <strong>{a.porcSeco.toFixed(0)}%</strong></span>
+                              <span>💧 Húmedo: <strong>{a.porcHumedo.toFixed(0)}%</strong></span>
+                            </div>
+
+                            {/* Pilares de vigor (reglas por nombre) */}
+                            {a.evaluacion.pilares.length > 0 && (
+                              <div className="text-[11px] text-emerald-800">
+                                <p className="font-semibold">✨ Pilares de vigor:</p>
+                                <ul className="list-disc list-inside">
+                                  {a.evaluacion.pilares.map((p, i) => (
+                                    <li key={i}><strong>{p.nombre}</strong>: {p.razon}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Venenos de cocina */}
+                            {a.evaluacion.venenos.length > 0 ? (
+                              <div className="text-[11px] text-red-700">
+                                <p className="font-semibold">🚫 Venenos de cocina:</p>
+                                <ul className="list-disc list-inside">
+                                  {a.evaluacion.venenos.map((v, i) => (
+                                    <li key={i}><strong>{v.nombre}</strong>: {v.razon}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-green-700">✅ Sin venenos de cocina</p>
+                            )}
+
+                            {/* Precauciones */}
+                            {a.evaluacion.precauciones.length > 0 && (
+                              <div className="text-[11px] text-yellow-800">
+                                <p className="font-semibold">⚠️ Usar con precaución:</p>
+                                <ul className="list-disc list-inside">
+                                  {a.evaluacion.precauciones.map((p, i) => (
+                                    <li key={i}><strong>{p.nombre}</strong>: {p.motivo}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Especias cálidas */}
+                            {a.evaluacion.especiasCalidas.length > 0 && (
+                              <p className="text-[11px] text-amber-800">
+                                🌶️ Especias cálidas (calientan el "frío interior"): {a.evaluacion.especiasCalidas.join(', ')}
+                              </p>
+                            )}
+
+                            {/* Recomendaciones */}
+                            {a.evaluacion.recomendaciones.length > 0 && (
+                              <div className="text-[11px] text-gray-700 border-t border-emerald-200 pt-2">
+                                <p className="font-semibold mb-1">📋 Recomendaciones:</p>
+                                <ul className="space-y-0.5">
+                                  {a.evaluacion.recomendaciones.map((r, i) => (
+                                    <li key={i}>{r}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

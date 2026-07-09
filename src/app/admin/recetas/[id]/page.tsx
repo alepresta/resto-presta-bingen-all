@@ -26,6 +26,7 @@ export default function EditarRecetaPage({ params }: { params: { id: string } })
   const [pasos, setPasos] = useState<string[]>(['']);
   const [ingredientes, setIngredientes] = useState<IngredienteSeleccionado[]>([]);
   const [notasHildegardianas, setNotasHildegardianas] = useState('');
+  const [interpretacionHildegardiana, setInterpretacionHildegardiana] = useState('');
 
   // Lista de platos disponibles
   const [platos, setPlatos] = useState<any[]>([]);
@@ -51,6 +52,7 @@ export default function EditarRecetaPage({ params }: { params: { id: string } })
             setDificultad(r.dificultad || 'media');
             setPasos(r.pasos || ['']);
             setNotasHildegardianas(r.notas_hildegardianas || '');
+            setInterpretacionHildegardiana(r.interpretacion_hildegardiana || '');
 
             // Cargar ingredientes de la nueva tabla
             const resIng = await fetch(`/api/admin/recetas/${params.id}/ingredientes`);
@@ -114,6 +116,7 @@ export default function EditarRecetaPage({ params }: { params: { id: string } })
           dificultad,
           pasos: pasos.filter((p) => p.trim()),
           notas_hildegardianas: notasHildegardianas,
+          interpretacion_hildegardiana: interpretacionHildegardiana,
         }),
       });
 
@@ -289,6 +292,22 @@ export default function EditarRecetaPage({ params }: { params: { id: string } })
               placeholder="Sabiduría de Santa Hildegarda sobre este plato..."
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+
+          {/* Interpretación Hildegardiana (informe editorial) */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-2">🌿 Interpretación Hildegardiana</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Informe editorial que se muestra al cliente (acción principal, órgano beneficiado, efecto en el ánimo,
+              uso estacional, conclusión…).
+            </p>
+            <textarea
+              value={interpretacionHildegardiana}
+              onChange={(e) => setInterpretacionHildegardiana(e.target.value)}
+              placeholder="Ej: Acción principal: Cardiotónica y reconstructora. Efecto en el ánimo: Antimelancólico..."
+              rows={8}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 

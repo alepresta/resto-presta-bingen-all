@@ -1,48 +1,19 @@
 // src/app/admin/page.tsx
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getUsuarioConRol } from '@/lib/supabase/server';
 
 export default async function AdminDashboardPage() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('admin_session');
+  const usuario = await getUsuarioConRol();
 
-  if (!sessionCookie) {
-    redirect('/admin/login');
+  if (!usuario) {
+    redirect('/auth/login?redirect=/admin');
   }
 
-  let session;
-  try {
-    session = JSON.parse(sessionCookie.value);
-  } catch {
-    redirect('/admin/login');
-  }
+  const session = usuario;
+  const soloLectura = usuario.rol === 'lector';
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-amber-700 to-orange-600 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">🌾 Panel Admin</h1>
-            <p className="text-amber-100 text-sm">RESTO PRESTA BINGEN ALL</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="font-semibold">{session.nombre}</p>
-              <p className="text-xs text-amber-100">{session.email}</p>
-            </div>
-            <form action="/api/auth/logout" method="POST">
-              <button
-                type="submit"
-                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-semibold"
-              >
-                Salir
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
-
       {/* Contenido */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
@@ -50,6 +21,11 @@ export default async function AdminDashboardPage() {
             Bienvenido, {session.nombre} 👋
           </h2>
           <p className="text-gray-600">Rol: {session.rol}</p>
+          {soloLectura && (
+            <div className="mt-3 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
+              👁️ Tu rol es <strong>lector</strong>: podés ver la información pero no crear, editar ni eliminar.
+            </div>
+          )}
         </div>
 
         {/* Stats */}

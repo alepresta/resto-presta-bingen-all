@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   const supabase = createServerSupabaseClient();
   const body = await request.json();
 
-  const { plato_id, tiempo_min, porciones, dificultad, pasos, ingredientes, notas_hildegardianas } = body;
+  const { plato_id, tiempo_min, porciones, dificultad, pasos, ingredientes, notas_hildegardianas, interpretacion_hildegardiana } = body;
 
   if (!plato_id) {
     return NextResponse.json({ error: 'plato_id es obligatorio' }, { status: 400 });
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
       pasos,
       ingredientes,
       notas_hildegardianas,
+      interpretacion_hildegardiana,
     })
     .select()
     .single();

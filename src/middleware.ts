@@ -1,47 +1,92 @@
 // src/middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { updateSession } from './lib/supabase/middleware';
 
-export function middleware(request: NextRequest) {
-  // Rutas que requieren autenticación
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Permitir acceso al login
-    if (request.nextUrl.pathname === '/admin/login') {
-      return NextResponse.next();
-    }
+// Vista inicial pública para clientes
+const MENU_INICIAL = '/menu/resto-presta-bingen-all';
 
-    // Verificar cookie de sesión
-    const session = request.cookies.get('admin_session');
+// Construye una URL absoluta respetando el host público (proxy de Codespaces, etc.)
+function construirUrl(request: NextRequest, pathname: string): URL {
+  const host =
+    request.headers.get('x-forwarded-host') ??
+    request.headers.get('host') ??
+    request.nextUrl.host;
+  const proto =
+    request.headers.get('x-forwarded-proto') ??
+    request.nextUrl.protocol.replace(':', '');
+  const url = new URL(`${proto}://${host}`);
+  url.pathname = pathname;
+  return url;
+}
 
-    if (!session) {
-      // Redirigir al login
-      const loginUrl = new URL('/admin/login', request.url);
-      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+// Solo el área de administración requiere sesión
+function requiereSesion(pathname: string): boolean {
+  // Panel admin y APIs de admin quedan protegidos
+  return pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
+}
 
-    try {
-      const sessionData = JSON.parse(session.value);
-      // Verificar que la sesión no esté expirada (8 horas)
-      const loginTime = new Date(sessionData.loginAt).getTime();
-      const now = Date.now();
-      const hoursPassed = (now - loginTime) / (1000 * 60 * 60);
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-      if (hoursPassed > 8) {
-        const response = NextResponse.redirect(new URL('/admin/login', request.url));
-        response.cookies.delete('admin_session');
-        return response;
-      }
-    } catch {
-      const response = NextResponse.redirect(new URL('/admin/login', request.url));
-      response.cookies.delete('admin_session');
-      return response;
-    }
+  // La raíz lleva al menú público (vista inicial de clientes)
+  if (pathname === '/') {
+    return NextResponse.redirect(construirUrl(request, MENU_INICIAL));
   }
 
-  return NextResponse.next();
+  const esAdmin = requiereSesion(pathname);
+  // Todo el flujo de pedidos requiere estar logueado o registrado
+  const esPedidos = pathname.startsWith('/pedidos');
+
+  // Rutas totalmente públicas: no requieren sesión.
+  if (!esAdmin && !esPedidos) {
+    return NextResponse.next();
+  }
+
+  // Validar la sesión de Supabase (una llamada de red)
+  const { response, supabase, user } = await updateSession(request);
+
+  // Requiere sesión (cualquier usuario autenticado)
+  if (!user) {
+    const loginUrl = construirUrl(request, '/auth/login');
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Para /pedidos alcanza con estar autenticado (sin rol especial)
+  if (esPedidos && !esAdmin) {
+    return response;
+  }
+
+  // Verificar rol del usuario (área de administración)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rol')
+    .eq('id', user.id)
+    .single();
+
+  const rol = profile?.rol;
+
+  if (rol !== 'admin' && rol !== 'lector') {
+    // Usuario autenticado pero sin rol válido: fuera del panel
+    return NextResponse.redirect(construirUrl(request, MENU_INICIAL));
+  }
+
+  // Lector = solo lectura: bloquear mutaciones en las APIs de admin
+  if (
+    rol === 'lector' &&
+    pathname.startsWith('/api/admin') &&
+    request.method !== 'GET'
+  ) {
+    return NextResponse.json(
+      { error: 'Tu rol es de solo lectura' },
+      { status: 403 }
+    );
+  }
+
+  return response;
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  // El middleware corre en la raíz, el área protegida y el flujo de pedidos.
+  matcher: ['/', '/admin/:path*', '/api/admin/:path*', '/pedidos/:path*'],
 };

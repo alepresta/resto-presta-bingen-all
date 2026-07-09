@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const TEMPERAMENTOS_INFO: Record<string, { nombre: string; icono: string; color: string; descripcion: string }> = {
   calido: { nombre: 'Cálido', icono: '🌡️', color: 'bg-orange-500', descripcion: 'Balanceado, moderado' },
@@ -67,6 +67,63 @@ export default function AnalisisNutricionalPage() {
   
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
+
+  // Grupos activos para analizar puntualmente
+  const [grupos, setGrupos] = useState<any[]>([]);
+  const [grupoSel, setGrupoSel] = useState('');
+
+  const analizarGrupo = async (grupoId: string) => {
+    if (!grupoId) return;
+    setCargando(true);
+    setError('');
+    setMensaje('');
+    try {
+      const urlN = `/api/admin/analisis-nutricional?grupo=${grupoId}${filtroTemperamento ? `&temperamento=${filtroTemperamento}` : ''}`;
+      const resN = await fetch(urlN);
+      const dataN = await resN.json();
+      if (!resN.ok) throw new Error(dataN.error);
+
+      if (dataN.mensaje) {
+        setMensaje(dataN.mensaje);
+        setResumen(null);
+      } else {
+        setResumen(dataN.resumen);
+        setPorDia(dataN.porDia);
+        setAlertas(dataN.alertas);
+        setTemperamentos(dataN.temperamentos);
+        setFiltroAplicado(dataN.filtroAplicado);
+      }
+
+      const resH = await fetch(`/api/admin/analisis-hildegardiano?grupo=${grupoId}`);
+      const dataH = await resH.json();
+      if (resH.ok && dataH.informe) setInforme(dataH.informe);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // Cargar grupos y auto-analizar si viene ?grupo en la URL
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/pedidos/grupos');
+        const data = await res.json();
+        setGrupos(data.grupos || (Array.isArray(data) ? data : []));
+      } catch {
+        /* noop */
+      }
+    })();
+
+    const params = new URLSearchParams(window.location.search);
+    const g = params.get('grupo');
+    if (g) {
+      setGrupoSel(g);
+      analizarGrupo(g);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const analizar = async () => {
     if (!fechaInicio || !fechaFin) {
@@ -137,6 +194,40 @@ export default function AnalisisNutricionalPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Analizar un grupo puntual */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6 border-l-4 border-emerald-500">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">👥 Analizar un grupo</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-3">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Grupo</label>
+              <select
+                value={grupoSel}
+                onChange={(e) => setGrupoSel(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="">Seleccioná un grupo…</option>
+                {grupos.map((g: any) => (
+                  <option key={g.id} value={g.id}>
+                    {g.palabra_secreta} · {g.estado} · {g.fecha_inicio} a {g.fecha_fin}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => analizarGrupo(grupoSel)}
+                disabled={cargando || !grupoSel}
+                className="w-full bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {cargando ? '⏳ Analizando...' : '🔬 Analizar grupo'}
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Analiza el grupo elegido usando sus propias fechas (sin importar si está confirmado).
+          </p>
+        </div>
+
         {/* Selector de fechas + filtro */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4">📅 Seleccionar Período y Filtros</h2>

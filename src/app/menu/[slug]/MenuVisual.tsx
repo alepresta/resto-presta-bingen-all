@@ -16,6 +16,7 @@ interface Receta {
   porciones: number;
   dificultad: string;
   notas_hildegardianas: string;
+  interpretacion_hildegardiana?: string | null;
 }
 
 interface Plato {
@@ -92,16 +93,6 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
   return (
     <>
-      {/* Header */}
-      <header className="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="text-center">
-            <h1 className="text-3xl md:text-4xl font-bold font-serif">{restaurante.nombre}</h1>
-            <p className="text-lg italic text-amber-100 mt-1">"{restaurante.tagline}"</p>
-          </div>
-        </div>
-      </header>
-
       {/* Navegación Principal: Tabs */}
       <div className="bg-white border-b shadow-md sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4">
@@ -452,6 +443,18 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   </h3>
                   <p className="text-gray-700 italic">
                     {platoSeleccionado.receta.notas_hildegardianas}
+                  </p>
+                </div>
+              )}
+
+              {/* Interpretación Hildegardiana (informe editorial) */}
+              {platoSeleccionado.receta.interpretacion_hildegardiana && (
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 border-l-4 border-emerald-600 p-4 rounded">
+                  <h3 className="text-lg font-bold text-emerald-800 mb-2 flex items-center gap-2">
+                    🌿 Informe Hildegardiano
+                  </h3>
+                  <p className="text-gray-700 whitespace-pre-line">
+                    {platoSeleccionado.receta.interpretacion_hildegardiana}
                   </p>
                 </div>
               )}

@@ -22,27 +22,48 @@ function normalizarACantidadBase(cantidad: number, unidad: string): number {
 export async function GET(request: NextRequest) {
   const supabase = createServerSupabaseClient();
   const { searchParams } = new URL(request.url);
-  const fechaInicio = searchParams.get('inicio');
-  const fechaFin = searchParams.get('fin');
+  let fechaInicio = searchParams.get('inicio');
+  let fechaFin = searchParams.get('fin');
+  const grupoId = searchParams.get('grupo'); // 🔥 Analizar un grupo específico
 
-  if (!fechaInicio || !fechaFin) {
+  if (!grupoId && (!fechaInicio || !fechaFin)) {
     return NextResponse.json({ error: 'Faltan parámetros inicio y fin' }, { status: 400 });
   }
 
   try {
-    // 1. Obtener pedidos confirmados
-    const { data: pedidos } = await supabase
-      .from('grupos_pedido')
-      .select(`id, fecha_inicio, fecha_fin, estado,
-        items:grupo_items(id, fecha, tipo_comida, cantidad, plato_id, 
-          platos:platos(id, nombre))`)
-      .eq('estado', 'confirmado')
-      .lte('fecha_inicio', fechaFin)
-      .gte('fecha_fin', fechaInicio);
+    // 1. Obtener pedidos (un grupo específico o todos los confirmados del rango)
+    let pedidos: any[] | null = null;
+
+    if (grupoId) {
+      const { data: grupo } = await supabase
+        .from('grupos_pedido')
+        .select(`id, fecha_inicio, fecha_fin, estado,
+          items:grupo_items(id, fecha, tipo_comida, cantidad, plato_id,
+            platos:platos(id, nombre))`)
+        .eq('id', grupoId)
+        .single();
+
+      if (!grupo) {
+        return NextResponse.json({ mensaje: 'Grupo no encontrado', informe: null });
+      }
+      fechaInicio = grupo.fecha_inicio;
+      fechaFin = grupo.fecha_fin;
+      pedidos = [grupo];
+    } else {
+      const { data } = await supabase
+        .from('grupos_pedido')
+        .select(`id, fecha_inicio, fecha_fin, estado,
+          items:grupo_items(id, fecha, tipo_comida, cantidad, plato_id,
+            platos:platos(id, nombre))`)
+        .eq('estado', 'confirmado')
+        .lte('fecha_inicio', fechaFin)
+        .gte('fecha_fin', fechaInicio);
+      pedidos = data;
+    }
 
     if (!pedidos || pedidos.length === 0) {
       return NextResponse.json({
-        mensaje: 'No hay pedidos confirmados en este rango',
+        mensaje: grupoId ? 'El grupo no tiene datos' : 'No hay pedidos confirmados en este rango',
         informe: null,
       });
     }

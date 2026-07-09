@@ -32,7 +32,7 @@ export async function PUT(
   const supabase = createServerSupabaseClient();
   const body = await request.json();
 
-  const { tiempo_min, porciones, dificultad, pasos, ingredientes, notas_hildegardianas } = body;
+  const { tiempo_min, porciones, dificultad, pasos, ingredientes, notas_hildegardianas, interpretacion_hildegardiana } = body;
 
   const { data: receta, error } = await supabase
     .from('recetas')
@@ -43,6 +43,7 @@ export async function PUT(
       pasos,
       ingredientes,
       notas_hildegardianas,
+      interpretacion_hildegardiana,
     })
     .eq('id', params.id)
     .select()
