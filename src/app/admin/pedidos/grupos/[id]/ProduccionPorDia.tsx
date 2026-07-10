@@ -3,10 +3,14 @@
 import { useState, useRef, useEffect } from 'react';
 
 interface PlatoAgg {
+  platoId: string;
   nombre: string;
   precio: number;
   platos: number;
   subtotal: number;
+  porcionesBase: number;
+  pasos: string[];
+  ingredientes: { nombre: string; cantidad: number; unidad: string }[];
 }
 
 interface IngredienteAgg {
@@ -120,6 +124,13 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
   const [filtro, setFiltro] = useState('');
   const [comprados, setComprados] = useState<Set<string>>(new Set());
   const [abiertos, setAbiertos] = useState<Set<string>>(new Set()); // días desplegados (vacío = minimizado)
+  const [recetaModal, setRecetaModal] = useState<PlatoAgg | null>(null);
+  const [porcionesModal, setPorcionesModal] = useState(1);
+
+  const abrirReceta = (p: PlatoAgg) => {
+    setRecetaModal(p);
+    setPorcionesModal(Math.max(1, p.platos || 1));
+  };
 
   const setAbierto = (fecha: string, open: boolean) =>
     setAbiertos((prev) => {
@@ -337,17 +348,27 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                     <div>
                       <h4 className="font-semibold text-gray-700 mb-2">👨‍🍳 Platos a preparar</h4>
                       <ul className="space-y-2">
-                        {dia.platosAgg.map((p, i) => (
-                          <li key={i} className="flex justify-between items-center bg-gray-50 rounded-lg px-3 py-2">
-                            <span className="text-gray-800">
-                              <span className="font-bold text-indigo-700">{p.platos}×</span> {p.nombre}
-                            </span>
-                            <span className="text-sm text-gray-600">
-                              {p.precio > 0 ? `$${p.precio.toLocaleString('es-AR')} c/u = ` : 'Gratis · '}
-                              <strong>${p.subtotal.toLocaleString('es-AR')}</strong>
-                            </span>
-                          </li>
-                        ))}
+                        {dia.platosAgg.map((p, i) => {
+                          const tieneReceta = p.ingredientes.length > 0 || p.pasos.length > 0;
+                          return (
+                            <li key={i}>
+                              <button
+                                type="button"
+                                onClick={() => tieneReceta && abrirReceta(p)}
+                                className={`w-full flex justify-between items-center gap-2 rounded-lg px-3 py-2 text-left ${tieneReceta ? 'bg-gray-50 hover:bg-indigo-50 cursor-pointer' : 'bg-gray-50 cursor-default'}`}
+                              >
+                                <span className="text-gray-800">
+                                  <span className="font-bold text-indigo-700">{p.platos}×</span> {p.nombre}
+                                  {tieneReceta && <span className="ml-2 text-xs text-indigo-500 whitespace-nowrap">📖 ver receta</span>}
+                                </span>
+                                <span className="text-sm text-gray-600 whitespace-nowrap">
+                                  {p.precio > 0 ? `$${p.precio.toLocaleString('es-AR')} c/u = ` : 'Gratis · '}
+                                  <strong>${p.subtotal.toLocaleString('es-AR')}</strong>
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
 
@@ -375,6 +396,67 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
           </div>
         </div>
       )}
+
+      {recetaModal && (() => {
+        const factor = porcionesModal / (recetaModal.porcionesBase || 1);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setRecetaModal(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="sticky top-0 bg-gradient-to-r from-indigo-700 to-blue-600 text-white px-5 py-4 flex justify-between items-start gap-3 z-10">
+                <div>
+                  <h3 className="text-lg font-bold">{recetaModal.nombre}</h3>
+                  <p className="text-indigo-100 text-xs">Receta original para {recetaModal.porcionesBase} porción{recetaModal.porcionesBase !== 1 ? 'es' : ''}</p>
+                </div>
+                <button onClick={() => setRecetaModal(null)} className="text-white hover:text-indigo-200 text-2xl leading-none">✕</button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="flex items-center justify-between bg-indigo-50 rounded-lg px-4 py-3">
+                  <span className="font-semibold text-gray-800">👥 Para</span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setPorcionesModal((p) => Math.max(1, p - 1))} className="w-9 h-9 rounded-full bg-white border font-bold text-indigo-700 text-lg">−</button>
+                    <span className="text-2xl font-bold text-indigo-700 w-10 text-center">{porcionesModal}</span>
+                    <button onClick={() => setPorcionesModal((p) => p + 1)} className="w-9 h-9 rounded-full bg-white border font-bold text-indigo-700 text-lg">+</button>
+                    <span className="text-sm text-gray-600">porción{porcionesModal !== 1 ? 'es' : ''}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-gray-700 mb-2">🥕 Ingredientes (para {porcionesModal})</h4>
+                  {recetaModal.ingredientes.length === 0 ? (
+                    <p className="text-sm text-gray-500">Esta receta no tiene ingredientes cargados.</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {recetaModal.ingredientes.map((ing, i) => (
+                        <li key={i} className="flex justify-between text-sm bg-green-50 rounded px-3 py-1.5">
+                          <span className="text-gray-800">{ing.nombre}</span>
+                          <span className="font-semibold text-green-700">{fmtCant(ing.cantidad * factor)} {ing.unidad}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {recetaModal.pasos.length > 0 && (
+                  <div>
+                    <h4 className="font-bold text-gray-700 mb-2">👨‍🍳 Preparación</h4>
+                    <ol className="space-y-2">
+                      {recetaModal.pasos.map((paso, i) => (
+                        <li key={i} className="flex gap-2 text-sm">
+                          <span className="shrink-0 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs">{i + 1}</span>
+                          <span className="text-gray-700 pt-0.5">{paso}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
+              <div className="sticky bottom-0 bg-white border-t px-5 py-3">
+                <button onClick={() => setRecetaModal(null)} className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700">← Volver al pedido</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

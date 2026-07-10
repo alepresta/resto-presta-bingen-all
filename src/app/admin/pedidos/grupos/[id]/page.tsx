@@ -62,11 +62,16 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
   const platoIds = [...new Set(items.map((i: any) => i.plato_id).filter(Boolean))];
   const { data: recetas } = await supabase
     .from('recetas')
-    .select('id, plato_id, porciones')
+    .select('id, plato_id, porciones, pasos')
     .in('plato_id', platoIds.length ? platoIds : ['00000000-0000-0000-0000-000000000000']);
 
-  const recetaPorPlato = new Map<string, { id: string; porciones: number }>();
-  (recetas || []).forEach((r: any) => recetaPorPlato.set(r.plato_id, { id: r.id, porciones: r.porciones || 1 }));
+  const recetaPorPlato = new Map<string, { id: string; porciones: number; pasos: string[] }>();
+  (recetas || []).forEach((r: any) => {
+    const pasos = (Array.isArray(r.pasos) ? r.pasos : []).map((p: any) =>
+      typeof p === 'string' ? p : p?.descripcion || p?.texto || p?.paso_texto || String(p ?? '')
+    ).filter((s: string) => s && s.trim() !== '');
+    recetaPorPlato.set(r.plato_id, { id: r.id, porciones: r.porciones || 1, pasos });
+  });
 
   const recetaIds = (recetas || []).map((r: any) => r.id);
   const { data: recetaIngredientes } = await supabase
@@ -88,12 +93,32 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
     const itemsDia = items.filter((i: any) => i.fecha === fecha);
 
     // Agregar platos por plato_id
-    const platosMap = new Map<string, { nombre: string; precio: number; platos: number; subtotal: number }>();
+    const platosMap = new Map<string, { platoId: string; nombre: string; precio: number; platos: number; subtotal: number; porcionesBase: number; pasos: string[]; ingredientes: { nombre: string; cantidad: number; unidad: string }[] }>();
     itemsDia.forEach((item: any) => {
       const n = platosDeItem(item);
       const precio = item.plato?.precio || 0;
       const key = item.plato_id;
-      const prev = platosMap.get(key) || { nombre: item.plato?.nombre || 'Plato', precio, platos: 0, subtotal: 0 };
+      let prev = platosMap.get(key);
+      if (!prev) {
+        const receta = recetaPorPlato.get(key);
+        const ingr = receta
+          ? (ingredientesPorReceta.get(receta.id) || []).map((ri: any) => ({
+              nombre: ri.ingrediente?.nombre || 'Ingrediente',
+              cantidad: Number(ri.cantidad) || 0,
+              unidad: ri.unidad || ri.ingrediente?.unidad_base || 'u',
+            }))
+          : [];
+        prev = {
+          platoId: key,
+          nombre: item.plato?.nombre || 'Plato',
+          precio,
+          platos: 0,
+          subtotal: 0,
+          porcionesBase: receta?.porciones || 1,
+          pasos: receta?.pasos || [],
+          ingredientes: ingr,
+        };
+      }
       prev.platos += n;
       prev.subtotal = prev.precio * prev.platos;
       platosMap.set(key, prev);
