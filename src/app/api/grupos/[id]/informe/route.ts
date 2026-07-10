@@ -1,6 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
-import { clasificarIngrediente } from '@/lib/hildegarda';
 
 // ============================================================
 // Informe COMPLETO de un grupo: nutricional científico + hildegardiano
@@ -130,7 +129,7 @@ export async function GET(
         receta_id, cantidad, unidad,
         ingrediente:ingredientes(
           id, nombre, categoria, temperamento,
-          es_veneno_hildegardiano, es_base_alegria, nivel_subtilitat, requiere_coccion,
+          es_veneno_hildegardiano, es_base_alegria, nivel_subtilitat, requiere_coccion, propiedades_hildegardianas,
           calorias, proteinas_g, carbohidratos_g, grasas_g, grasas_saturadas_g, fibra_g, azucar_g,
           sodio_mg, calcio_mg, hierro_mg, magnesio_mg, potasio_mg, zinc_mg, fosforo_mg,
           vitamina_a_mcg, vitamina_c_mg, vitamina_d_mcg, vitamina_e_mg, vitamina_k_mcg,
@@ -212,17 +211,15 @@ export async function GET(
             temperamentos[ing.temperamento] += gramosEscala;
           }
 
-          // Clasificación por reglas hildegardianas (por nombre) + flags de la BD
-          const clas = clasificarIngrediente(ing.nombre);
-          if (ing.es_veneno_hildegardiano || clas.veneno) {
+          // Clasificación hildegardiana según los flags REALES de la BD (no por nombre)
+          if (ing.es_veneno_hildegardiano) {
             venenosDetectados.push({
               nombre: ing.nombre,
               peso: gramosEscala,
-              razon: clas.razonVeneno || obtenerRazonVeneno(ing.nombre),
+              razon: ing.propiedades_hildegardianas || obtenerRazonVeneno(ing.nombre),
             });
           }
           if (ing.es_base_alegria) basesAlegriaEncontradas.add(obtenerPilar(ing.nombre));
-          if (clas.pilar) basesAlegriaEncontradas.add(obtenerPilar(ing.nombre));
           if (ing.requiere_coccion) pesoCocidoRequerido += gramosEscala;
           else pesoCrudoEncontrado += gramosEscala;
           if (!ingredientesPorDia[item.fecha]) ingredientesPorDia[item.fecha] = [];

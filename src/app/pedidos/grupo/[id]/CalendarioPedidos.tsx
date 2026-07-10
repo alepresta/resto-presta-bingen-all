@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { DIAS_SEMANA, CATEGORIAS_COMIDA } from '@/lib/pedidos';
-import { evaluarReceta } from '@/lib/hildegarda';
+import { evaluarHildegardianoDB } from '@/lib/analisis-plato';
 
 // Parseo/format de fechas 'YYYY-MM-DD' de forma estable en cualquier zona horaria
 // (evita desajustes de día entre el render del servidor y la hidratación del cliente).
@@ -81,8 +81,6 @@ const NUTRIENTE_META: Record<string, { l: string; u: string }> = Object.fromEntr
   NUTRIENTES_LISTA.map((n) => [n.key, { l: n.l, u: n.u }])
 );
 // Pilares de alegría hildegardianos
-const PILARES_ALEGRIA = ['espelta', 'hinojo', 'galanga', 'castaña'];
-
 function obtenerPilarNombre(nombre: string): string {
   const n = nombre.toLowerCase();
   if (n.includes('espelta')) return 'Espelta';
@@ -379,6 +377,7 @@ export default function CalendarioPedidos({
     const temp: Record<string, number> = {};
     const venenos: string[] = [];
     const pilares = new Set<string>();
+    const ingsHildegarda: Array<{ ing: typeof receta.ingredientes[number]['ingrediente']; gramos: number }> = [];
     let peso = 0;
     let subtilitatPond = 0;
     let pesoCocido = 0;
@@ -425,12 +424,7 @@ export default function CalendarioPedidos({
       if (ing.temperamento) temp[ing.temperamento] = (temp[ing.temperamento] || 0) + (ing.calorias || 0) * f;
       if (ing.es_veneno_hildegardiano) venenos.push(ing.nombre);
       if (ing.es_base_alegria) pilares.add(obtenerPilarNombre(ing.nombre));
-      else {
-        const nl = ing.nombre.toLowerCase();
-        PILARES_ALEGRIA.forEach((p) => {
-          if (nl.includes(p)) pilares.add(obtenerPilarNombre(ing.nombre));
-        });
-      }
+      ingsHildegarda.push({ ing, gramos });
     });
 
     const calido = (temp.calido || 0) + (temp.calido_seco || 0) + (temp.calido_humedo || 0);
@@ -440,9 +434,8 @@ export default function CalendarioPedidos({
     const tot = calido + frio;
     const pesoTot = pesoCocido + pesoCrudo;
 
-    // Evaluación por reglas hildegardianas (según nombres de ingredientes)
-    const nombres = receta.ingredientes.map((ri) => ri.ingrediente?.nombre || '').filter(Boolean);
-    const evaluacion = evaluarReceta(nombres);
+    // Evaluación hildegardiana por los flags reales de la BD (no por nombre)
+    const evaluacion = evaluarHildegardianoDB(ingsHildegarda);
 
     return {
       n,

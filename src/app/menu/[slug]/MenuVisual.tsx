@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { AnalisisPlato, ResumenLinea } from '@/lib/analisis-plato';
 
 interface Ingrediente {
   nombre: string;
@@ -24,6 +25,7 @@ interface Plato {
   nombre: string;
   descripcion: string;
   precio: number;
+  imagen?: string | null;
   alergenos: string[];
   tags: string[];
   es_estrella: boolean;
@@ -31,6 +33,7 @@ interface Plato {
   disponible_todos_dias: boolean;
   categoria_id: number;
   receta: Receta | null;
+  analisis?: AnalisisPlato | null;
 }
 
 interface Categoria {
@@ -57,6 +60,261 @@ interface MenuVisualProps {
   diaInfo: DiaInfo;
   categorias: Categoria[];
   todosLosPlatos: Plato[];
+}
+
+const TONO_CLASE: Record<ResumenLinea['tono'], string> = {
+  malo: 'text-red-700',
+  alerta: 'text-amber-700',
+  bien: 'text-green-700',
+  neutro: 'text-gray-500',
+};
+
+function ResumenPlato({ resumen }: { resumen: ResumenLinea[] }) {
+  if (!resumen || resumen.length === 0) return null;
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+      {resumen.map((linea, i) => (
+        <div key={i}>
+          <p className={`text-xs font-semibold flex items-center gap-1.5 ${TONO_CLASE[linea.tono]}`}>
+            <span>{linea.icono}</span>
+            <span>{linea.texto}</span>
+          </p>
+          {linea.detalle && linea.detalle.length > 0 && (
+            <ul className="mt-0.5 ml-6 flex flex-wrap gap-x-2 gap-y-0.5">
+              {linea.detalle.map((d, j) => (
+                <li
+                  key={j}
+                  className="text-[10px] leading-tight text-gray-500 before:content-['•'] before:mr-1 before:text-gray-300"
+                >
+                  {d}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const MACROS_MODAL: Array<{ clave: string; label: string; unidad: string }> = [
+  { clave: 'calorias', label: 'Calorías', unidad: 'kcal' },
+  { clave: 'proteinas', label: 'Proteínas', unidad: 'g' },
+  { clave: 'carbohidratos', label: 'Carbohidratos', unidad: 'g' },
+  { clave: 'grasas', label: 'Grasas', unidad: 'g' },
+  { clave: 'grasas_saturadas', label: 'Grasas saturadas', unidad: 'g' },
+  { clave: 'fibra', label: 'Fibra', unidad: 'g' },
+  { clave: 'azucar', label: 'Azúcar', unidad: 'g' },
+  { clave: 'sodio', label: 'Sodio', unidad: 'mg' },
+];
+
+const MICROS_MODAL: Array<{ clave: string; label: string; unidad: string }> = [
+  { clave: 'calcio', label: 'Calcio', unidad: 'mg' },
+  { clave: 'hierro', label: 'Hierro', unidad: 'mg' },
+  { clave: 'magnesio', label: 'Magnesio', unidad: 'mg' },
+  { clave: 'potasio', label: 'Potasio', unidad: 'mg' },
+  { clave: 'zinc', label: 'Zinc', unidad: 'mg' },
+  { clave: 'fosforo', label: 'Fósforo', unidad: 'mg' },
+  { clave: 'vitaminaA', label: 'Vit. A', unidad: 'µg' },
+  { clave: 'vitaminaC', label: 'Vit. C', unidad: 'mg' },
+  { clave: 'vitaminaD', label: 'Vit. D', unidad: 'µg' },
+  { clave: 'vitaminaE', label: 'Vit. E', unidad: 'mg' },
+  { clave: 'vitaminaK', label: 'Vit. K', unidad: 'µg' },
+  { clave: 'vitaminaB1', label: 'Vit. B1', unidad: 'mg' },
+  { clave: 'vitaminaB2', label: 'Vit. B2', unidad: 'mg' },
+  { clave: 'vitaminaB3', label: 'Vit. B3', unidad: 'mg' },
+  { clave: 'vitaminaB6', label: 'Vit. B6', unidad: 'mg' },
+  { clave: 'vitaminaB9', label: 'Vit. B9', unidad: 'µg' },
+  { clave: 'vitaminaB12', label: 'Vit. B12', unidad: 'µg' },
+];
+
+function fmt(n: number): string {
+  if (n >= 100) return Math.round(n).toString();
+  if (n >= 10) return n.toFixed(1);
+  return n.toFixed(n < 1 ? 2 : 1);
+}
+
+function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
+  if (!analisis.tieneDatos) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 p-4 rounded text-sm text-gray-500">
+        ℹ️ Esta receta aún no tiene datos nutricionales cargados en sus ingredientes.
+      </div>
+    );
+  }
+  const { nutricion, porcentajeVDR } = analisis;
+  return (
+    <div>
+      <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+        🔬 Datos nutricionales (por porción)
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+        {MACROS_MODAL.map((m) => (
+          <div key={m.clave} className="bg-purple-50 rounded-lg p-3 text-center">
+            <p className="text-xs text-gray-500">{m.label}</p>
+            <p className="text-base font-bold text-purple-700">
+              {fmt(nutricion[m.clave as keyof typeof nutricion])}
+              <span className="text-xs font-normal text-gray-500"> {m.unidad}</span>
+            </p>
+            <p className="text-[10px] text-gray-400">{Math.round(porcentajeVDR[m.clave] || 0)}% VDR</p>
+          </div>
+        ))}
+      </div>
+      <details className="group">
+        <summary className="cursor-pointer text-sm font-semibold text-purple-700 hover:underline">
+          Ver vitaminas y minerales
+        </summary>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+          {MICROS_MODAL.map((m) => {
+            const pct = Math.round(porcentajeVDR[m.clave] || 0);
+            const bajo = pct < 15;
+            return (
+              <div key={m.clave} className="bg-gray-50 rounded-lg p-2 text-center">
+                <p className="text-xs text-gray-500">{m.label}</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {fmt(nutricion[m.clave as keyof typeof nutricion])}
+                  <span className="text-[10px] font-normal text-gray-400"> {m.unidad}</span>
+                </p>
+                <p className={`text-[10px] ${bajo ? 'text-amber-600 font-semibold' : 'text-gray-400'}`}>
+                  {pct}% VDR{bajo ? ' · bajo' : ''}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function DatosHildegardianos({ analisis }: { analisis: AnalisisPlato }) {
+  const h = analisis.hildegardiano;
+  return (
+    <div className="bg-gradient-to-br from-emerald-50 to-green-50 border-l-4 border-emerald-600 p-4 rounded">
+      <h3 className="text-lg font-bold text-emerald-800 mb-2 flex items-center gap-2">
+        🌿 Análisis hildegardiano
+      </h3>
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-2xl font-bold text-emerald-700">{h.puntaje}</span>
+        <span className="text-sm text-gray-600">/100 · {h.veredicto}</span>
+      </div>
+      {h.pilares.length > 0 && (
+        <div className="mb-2">
+          <p className="text-xs font-semibold text-emerald-800">✨ Pilares de vigor:</p>
+          <ul className="text-sm text-gray-700 list-disc pl-5">
+            {h.pilares.map((p, i) => (
+              <li key={i}><strong>{p.nombre}</strong>: {p.razon}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {h.venenos.length > 0 && (
+        <div className="mb-2">
+          <p className="text-xs font-semibold text-red-700">🚫 Venenos de cocina:</p>
+          <ul className="text-sm text-gray-700 list-disc pl-5">
+            {h.venenos.map((v, i) => (
+              <li key={i}><strong>{v.nombre}</strong>: {v.razon}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {h.precauciones.length > 0 && (
+        <div className="mb-2">
+          <p className="text-xs font-semibold text-amber-700">⚠️ Precauciones:</p>
+          <ul className="text-sm text-gray-700 list-disc pl-5">
+            {h.precauciones.map((p, i) => (
+              <li key={i}><strong>{p.nombre}</strong>: {p.motivo}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {h.recomendaciones.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {h.recomendaciones.map((r, i) => (
+            <p key={i} className="text-sm text-gray-700">{r}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TarjetaPlato({ plato, onSelect }: { plato: Plato; onSelect: (p: Plato) => void }) {
+  return (
+    <div
+      onClick={() => plato.receta && onSelect(plato)}
+      className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden flex flex-col ${
+        plato.receta ? 'cursor-pointer hover:scale-105' : ''
+      }`}
+    >
+      {/* Foto */}
+      <div className="relative h-40 w-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center overflow-hidden">
+        {plato.imagen ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={plato.imagen} alt={plato.nombre} className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-5xl opacity-60">🍽️</span>
+        )}
+        {plato.es_estrella && (
+          <span className="absolute top-2 left-2 bg-white/90 text-amber-700 text-xs font-bold px-2 py-1 rounded-full shadow">
+            ⭐ Especialidad
+          </span>
+        )}
+        <span className="absolute top-2 right-2 bg-amber-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow">
+          $ {plato.precio.toLocaleString('es-AR')}
+        </span>
+      </div>
+
+      <div className="p-6 flex flex-col flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="text-lg font-bold text-gray-800">{plato.nombre}</h3>
+          {plato.receta && (
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-semibold">
+              📖 Receta
+            </span>
+          )}
+        </div>
+        <p className="text-gray-600 text-sm mt-1">{plato.descripcion}</p>
+
+        {plato.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-3">
+            {plato.tags.map((tag) => (
+              <span key={tag} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {plato.alergenos.length > 0 && (
+          <div className="mt-3">
+            <p className="text-xs text-red-600 font-semibold mb-1">⚠️ Alérgenos:</p>
+            <div className="flex flex-wrap gap-1">
+              {plato.alergenos.map((alergeno) => (
+                <span
+                  key={alergeno}
+                  className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200"
+                >
+                  {alergeno}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1" />
+
+        {/* Resumen nutricional al pie */}
+        {plato.analisis && <ResumenPlato resumen={plato.analisis.resumen} />}
+
+        {plato.receta && (
+          <p className="text-xs text-amber-700 font-semibold mt-3">
+            👆 Click para ver receta y análisis completo
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosPlatos }: MenuVisualProps) {
@@ -174,72 +432,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {platosPrincipales.map((plato) => (
-                  <div
-                    key={plato.id}
-                    onClick={() => plato.receta && setPlatoSeleccionado(plato)}
-                    className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden ${
-                      plato.receta ? 'cursor-pointer hover:scale-105' : ''
-                    }`}
-                  >
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-bold text-gray-800">{plato.nombre}</h3>
-                            {plato.es_estrella && <span className="text-xl" title="Especialidad">⭐</span>}
-                            {plato.receta && (
-                              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-semibold">
-                                📖 Receta
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-gray-600 text-sm mt-1">{plato.descripcion}</p>
-                        </div>
-                        <div className="text-right ml-4">
-                          <span className="text-xl font-bold text-amber-600">
-                            $ {plato.precio.toLocaleString('es-AR')}
-                          </span>
-                        </div>
-                      </div>
-
-                      {plato.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3">
-                          {plato.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {plato.alergenos.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-xs text-red-600 font-semibold mb-1">⚠️ Alérgenos:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {plato.alergenos.map((alergeno) => (
-                              <span
-                                key={alergeno}
-                                className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200"
-                              >
-                                {alergeno}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {plato.receta && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <p className="text-xs text-amber-700 font-semibold">
-                            👆 Click para ver receta completa
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <TarjetaPlato key={plato.id} plato={plato} onSelect={setPlatoSeleccionado} />
                 ))}
               </div>
             )}
@@ -296,72 +489,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {categoria.platos.map((plato) => (
-                    <div
-                      key={plato.id}
-                      onClick={() => plato.receta && setPlatoSeleccionado(plato)}
-                      className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden ${
-                        plato.receta ? 'cursor-pointer hover:scale-105' : ''
-                      }`}
-                    >
-                      <div className="p-6">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-lg font-bold text-gray-800">{plato.nombre}</h3>
-                              {plato.es_estrella && <span className="text-xl" title="Especialidad">⭐</span>}
-                              {plato.receta && (
-                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-semibold">
-                                  📖 Receta
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-gray-600 text-sm mt-1">{plato.descripcion}</p>
-                          </div>
-                          <div className="text-right ml-4">
-                            <span className="text-xl font-bold text-amber-600">
-                              $ {plato.precio.toLocaleString('es-AR')}
-                            </span>
-                          </div>
-                        </div>
-
-                        {plato.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-3">
-                            {plato.tags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        {plato.alergenos.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-xs text-red-600 font-semibold mb-1">⚠️ Alérgenos:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {plato.alergenos.map((alergeno) => (
-                                <span
-                                  key={alergeno}
-                                  className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200"
-                                >
-                                  {alergeno}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {plato.receta && (
-                          <div className="mt-3 pt-3 border-t border-gray-100">
-                            <p className="text-xs text-amber-700 font-semibold">
-                              👆 Click para ver receta completa
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <TarjetaPlato key={plato.id} plato={plato} onSelect={setPlatoSeleccionado} />
                   ))}
                 </div>
               </div>
@@ -400,7 +528,27 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
               </div>
             </div>
 
+            {/* Foto del plato */}
+            {platoSeleccionado.imagen && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={platoSeleccionado.imagen}
+                alt={platoSeleccionado.nombre}
+                className="w-full h-56 object-cover"
+              />
+            )}
+
             <div className="p-6 space-y-6">
+              {/* Datos nutricionales científicos */}
+              {platoSeleccionado.analisis && (
+                <DatosCientificos analisis={platoSeleccionado.analisis} />
+              )}
+
+              {/* Análisis hildegardiano dinámico */}
+              {platoSeleccionado.analisis && (
+                <DatosHildegardianos analisis={platoSeleccionado.analisis} />
+              )}
+
               {/* Ingredientes */}
               <div>
                 <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -462,17 +610,6 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <footer className="bg-amber-900 text-amber-100 py-8 mt-12">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="font-serif text-xl mb-2">{restaurante.nombre}</p>
-          <p className="italic text-sm">"{restaurante.tagline}"</p>
-          <p className="text-xs mt-4 opacity-75">
-            Basado en las revelaciones de Santa Hildegarda de Bingen (1098-1179)
-          </p>
-        </div>
-      </footer>
     </>
   );
 }
