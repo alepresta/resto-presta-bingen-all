@@ -14,6 +14,7 @@ interface IngredienteSeleccionado {
 interface PlatoOpcion {
   id: string;
   nombre: string;
+  dia_semana_id?: number | null;
 }
 
 interface DatosIniciales {
@@ -21,6 +22,7 @@ interface DatosIniciales {
   tiempoMin: number;
   porciones: number;
   dificultad: string;
+  diaSemanaId: string;
   pasos: string[];
   ingredientes: IngredienteSeleccionado[];
   notasHildegardianas: string;
@@ -44,6 +46,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
   const [platoId, setPlatoId] = useState(initial.platoId);  const [tiempoMin, setTiempoMin] = useState(initial.tiempoMin);
   const [porciones, setPorciones] = useState(initial.porciones);
   const [dificultad, setDificultad] = useState(initial.dificultad);
+  const [diaSemanaId, setDiaSemanaId] = useState(initial.diaSemanaId);
   const [pasos, setPasos] = useState<string[]>(initial.pasos.length > 0 ? initial.pasos : ['']);
   const [ingredientes, setIngredientes] = useState<IngredienteSeleccionado[]>(initial.ingredientes);
   const [notasHildegardianas, setNotasHildegardianas] = useState(initial.notasHildegardianas);
@@ -55,6 +58,23 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
     setPasos(nuevos);
   };
   const eliminarPaso = (index: number) => setPasos(pasos.filter((_, i) => i !== index));
+
+  // Al elegir un plato, precargar su día actual
+  const seleccionarPlato = (id: string) => {
+    setPlatoId(id);
+    const p = platos.find((x) => x.id === id);
+    setDiaSemanaId(p?.dia_semana_id != null ? String(p.dia_semana_id) : '');
+  };
+
+  const DIAS_SEMANA = [
+    { id: 1, nombre: 'Lunes', icono: '🥩' },
+    { id: 2, nombre: 'Martes', icono: '🥗' },
+    { id: 3, nombre: 'Miércoles', icono: '🍝' },
+    { id: 4, nombre: 'Jueves', icono: '🍗' },
+    { id: 5, nombre: 'Viernes', icono: '🐟' },
+    { id: 6, nombre: 'Sábado', icono: '🍕' },
+    { id: 7, nombre: 'Domingo', icono: '🍝' },
+  ];
 
   const guardarReceta = async () => {
     setLoading(true);
@@ -106,6 +126,17 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
       if (!resIngredientes.ok) throw new Error('Error al guardar ingredientes');
 
+      // 3. Guardar el día de la semana en el plato asociado
+      const resPlato = await fetch(`/api/admin/platos/${platoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId) }),
+      });
+      if (!resPlato.ok) {
+        const dataPlato = await resPlato.json().catch(() => ({}));
+        throw new Error(dataPlato.error || 'Error al guardar el día del plato');
+      }
+
       setMensaje('✅ Receta guardada exitosamente');
       setTimeout(() => router.push('/admin/recetas'), 1500);
     } catch (err: any) {
@@ -154,7 +185,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 )}
                 <select
                   value={platoId}
-                  onChange={(e) => setPlatoId(e.target.value)}
+                  onChange={(e) => seleccionarPlato(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
                 >
                   <option value="">Seleccioná un plato...</option>
@@ -194,6 +225,20 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                   <option value="media">Media</option>
                   <option value="difícil">Difícil</option>
                 </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">📅 Día de disponibilidad</label>
+                <select
+                  value={diaSemanaId}
+                  onChange={(e) => setDiaSemanaId(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
+                >
+                  <option value="">🗓️ Todos los días</option>
+                  {DIAS_SEMANA.map((d) => (
+                    <option key={d.id} value={d.id}>{d.icono} {d.nombre}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Define en qué día del menú aparece el plato de esta receta.</p>
               </div>
             </div>
           </div>

@@ -371,6 +371,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
   const [precioFiltro, setPrecioFiltro] = useState<'todos' | 'gratis' | 'con_precio'>('todos');
   const [glutenFiltro, setGlutenFiltro] = useState<'todos' | 'con' | 'sin'>('todos');
   const [igFiltro, setIgFiltro] = useState<'todos' | 'bajo' | 'medio' | 'alto'>('todos');
+  const [diaFiltro, setDiaFiltro] = useState<string>('');
   const [vitaminasSel, setVitaminasSel] = useState<string[]>([]);
   const [mineralesSel, setMineralesSel] = useState<string[]>([]);
   const [panelNutrientes, setPanelNutrientes] = useState(false);
@@ -455,6 +456,10 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
       // Índice glucémico
       if (igFiltro !== 'todos' && categoriaIG(plato.indiceGlucemico) !== igFiltro) return false;
 
+      // Día de la semana
+      if (diaFiltro === 'todos_dias' && plato.dia_semana_id !== null) return false;
+      if (diaFiltro !== '' && diaFiltro !== 'todos_dias' && plato.dia_semana_id !== Number(diaFiltro)) return false;
+
       if (categoriaFiltro && plato.categoria_id !== categoriaFiltro) return false;
 
       if (temperamentoFiltro && plato.receta?.ingredientes) {
@@ -496,7 +501,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
 
       return true;
     });
-  }, [platos, textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, estadoFiltro, precioFiltro, glutenFiltro, igFiltro, vitaminasSel, mineralesSel]);
+  }, [platos, textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, estadoFiltro, precioFiltro, glutenFiltro, igFiltro, diaFiltro, vitaminasSel, mineralesSel]);
 
 
   const totalConReceta = platos.filter(p => p.receta?.id).length;
@@ -513,12 +518,13 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
     setPrecioFiltro('todos');
     setGlutenFiltro('todos');
     setIgFiltro('todos');
+    setDiaFiltro('');
     setVitaminasSel([]);
     setMineralesSel([]);
   };
 
   const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos || soloBaseAlegria
-    || estadoFiltro !== 'todos' || precioFiltro !== 'todos' || glutenFiltro !== 'todos' || igFiltro !== 'todos'
+    || estadoFiltro !== 'todos' || precioFiltro !== 'todos' || glutenFiltro !== 'todos' || igFiltro !== 'todos' || diaFiltro !== ''
     || vitaminasSel.length > 0 || mineralesSel.length > 0;
 
   const getTemperamentoDominante = (plato: Plato): string | null => {
@@ -659,9 +665,23 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
           </div>
 
           {/* Fila 2: Estado, Precio, Gluten, Índice glucémico, Nutrientes */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">👁️ Estado</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">� Día</label>
+              <select
+                value={diaFiltro}
+                onChange={(e) => setDiaFiltro(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="">Todos</option>
+                <option value="todos_dias">🗓️ Todos los días</option>
+                {DIAS_SEMANA.map((d) => (
+                  <option key={d.id} value={d.id}>{d.icono} {d.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">�👁️ Estado</label>
               <select
                 value={estadoFiltro}
                 onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)}

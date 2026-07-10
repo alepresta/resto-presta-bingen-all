@@ -31,10 +31,14 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
   // Platos disponibles para el selector
   const { data: platosData } = await supabase
     .from('platos')
-    .select('id, nombre, categoria_id')
+    .select('id, nombre, categoria_id, dia_semana_id')
     .eq('disponible', true)
     .order('nombre');
-  const platos = (platosData || []).map((p) => ({ id: p.id, nombre: p.nombre }));
+  const platos = (platosData || []).map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    dia_semana_id: p.dia_semana_id ?? null,
+  }));
 
   // Datos iniciales por defecto (receta nueva)
   let initial = {
@@ -42,6 +46,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
     tiempoMin: 30,
     porciones: 4,
     dificultad: 'media',
+    diaSemanaId: '',
     pasos: [''] as string[],
     ingredientes: [] as IngredienteSeleccionado[],
     notasHildegardianas: '',
@@ -91,6 +96,10 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
         tiempoMin: r.tiempo_min || 30,
         porciones: r.porciones || 4,
         dificultad: r.dificultad || 'media',
+        diaSemanaId: (() => {
+          const p = (platosData || []).find((x) => x.id === r.plato_id);
+          return p?.dia_semana_id != null ? String(p.dia_semana_id) : '';
+        })(),
         pasos: normalizarPasos(r.pasos),
         ingredientes,
         notasHildegardianas: r.notas_hildegardianas || '',
