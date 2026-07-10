@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { DIAS_SEMANA, CATEGORIAS_COMIDA } from '@/lib/pedidos';
 import { evaluarHildegardianoDB } from '@/lib/analisis-plato';
 import ProduccionPorDia from '@/app/admin/pedidos/grupos/[id]/ProduccionPorDia';
@@ -277,6 +278,7 @@ export default function CalendarioPedidos({
   clienteNombre = '',
   clienteEmail = '',
 }: CalendarioPedidosProps) {
+  const router = useRouter();
   const [items, setItems] = useState<ItemPedido[]>(itemsIniciales);
   const [modalAbierto, setModalAbierto] = useState<{ fecha: string; tipo: string } | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -808,6 +810,27 @@ export default function CalendarioPedidos({
     }
   };
 
+  // Abandonar el grupo
+  const salirDelGrupo = async () => {
+    if (!confirm('¿Seguro que querés abandonar este grupo? Se quitará tu participación.')) return;
+    setCargando(true);
+    setMensaje('');
+    try {
+      const res = await fetch(`/api/grupos/${grupoId}/salir`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo abandonar el grupo');
+
+      // Quitarse de la lista de miembros y volver al menú
+      setMiembrosState((prev) => prev.filter((m) => m.cliente_id !== clienteActualId));
+      router.push('/menu/resto-presta-bingen-all');
+      router.refresh();
+    } catch (err: any) {
+      setMensaje(`❌ ${err.message}`);
+      setTimeout(() => setMensaje(''), 5000);
+      setCargando(false);
+    }
+  };
+
   const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos;
 
   // 🍽️ Producción por día (mismo bloque que ve el admin): platos a preparar,
@@ -1011,7 +1034,18 @@ export default function CalendarioPedidos({
 
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="bg-white rounded-xl shadow-md p-4">
-          <h2 className="font-bold text-gray-800 mb-3">👥 Miembros del Grupo</h2>
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <h2 className="font-bold text-gray-800">👥 Miembros del Grupo</h2>
+            {esMiembro && (
+              <button
+                onClick={salirDelGrupo}
+                disabled={cargando}
+                className="text-xs font-semibold text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-lg px-3 py-1.5 disabled:opacity-50"
+              >
+                🚪 Abandonar grupo
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {miembrosState.map((miembro) => (
               <div
