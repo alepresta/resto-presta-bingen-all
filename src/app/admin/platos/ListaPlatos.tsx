@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ToggleTema from '@/components/ToggleTema';
+import type { AnalisisPlato } from '@/lib/analisis-plato';
 
 interface Ingrediente {
   id: string;
@@ -23,6 +24,9 @@ interface Plato {
   imagen: string | null;
   dia_semana_id: number | null;
   disponible_todos_dias?: boolean;
+  alergenos?: string[] | null;
+  analisis?: AnalisisPlato | null;
+  indiceGlucemico?: number | null;
   receta?: {
     id: string;
     ingredientes?: Array<{
@@ -62,6 +66,51 @@ function formatoPrecio(precio: number | null): string {
   if (precio === null || precio === undefined || precio <= 0) return 'Gratis';
   return `$${precio.toLocaleString('es-AR')}`;
 }
+
+// Umbral de "buena fuente": aporta al menos este % del Valor Diario de Referencia
+const UMBRAL_FUENTE = 15;
+
+const VITAMINAS: Array<{ clave: string; label: string }> = [
+  { clave: 'vitaminaA', label: 'Vit. A' },
+  { clave: 'vitaminaC', label: 'Vit. C' },
+  { clave: 'vitaminaD', label: 'Vit. D' },
+  { clave: 'vitaminaE', label: 'Vit. E' },
+  { clave: 'vitaminaK', label: 'Vit. K' },
+  { clave: 'vitaminaB1', label: 'Vit. B1' },
+  { clave: 'vitaminaB2', label: 'Vit. B2' },
+  { clave: 'vitaminaB3', label: 'Vit. B3' },
+  { clave: 'vitaminaB5', label: 'Vit. B5' },
+  { clave: 'vitaminaB6', label: 'Vit. B6' },
+  { clave: 'vitaminaB9', label: 'Vit. B9' },
+  { clave: 'vitaminaB12', label: 'Vit. B12' },
+];
+
+const MINERALES: Array<{ clave: string; label: string }> = [
+  { clave: 'calcio', label: 'Calcio' },
+  { clave: 'hierro', label: 'Hierro' },
+  { clave: 'magnesio', label: 'Magnesio' },
+  { clave: 'potasio', label: 'Potasio' },
+  { clave: 'zinc', label: 'Zinc' },
+  { clave: 'fosforo', label: 'Fósforo' },
+];
+
+function tieneGluten(plato: Plato): boolean {
+  return (plato.alergenos || []).some((a) => /gluten|trigo|cebada|centeno|avena|espelta/i.test(a));
+}
+
+// Clasificación del índice glucémico: bajo ≤ 55, medio 56-69, alto ≥ 70
+function categoriaIG(ig: number | null | undefined): 'bajo' | 'medio' | 'alto' | null {
+  if (ig === null || ig === undefined) return null;
+  if (ig <= 55) return 'bajo';
+  if (ig <= 69) return 'medio';
+  return 'alto';
+}
+
+const IG_INFO: Record<'bajo' | 'medio' | 'alto', { label: string; color: string }> = {
+  bajo: { label: 'IG bajo', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' },
+  medio: { label: 'IG medio', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' },
+  alto: { label: 'IG alto', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' },
+};
 
 function ModalEditarPlato({
   plato,
@@ -317,6 +366,24 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
   const [soloBaseAlegria, setSoloBaseAlegria] = useState(false);
   const [vista, setVista] = useState<'grid' | 'lista'>('grid');
 
+  // Filtros avanzados
+  const [estadoFiltro, setEstadoFiltro] = useState<'todos' | 'publicados' | 'despublicados'>('todos');
+  const [precioFiltro, setPrecioFiltro] = useState<'todos' | 'gratis' | 'con_precio'>('todos');
+  const [glutenFiltro, setGlutenFiltro] = useState<'todos' | 'con' | 'sin'>('todos');
+  const [igFiltro, setIgFiltro] = useState<'todos' | 'bajo' | 'medio' | 'alto'>('todos');
+  const [vitaminasSel, setVitaminasSel] = useState<string[]>([]);
+  const [mineralesSel, setMineralesSel] = useState<string[]>([]);
+  const [panelNutrientes, setPanelNutrientes] = useState(false);
+
+  const toggleEnLista = (
+    valor: string,
+    lista: string[],
+    setter: (v: string[]) => void
+  ) => {
+    setter(lista.includes(valor) ? lista.filter((v) => v !== valor) : [...lista, valor]);
+  };
+
+
   // Edición de plato
   const [platoEditando, setPlatoEditando] = useState<Plato | null>(null);
   const [guardando, setGuardando] = useState(false);
@@ -372,6 +439,22 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
         if (!coincideNombre && !coincideDesc && !coincideIngrediente) return false;
       }
 
+      // Estado de publicación
+      if (estadoFiltro === 'publicados' && !plato.disponible) return false;
+      if (estadoFiltro === 'despublicados' && plato.disponible) return false;
+
+      // Precio
+      const esGratis = plato.precio === null || plato.precio === undefined || plato.precio <= 0;
+      if (precioFiltro === 'gratis' && !esGratis) return false;
+      if (precioFiltro === 'con_precio' && esGratis) return false;
+
+      // Gluten (según alérgenos declarados)
+      if (glutenFiltro === 'con' && !tieneGluten(plato)) return false;
+      if (glutenFiltro === 'sin' && tieneGluten(plato)) return false;
+
+      // Índice glucémico
+      if (igFiltro !== 'todos' && categoriaIG(plato.indiceGlucemico) !== igFiltro) return false;
+
       if (categoriaFiltro && plato.categoria_id !== categoriaFiltro) return false;
 
       if (temperamentoFiltro && plato.receta?.ingredientes) {
@@ -399,17 +482,26 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
         return false;
       }
 
+      // Vitaminas / minerales: el plato debe ser buena fuente (≥ UMBRAL_FUENTE % VDR) de cada uno elegido
+      if (vitaminasSel.length > 0 || mineralesSel.length > 0) {
+        const pct = plato.analisis?.porcentajeVDR;
+        if (!pct) return false;
+        for (const clave of vitaminasSel) {
+          if ((pct[clave] || 0) < UMBRAL_FUENTE) return false;
+        }
+        for (const clave of mineralesSel) {
+          if ((pct[clave] || 0) < UMBRAL_FUENTE) return false;
+        }
+      }
+
       return true;
     });
-  }, [platos, textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria]);
+  }, [platos, textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, estadoFiltro, precioFiltro, glutenFiltro, igFiltro, vitaminasSel, mineralesSel]);
+
 
   const totalConReceta = platos.filter(p => p.receta?.id).length;
-  const totalConVenenos = platos.filter(p => 
-    p.receta?.ingredientes?.some(ri => ri.ingrediente.es_veneno_hildegardiano)
-  ).length;
-  const totalBaseAlegria = platos.filter(p => 
-    p.receta?.ingredientes?.some(ri => ri.ingrediente.es_base_alegria)
-  ).length;
+  const totalPublicados = platos.filter(p => p.disponible).length;
+  const totalDespublicados = platos.length - totalPublicados;
 
   const limpiarFiltros = () => {
     setTextoBusqueda('');
@@ -417,9 +509,17 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
     setTemperamentoFiltro('');
     setSoloSinVenenos(false);
     setSoloBaseAlegria(false);
+    setEstadoFiltro('todos');
+    setPrecioFiltro('todos');
+    setGlutenFiltro('todos');
+    setIgFiltro('todos');
+    setVitaminasSel([]);
+    setMineralesSel([]);
   };
 
-  const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos || soloBaseAlegria;
+  const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos || soloBaseAlegria
+    || estadoFiltro !== 'todos' || precioFiltro !== 'todos' || glutenFiltro !== 'todos' || igFiltro !== 'todos'
+    || vitaminasSel.length > 0 || mineralesSel.length > 0;
 
   const getTemperamentoDominante = (plato: Plato): string | null => {
     if (!plato.receta?.ingredientes) return null;
@@ -441,7 +541,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
           <div>
             <h1 className="text-2xl font-bold">🍽️ Gestión de Platos</h1>
             <p className="text-amber-100 text-sm">
-              {platos.length} platos · {totalConReceta} con receta · {totalConVenenos} con venenos · {totalBaseAlegria} base alegría
+              {platos.length} platos · {totalPublicados} publicados · {totalDespublicados} ocultos · {totalConReceta} con receta
             </p>
           </div>
           <div className="flex gap-2 items-center">
@@ -467,7 +567,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                 type="text"
                 value={textoBusqueda}
                 onChange={(e) => setTextoBusqueda(e.target.value)}
-                placeholder="🔍 Buscar por nombre, descripción o ingrediente..."
+                placeholder="Buscar por nombre, descripción o ingrediente..."
                 className="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
               <span className="absolute left-3 top-3.5 text-gray-400">🔍</span>
@@ -558,6 +658,140 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
             </div>
           </div>
 
+          {/* Fila 2: Estado, Precio, Gluten, Índice glucémico, Nutrientes */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">👁️ Estado</label>
+              <select
+                value={estadoFiltro}
+                onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="todos">Todos</option>
+                <option value="publicados">🟢 Publicados</option>
+                <option value="despublicados">⚪ Despublicados</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">💲 Precio</label>
+              <select
+                value={precioFiltro}
+                onChange={(e) => setPrecioFiltro(e.target.value as typeof precioFiltro)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="todos">Todos</option>
+                <option value="con_precio">💰 Con precio</option>
+                <option value="gratis">🎁 Gratis</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">🌾 Gluten</label>
+              <select
+                value={glutenFiltro}
+                onChange={(e) => setGlutenFiltro(e.target.value as typeof glutenFiltro)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="todos">Todos</option>
+                <option value="con">Con gluten</option>
+                <option value="sin">Sin gluten</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">📈 Índice glucémico</label>
+              <select
+                value={igFiltro}
+                onChange={(e) => setIgFiltro(e.target.value as typeof igFiltro)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="todos">Todos</option>
+                <option value="bajo">🟢 Bajo (≤ 55)</option>
+                <option value="medio">🟡 Medio (56–69)</option>
+                <option value="alto">🔴 Alto (≥ 70)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">🧪 Nutrientes</label>
+              <button
+                type="button"
+                onClick={() => setPanelNutrientes((v) => !v)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center justify-between"
+              >
+                <span>
+                  {vitaminasSel.length + mineralesSel.length > 0
+                    ? `${vitaminasSel.length + mineralesSel.length} seleccionados`
+                    : 'Vitaminas y minerales'}
+                </span>
+                <span>{panelNutrientes ? '▲' : '▼'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Panel de nutrientes (vitaminas / minerales) */}
+          {panelNutrientes && (
+            <div className="mt-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Mostrar platos que sean <strong>buena fuente</strong> (aportan ≥ {UMBRAL_FUENTE}% del valor diario por porción) de:
+              </p>
+              <div className="mb-3">
+                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">💊 Vitaminas</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {VITAMINAS.map((v) => {
+                    const activo = vitaminasSel.includes(v.clave);
+                    return (
+                      <button
+                        key={v.clave}
+                        type="button"
+                        onClick={() => toggleEnLista(v.clave, vitaminasSel, setVitaminasSel)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                          activo
+                            ? 'bg-amber-500 border-amber-500 text-white'
+                            : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-amber-400'
+                        }`}
+                      >
+                        {v.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">⛏️ Minerales</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {MINERALES.map((m) => {
+                    const activo = mineralesSel.includes(m.clave);
+                    return (
+                      <button
+                        key={m.clave}
+                        type="button"
+                        onClick={() => toggleEnLista(m.clave, mineralesSel, setMineralesSel)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                          activo
+                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                            : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-emerald-400'
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {(vitaminasSel.length > 0 || mineralesSel.length > 0) && (
+                <button
+                  type="button"
+                  onClick={() => { setVitaminasSel([]); setMineralesSel([]); }}
+                  className="mt-3 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline"
+                >
+                  ✖️ Limpiar nutrientes
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-sm">
             <p className="text-gray-600 dark:text-gray-400">
               Mostrando <strong className="text-amber-700 dark:text-amber-400">{platosFiltrados.length}</strong> de <strong>{platos.length}</strong> platos
@@ -629,6 +863,11 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                       }`}>
                         {plato.disponible ? '🟢 Publicado' : '⚪ No publicado'}
                       </span>
+                      {categoriaIG(plato.indiceGlucemico) && (
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${IG_INFO[categoriaIG(plato.indiceGlucemico)!].color}`}>
+                          📈 {IG_INFO[categoriaIG(plato.indiceGlucemico)!].label} ({plato.indiceGlucemico})
+                        </span>
+                      )}
                       {tempInfo && (
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${tempInfo.color}`}>
                           {tempInfo.nombre}
