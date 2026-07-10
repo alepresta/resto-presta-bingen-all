@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface IngredienteLista {
   id: string;
@@ -37,8 +37,8 @@ const CATEGORIAS_INFO: Record<string, { icono: string; nombre: string; color: st
 };
 
 export default function ListaComprasPage() {
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
+  const [grupos, setGrupos] = useState<any[]>([]);
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
   const [cargando, setCargando] = useState(false);
   const [lista, setLista] = useState<IngredienteLista[]>([]);
   const [porCategoria, setPorCategoria] = useState<Record<string, IngredienteLista[]>>({});
@@ -46,9 +46,31 @@ export default function ListaComprasPage() {
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/pedidos/grupos');
+        const data = await res.json();
+        setGrupos(data.grupos || (Array.isArray(data) ? data : []));
+      } catch {
+        /* noop */
+      }
+    })();
+  }, []);
+
+  const toggleGrupo = (id: string) =>
+    setSeleccionados((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const seleccionarTodos = () => setSeleccionados(new Set(grupos.map((g) => g.id)));
+  const limpiarSeleccion = () => setSeleccionados(new Set());
+
   const generarLista = async () => {
-    if (!fechaInicio || !fechaFin) {
-      setError('Seleccioná ambas fechas');
+    if (seleccionados.size === 0) {
+      setError('Seleccioná al menos un grupo');
       return;
     }
     setCargando(true);
@@ -57,7 +79,7 @@ export default function ListaComprasPage() {
 
     try {
       const res = await fetch(
-        `/api/admin/lista-compras?inicio=${fechaInicio}&fin=${fechaFin}`
+        `/api/admin/lista-compras?grupos=${Array.from(seleccionados).join(',')}`
       );
       const data = await res.json();
 
@@ -66,7 +88,7 @@ export default function ListaComprasPage() {
       setLista(data.lista || []);
       setPorCategoria(data.porCategoria || {});
       setResumen(data.resumen || null);
-      
+
       if (data.mensaje) {
         setMensaje(data.mensaje);
       }
@@ -97,7 +119,7 @@ export default function ListaComprasPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `lista-compras-${fechaInicio}-${fechaFin}.csv`;
+    link.download = `lista-compras.csv`;
     link.click();
   };
 
@@ -108,7 +130,7 @@ export default function ListaComprasPage() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">🛒 Lista de Compras Inteligente</h1>
-            <p className="text-blue-100 text-sm">Calculada desde pedidos confirmados</p>
+            <p className="text-blue-100 text-sm">Calculada desde uno o varios grupos de pedido</p>
           </div>
           <a
             href="/admin"
@@ -120,61 +142,87 @@ export default function ListaComprasPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Selector de fechas */}
+        {/* Selector de grupos */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6 print:hidden">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">📅 Rango de Fechas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Fecha inicio
-              </label>
-              <input
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Fecha fin
-              </label>
-              <input
-                type="date"
-                value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex items-end">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <h2 className="text-lg font-bold text-gray-800">👥 Elegí uno o más grupos</h2>
+            <div className="flex gap-2">
               <button
-                onClick={generarLista}
-                disabled={cargando}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:shadow-lg disabled:opacity-50"
+                onClick={seleccionarTodos}
+                disabled={grupos.length === 0 || seleccionados.size === grupos.length}
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50"
               >
-                {cargando ? '⏳ Generando...' : '🔄 Generar Lista'}
+                ✅ Todos
+              </button>
+              <button
+                onClick={limpiarSeleccion}
+                disabled={seleccionados.size === 0}
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+              >
+                ✖️ Ninguno
               </button>
             </div>
-            <div className="flex items-end gap-2">
-              {lista.length > 0 && (
-                <>
-                  <button
-                    onClick={imprimirLista}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-semibold"
-                    title="Imprimir"
+          </div>
+
+          {grupos.length === 0 ? (
+            <p className="text-sm text-gray-500">No hay grupos creados todavía.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-4 max-h-72 overflow-y-auto">
+              {grupos.map((g: any) => {
+                const activo = seleccionados.has(g.id);
+                const nMiembros = g.miembros?.length ?? 0;
+                return (
+                  <label
+                    key={g.id}
+                    className={`flex items-center gap-3 px-3 py-2 border rounded-lg cursor-pointer ${
+                      activo ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                    }`}
                   >
-                    🖨️
-                  </button>
-                  <button
-                    onClick={exportarCSV}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold"
-                    title="Exportar CSV"
-                  >
-                    📊
-                  </button>
-                </>
-              )}
+                    <input
+                      type="checkbox"
+                      checked={activo}
+                      onChange={() => toggleGrupo(g.id)}
+                      className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-800 font-mono">{g.palabra_secreta}</p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {g.estado} · {new Date(g.fecha_inicio).toLocaleDateString('es-AR')} a {new Date(g.fecha_fin).toLocaleDateString('es-AR')}
+                        {nMiembros ? ` · ${nMiembros} miembro${nMiembros !== 1 ? 's' : ''}` : ''}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={generarLista}
+              disabled={cargando || seleccionados.size === 0}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:shadow-lg disabled:opacity-50"
+            >
+              {cargando ? '⏳ Generando...' : `🛒 Generar lista (${seleccionados.size} grupo${seleccionados.size !== 1 ? 's' : ''})`}
+            </button>
+            {lista.length > 0 && (
+              <>
+                <button
+                  onClick={imprimirLista}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-semibold"
+                  title="Imprimir"
+                >
+                  🖨️
+                </button>
+                <button
+                  onClick={exportarCSV}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold"
+                  title="Exportar CSV"
+                >
+                  📊
+                </button>
+              </>
+            )}
           </div>
 
           {error && (
@@ -182,7 +230,7 @@ export default function ListaComprasPage() {
               ❌ {error}
             </div>
           )}
-          
+
           {mensaje && (
             <div className="mt-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
               ℹ️ {mensaje}
@@ -318,10 +366,10 @@ export default function ListaComprasPage() {
           !cargando && (
             <div className="bg-white rounded-xl shadow-md p-12 text-center">
               <p className="text-gray-500 text-lg">
-                {mensaje || 'No hay pedidos confirmados en este rango de fechas'}
+                {mensaje || 'Elegí uno o más grupos y generá la lista'}
               </p>
               <p className="text-sm text-gray-400 mt-2">
-                Primero necesitás crear pedidos y confirmarlos
+                La lista suma todos los platos de los grupos seleccionados
               </p>
             </div>
           )

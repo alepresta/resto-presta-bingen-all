@@ -59,22 +59,30 @@ function formatearPresentacion(cantidad: number, unidad: string): string {
   return `${cantidad.toFixed(2)} ${unidad}`;
 }
 
+// Platos a preparar de un ítem = personas que lo eligieron (votos), o la cantidad, o 1.
+function platosDeItem(item: any): number {
+  const votos = Array.isArray(item.votos) ? item.votos.length : 0;
+  return Math.max(votos, item.cantidad || 0, 1);
+}
+
 export async function GET(request: NextRequest) {
   const supabase = createServerSupabaseClient();
   const { searchParams } = new URL(request.url);
   const fechaInicio = searchParams.get('inicio');
   const fechaFin = searchParams.get('fin');
+  const gruposParam = searchParams.get('grupos');
+  const gruposIds = gruposParam ? gruposParam.split(',').map((s) => s.trim()).filter(Boolean) : [];
 
-  if (!fechaInicio || !fechaFin) {
+  if (gruposIds.length === 0 && (!fechaInicio || !fechaFin)) {
     return NextResponse.json(
-      { error: 'Faltan parámetros inicio y fin' },
+      { error: 'Seleccioná al menos un grupo' },
       { status: 400 }
     );
   }
 
   try {
-    // 1. Obtener pedidos confirmados en el rango
-    const { data: pedidos, error: errorPedidos } = await supabase
+    // 1. Obtener los grupos seleccionados (o los confirmados del rango de fechas)
+    let query = supabase
       .from('grupos_pedido')
       .select(`
         id,
@@ -87,13 +95,19 @@ export async function GET(request: NextRequest) {
           fecha,
           tipo_comida,
           cantidad,
+          votos,
           plato_id,
           platos:platos(id, nombre, precio)
         )
-      `)
-      .eq('estado', 'confirmado')
-      .lte('fecha_inicio', fechaFin)
-      .gte('fecha_fin', fechaInicio);
+      `);
+
+    if (gruposIds.length > 0) {
+      query = query.in('id', gruposIds);
+    } else {
+      query = query.eq('estado', 'confirmado').lte('fecha_inicio', fechaFin).gte('fecha_fin', fechaInicio);
+    }
+
+    const { data: pedidos, error: errorPedidos } = await query;
 
     if (errorPedidos) throw errorPedidos;
 
@@ -101,7 +115,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         lista: [],
         resumen: { totalIngredientes: 0, totalPlatos: 0, pedidos: 0 },
-        mensaje: 'No hay pedidos confirmados en este rango',
+        mensaje: gruposIds.length > 0 ? 'Los grupos seleccionados no tienen platos' : 'No hay pedidos confirmados en este rango',
       });
     }
 
@@ -118,12 +132,12 @@ export async function GET(request: NextRequest) {
         const key = item.plato_id;
         if (platosMap.has(key)) {
           const existente = platosMap.get(key)!;
-          existente.cantidadTotal += item.cantidad || 1;
+          existente.cantidadTotal += platosDeItem(item);
           existente.fechas.push(item.fecha);
         } else {
           platosMap.set(key, {
             plato: item.platos,
-            cantidadTotal: item.cantidad || 1,
+            cantidadTotal: platosDeItem(item),
             fechas: [item.fecha],
           });
         }

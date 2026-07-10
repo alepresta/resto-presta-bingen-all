@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface PlatoAgg {
   nombre: string;
@@ -119,6 +119,26 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
   const [seleccionados, setSeleccionados] = useState<Set<string>>(() => new Set(dias.map((d) => d.fecha)));
   const [filtro, setFiltro] = useState('');
   const [comprados, setComprados] = useState<Set<string>>(new Set());
+  const [abiertos, setAbiertos] = useState<Set<string>>(new Set()); // días desplegados (vacío = minimizado)
+
+  const setAbierto = (fecha: string, open: boolean) =>
+    setAbiertos((prev) => {
+      const next = new Set(prev);
+      if (open) next.add(fecha);
+      else next.delete(fecha);
+      return next;
+    });
+  const expandirTodo = () => setAbiertos(new Set(dias.map((d) => d.fecha)));
+  const colapsarTodo = () => setAbiertos(new Set());
+
+  const todosSeleccionados = dias.length > 0 && seleccionados.size === dias.length;
+  const algunoSeleccionado = seleccionados.size > 0 && !todosSeleccionados;
+  const toggleTodosDias = () =>
+    setSeleccionados(todosSeleccionados ? new Set() : new Set(dias.map((d) => d.fecha)));
+  const masterRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (masterRef.current) masterRef.current.indeterminate = algunoSeleccionado;
+  }, [algunoSeleccionado]);
 
   const toggleComprado = (k: string) =>
     setComprados((prev) => {
@@ -136,9 +156,6 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
       return next;
     });
   };
-
-  const seleccionarTodos = () => setSeleccionados(new Set(dias.map((d) => d.fecha)));
-  const deseleccionarTodos = () => setSeleccionados(new Set());
 
   const diasSel = dias.filter((d) => seleccionados.has(d.fecha));
   const totalPrecio = diasSel.reduce((s, d) => s + d.totalDia, 0);
@@ -163,27 +180,32 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
     ? compras.filter((c) => c.nombre.toLowerCase().includes(filtro.trim().toLowerCase()))
     : compras;
 
-  const todosSeleccionados = seleccionados.size === dias.length && dias.length > 0;
-
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <h2 className="text-xl font-bold text-gray-800">🍽️ Producción por día</h2>
+        <label className="flex items-center gap-2 cursor-pointer" title={todosSeleccionados ? 'Deseleccionar todos los días' : 'Seleccionar todos los días'}>
+          <input
+            ref={masterRef}
+            type="checkbox"
+            checked={todosSeleccionados}
+            onChange={toggleTodosDias}
+            className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+          />
+          <h2 className="text-xl font-bold text-gray-800">🍽️ Producción por día</h2>
+        </label>
         {dias.length > 0 && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={seleccionarTodos}
-              disabled={todosSeleccionados}
-              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50"
+              onClick={expandirTodo}
+              className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
             >
-              ✅ Seleccionar todos
+              🔽 Expandir todo
             </button>
             <button
-              onClick={deseleccionarTodos}
-              disabled={seleccionados.size === 0}
-              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+              onClick={colapsarTodo}
+              className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200"
             >
-              ✖️ Deseleccionar todos
+              🔼 Colapsar todo
             </button>
           </div>
         )}
@@ -192,9 +214,9 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
       {dias.length === 0 ? (
         <p className="text-gray-500 text-center py-8">No hay platos seleccionados aún</p>
       ) : (
-        <>
-          {/* Resumen consolidado de compras (días seleccionados) */}
-          <div className="mb-6 border-2 border-emerald-200 rounded-xl overflow-hidden">
+        <div className="flex flex-col">
+          {/* Resumen consolidado de compras (días seleccionados) — al final */}
+          <div className="order-2 mt-6 border-2 border-emerald-200 rounded-xl overflow-hidden">
             <div className="bg-emerald-50 px-4 py-3 flex flex-wrap justify-between items-center gap-2">
               <h3 className="font-bold text-emerald-800">
                 🛒 Lista de compras — {diasSel.length} día{diasSel.length !== 1 ? 's' : ''} seleccionado{diasSel.length !== 1 ? 's' : ''}
@@ -278,30 +300,35 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
           </div>
 
           {/* Días (colapsables + seleccionables) */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             {dias.map((dia) => {
               const activo = seleccionados.has(dia.fecha);
               return (
-                <details key={dia.fecha} className={`group border rounded-xl overflow-hidden ${activo ? 'border-indigo-300' : 'border-gray-200 opacity-70'}`}>
-                  <summary className="bg-indigo-50 px-4 py-3 flex flex-wrap justify-between items-center gap-2 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-indigo-100">
-                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <details
+                  key={dia.fecha}
+                  open={abiertos.has(dia.fecha)}
+                  onToggle={(e) => setAbierto(dia.fecha, (e.target as HTMLDetailsElement).open)}
+                  className={`group border rounded-xl overflow-hidden ${activo ? 'border-indigo-300' : 'border-gray-200 opacity-70'}`}
+                >
+                  <summary className="bg-indigo-50 px-3 py-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-indigo-100">
+                    <h3 className="font-bold text-gray-800 flex items-center gap-1.5 text-sm min-w-0">
                       <input
                         type="checkbox"
                         checked={activo}
                         onClick={(e) => e.stopPropagation()}
                         onChange={() => toggleDia(dia.fecha)}
-                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
+                        className="w-4 h-4 shrink-0 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
                         title={activo ? 'Quitar de la lista de compras' : 'Incluir en la lista de compras'}
                       />
-                      <span className="text-indigo-500 transition-transform group-open:rotate-90">▶</span>
-                      📅 {fmtFecha(dia.fecha)}
+                      <span className="text-indigo-500 transition-transform group-open:rotate-90 shrink-0">▶</span>
+                      <span className="capitalize truncate">📅 {fmtFecha(dia.fecha)}</span>
                     </h3>
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="bg-amber-100 text-amber-800 font-semibold px-3 py-1 rounded-full">
-                        🍽️ {dia.totalPlatosDia} plato{dia.totalPlatosDia !== 1 ? 's' : ''} a preparar
+                    <div className="flex items-center gap-1.5 text-xs shrink-0">
+                      <span className="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">
+                        🍽️ {dia.totalPlatosDia}
                       </span>
-                      <span className="bg-orange-100 text-orange-800 font-bold px-3 py-1 rounded-full">
-                        💰 Total día: ${dia.totalDia.toLocaleString('es-AR')}
+                      <span className="bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded-full">
+                        💰 ${dia.totalDia.toLocaleString('es-AR')}
                       </span>
                     </div>
                   </summary>
@@ -346,7 +373,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
               );
             })}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
