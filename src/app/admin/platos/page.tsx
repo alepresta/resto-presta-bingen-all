@@ -4,11 +4,10 @@ import ListaPlatos from './ListaPlatos';
 export default async function AdminPlatosPage() {
   const supabase = createServerSupabaseClient();
 
-  // PASO 1: Obtener platos básicos (con imagen)
+  // PASO 1: Obtener TODOS los platos (publicados y no publicados) para gestión
   const { data: platosBasicos, error: errorPlatos } = await supabase
     .from('platos')
     .select('*')
-    .eq('disponible', true)
     .order('nombre');
 
   if (errorPlatos) {

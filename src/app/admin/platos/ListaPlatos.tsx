@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ToggleTema from '@/components/ToggleTema';
 
@@ -16,10 +17,12 @@ interface Plato {
   id: string;
   nombre: string;
   descripcion: string;
-  precio: number;
+  precio: number | null;
   categoria_id: number;
   disponible: boolean;
   imagen: string | null;
+  dia_semana_id: number | null;
+  disponible_todos_dias?: boolean;
   receta?: {
     id: string;
     ingredientes?: Array<{
@@ -40,6 +43,262 @@ const CATEGORIAS: Record<number, { nombre: string; icono: string }> = {
   5: { nombre: 'Postre', icono: '🍰' },
 };
 
+const DIAS_SEMANA: Array<{ id: number; nombre: string; icono: string }> = [
+  { id: 1, nombre: 'Lunes', icono: '🥩' },
+  { id: 2, nombre: 'Martes', icono: '🥗' },
+  { id: 3, nombre: 'Miércoles', icono: '🍝' },
+  { id: 4, nombre: 'Jueves', icono: '🍗' },
+  { id: 5, nombre: 'Viernes', icono: '🐟' },
+  { id: 6, nombre: 'Sábado', icono: '🍕' },
+  { id: 7, nombre: 'Domingo', icono: '🍝' },
+];
+
+function nombreDia(id: number | null): string {
+  if (id === null) return 'Todos los días';
+  return DIAS_SEMANA.find((d) => d.id === id)?.nombre ?? 'Todos los días';
+}
+
+function formatoPrecio(precio: number | null): string {
+  if (precio === null || precio === undefined || precio <= 0) return 'Gratis';
+  return `$${precio.toLocaleString('es-AR')}`;
+}
+
+function ModalEditarPlato({
+  plato,
+  guardando,
+  error,
+  onGuardar,
+  onCerrar,
+}: {
+  plato: Plato;
+  guardando: boolean;
+  error: string | null;
+  onGuardar: (
+    id: string,
+    cambios: { imagen: string | null; precio: number | null; disponible: boolean; dia_semana_id: number | null }
+  ) => void;
+  onCerrar: () => void;
+}) {
+  const [imagen, setImagen] = useState(plato.imagen ?? '');
+  const [precio, setPrecio] = useState(
+    plato.precio === null || plato.precio === undefined || plato.precio <= 0 ? '' : String(plato.precio)
+  );
+  const [disponible, setDisponible] = useState(plato.disponible);
+  const [diaSemana, setDiaSemana] = useState<string>(
+    plato.dia_semana_id === null || plato.dia_semana_id === undefined ? '' : String(plato.dia_semana_id)
+  );
+  const [subiendo, setSubiendo] = useState(false);
+  const [errorImagen, setErrorImagen] = useState<string | null>(null);
+
+  const subirImagen = async (file: File) => {
+    setSubiendo(true);
+    setErrorImagen(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/admin/platos/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo subir la imagen');
+      setImagen(data.url);
+    } catch (e: any) {
+      setErrorImagen(e.message || 'Error al subir la imagen');
+    } finally {
+      setSubiendo(false);
+    }
+  };
+
+  const sinPrecio = precio.trim() === '';
+  const precioNum = Number(precio);
+  const precioValido = sinPrecio || (Number.isFinite(precioNum) && precioNum >= 0);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onCerrar}
+    >
+      <div
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">✏️ Editar plato</h3>
+          <button
+            onClick={onCerrar}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl leading-none"
+          >
+            ✖️
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{plato.nombre}</p>
+
+          {/* Imagen */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+              🖼️ Imagen
+            </label>
+
+            {/* Subir desde la PC */}
+            <label className={`flex items-center justify-center gap-2 w-full px-3 py-3 mb-2 border-2 border-dashed rounded-lg cursor-pointer text-sm font-semibold transition-colors ${
+              subiendo
+                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600'
+                : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+            }`}>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={subiendo}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) subirImagen(f);
+                  e.currentTarget.value = '';
+                }}
+              />
+              {subiendo ? '⏳ Subiendo…' : '📁 Subir desde mi PC'}
+            </label>
+
+            {/* O pegar URL */}
+            <input
+              type="url"
+              value={imagen}
+              onChange={(e) => setImagen(e.target.value)}
+              placeholder="…o pegá una URL: https://…/foto.jpg"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            />
+
+            {errorImagen && (
+              <p className="mt-1 text-xs text-red-600">❌ {errorImagen}</p>
+            )}
+
+            {imagen ? (
+              <div className="mt-2 relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imagen}
+                  alt="Vista previa"
+                  className="h-32 w-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setImagen('')}
+                  className="absolute top-1 right-1 bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-300 rounded-full w-6 h-6 text-xs font-bold shadow hover:bg-red-100 hover:text-red-600"
+                  title="Quitar imagen"
+                >
+                  ✖️
+                </button>
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-gray-400">Sin imagen. Subí una foto o pegá una URL.</p>
+            )}
+          </div>
+
+          {/* Precio */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+              💲 Precio <span className="font-normal text-gray-400">(dejar vacío = Gratis)</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                step="1"
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
+                placeholder="Gratis"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+              {!sinPrecio && (
+                <button
+                  type="button"
+                  onClick={() => setPrecio('')}
+                  className="px-3 py-2 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+                >
+                  Gratis
+                </button>
+              )}
+            </div>
+            {sinPrecio ? (
+              <p className="mt-1 text-xs text-gray-400">Este plato se mostrará como <strong>Gratis</strong>.</p>
+            ) : !precioValido ? (
+              <p className="mt-1 text-xs text-red-600">Ingresá un precio válido (≥ 0) o dejalo vacío.</p>
+            ) : null}
+          </div>
+
+          {/* Día de la semana */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+              📅 Día de disponibilidad
+            </label>
+            <select
+              value={diaSemana}
+              onChange={(e) => setDiaSemana(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            >
+              <option value="">🗓️ Todos los días</option>
+              {DIAS_SEMANA.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.icono} {d.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Publicación */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+              👁️ Estado en el menú
+            </label>
+            <label className="flex items-center gap-3 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-white dark:bg-gray-700">
+              <input
+                type="checkbox"
+                checked={disponible}
+                onChange={(e) => setDisponible(e.target.checked)}
+                className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-200">
+                {disponible ? '🟢 Publicado (visible en el menú)' : '⚪ No publicado (oculto)'}
+              </span>
+            </label>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-3 py-2 rounded-lg text-sm">
+              ❌ {error}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={onCerrar}
+            disabled={guardando}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() =>
+              onGuardar(plato.id, {
+                imagen: imagen.trim() || null,
+                precio: sinPrecio ? 0 : precioNum,
+                disponible,
+                dia_semana_id: diaSemana === '' ? null : Number(diaSemana),
+              })
+            }
+            disabled={guardando || !precioValido || subiendo}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50"
+          >
+            {guardando ? 'Guardando…' : '💾 Guardar cambios'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const TEMPERAMENTOS = [
   { valor: 'calido', nombre: '🌡️ Cálido', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' },
   { valor: 'calido_seco', nombre: '🔥 Cálido-Seco', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' },
@@ -50,12 +309,56 @@ const TEMPERAMENTOS = [
 ];
 
 export default function ListaPlatos({ platos }: ListaPlatosProps) {
+  const router = useRouter();
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<number | null>(null);
   const [temperamentoFiltro, setTemperamentoFiltro] = useState<string>('');
   const [soloSinVenenos, setSoloSinVenenos] = useState(false);
   const [soloBaseAlegria, setSoloBaseAlegria] = useState(false);
   const [vista, setVista] = useState<'grid' | 'lista'>('grid');
+
+  // Edición de plato
+  const [platoEditando, setPlatoEditando] = useState<Plato | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [errorGuardar, setErrorGuardar] = useState<string | null>(null);
+
+  const guardarPlato = async (
+    id: string,
+    cambios: { imagen?: string | null; precio?: number | null; disponible?: boolean; dia_semana_id?: number | null }
+  ) => {
+    setGuardando(true);
+    setErrorGuardar(null);
+    try {
+      const res = await fetch(`/api/admin/platos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cambios),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
+      setPlatoEditando(null);
+      router.refresh();
+    } catch (e: any) {
+      setErrorGuardar(e.message || 'Error al guardar');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const togglePublicado = async (plato: Plato) => {
+    setGuardando(true);
+    try {
+      await fetch(`/api/admin/platos/${plato.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disponible: !plato.disponible }),
+      });
+      router.refresh();
+    } finally {
+      setGuardando(false);
+    }
+  };
+
 
   const platosFiltrados = useMemo(() => {
     return platos.filter((plato) => {
@@ -294,7 +597,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                         }}
                       />
                       <div className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-amber-700 dark:text-amber-400">
-                        ${plato.precio.toLocaleString('es-AR')}
+                        {formatoPrecio(plato.precio)}
                       </div>
                     </div>
                   )}
@@ -316,6 +619,16 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                     )}
 
                     <div className="flex flex-wrap gap-1 mb-3">
+                      <span className="px-2 py-1 rounded text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                        📅 {nombreDia(plato.dia_semana_id)}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        plato.disponible
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                      }`}>
+                        {plato.disponible ? '🟢 Publicado' : '⚪ No publicado'}
+                      </span>
                       {tempInfo && (
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${tempInfo.color}`}>
                           {tempInfo.nombre}
@@ -352,6 +665,32 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                         </p>
                       </div>
                     )}
+
+                    {/* Acciones de gestión */}
+                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                        {formatoPrecio(plato.precio)}
+                      </span>
+                      <div className="flex-1" />
+                      <button
+                        onClick={() => togglePublicado(plato)}
+                        disabled={guardando}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 ${
+                          plato.disponible
+                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200'
+                        }`}
+                        title={plato.disponible ? 'Quitar del menú' : 'Publicar en el menú'}
+                      >
+                        {plato.disponible ? '⚪ Despublicar' : '🟢 Publicar'}
+                      </button>
+                      <button
+                        onClick={() => { setErrorGuardar(null); setPlatoEditando(plato); }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600"
+                      >
+                        ✏️ Editar
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -364,9 +703,11 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                 <tr>
                   <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Plato</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Categoría</th>
+                  <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Día</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Precio</th>
                   <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Temperamento</th>
                   <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Estado</th>
+                  <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -400,8 +741,11 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                         {categoria?.icono} {categoria?.nombre}
                       </td>
+                      <td className="px-4 py-3 text-center text-xs text-gray-600 dark:text-gray-300">
+                        📅 {nombreDia(plato.dia_semana_id)}
+                      </td>
                       <td className="px-4 py-3 text-right font-semibold text-amber-600 dark:text-amber-400">
-                        ${plato.precio.toLocaleString('es-AR')}
+                        {formatoPrecio(plato.precio)}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {tempInfo ? (
@@ -413,10 +757,30 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          plato.disponible
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        }`}>
+                          {plato.disponible ? '🟢 Publicado' : '⚪ Oculto'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
                         <div className="flex gap-1 justify-center">
-                          {tieneVeneno && <span title="Contiene venenos">🚫</span>}
-                          {tieneBaseAlegria && <span title="Base de alegría">✨</span>}
-                          {!plato.receta?.id && <span title="Sin receta">⚠️</span>}
+                          <button
+                            onClick={() => togglePublicado(plato)}
+                            disabled={guardando}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+                            title={plato.disponible ? 'Despublicar' : 'Publicar'}
+                          >
+                            {plato.disponible ? '⚪' : '🟢'}
+                          </button>
+                          <button
+                            onClick={() => { setErrorGuardar(null); setPlatoEditando(plato); }}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600"
+                          >
+                            ✏️
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -439,6 +803,16 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
           </div>
         )}
       </main>
+
+      {platoEditando && (
+        <ModalEditarPlato
+          plato={platoEditando}
+          guardando={guardando}
+          error={errorGuardar}
+          onGuardar={guardarPlato}
+          onCerrar={() => setPlatoEditando(null)}
+        />
+      )}
     </div>
   );
 }

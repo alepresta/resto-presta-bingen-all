@@ -24,7 +24,7 @@ interface Plato {
   id: string;
   nombre: string;
   descripcion: string;
-  precio: number;
+  precio: number | null;
   imagen?: string | null;
   alergenos: string[];
   tags: string[];
@@ -261,7 +261,7 @@ function TarjetaPlato({ plato, onSelect }: { plato: Plato; onSelect: (p: Plato) 
           </span>
         )}
         <span className="absolute top-2 right-2 bg-amber-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow">
-          $ {plato.precio.toLocaleString('es-AR')}
+          {plato.precio != null && plato.precio > 0 ? `$ ${plato.precio.toLocaleString('es-AR')}` : 'Gratis'}
         </span>
       </div>
 
