@@ -11,20 +11,7 @@ export async function POST(
   const { cliente_id } = body;
 
   try {
-    // Verificar que el grupo no tenga 4 miembros
-    const { data: miembros } = await supabase
-      .from('grupo_miembros')
-      .select('id')
-      .eq('grupo_id', params.id);
-
-    if (miembros && miembros.length >= 4) {
-      return NextResponse.json(
-        { error: 'El grupo ya tiene 4 miembros' },
-        { status: 400 }
-      );
-    }
-
-    // Agregar miembro
+    // Agregar miembro (sin límite de cantidad)
     const { data: miembro, error } = await supabase
       .from('grupo_miembros')
       .insert({

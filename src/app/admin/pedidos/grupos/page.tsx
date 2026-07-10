@@ -136,7 +136,7 @@ export default async function AdminGruposPage() {
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">👥 Miembros</p>
-                        <p className="font-semibold text-gray-800">{totalMiembros}/4</p>
+                        <p className="font-semibold text-gray-800">{totalMiembros}</p>
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">✅ Confirmados</p>

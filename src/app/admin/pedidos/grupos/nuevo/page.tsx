@@ -224,7 +224,7 @@ export default function CrearGrupoPage() {
                 <p><strong>Período:</strong> {new Date(fechaInicio).toLocaleDateString('es-AR')} al {new Date(fechaFin).toLocaleDateString('es-AR')}</p>
                 <p><strong>Duración:</strong> {duracion} días</p>
                 <p><strong>Palabra secreta:</strong> <span className="font-mono font-bold">{palabraSecreta}</span></p>
-                <p><strong>Capacidad:</strong> 4 miembros</p>
+                <p><strong>Capacidad:</strong> sin límite de miembros</p>
               </div>
             </div>
           )}
