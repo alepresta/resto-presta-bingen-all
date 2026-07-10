@@ -54,9 +54,27 @@ export async function POST(
       console.error('❌ Plato no encontrado:', plato_id);
       return NextResponse.json({ error: 'Plato no encontrado' }, { status: 404 });
     }
-    
+
+    // Buscar si ya hay una selección para ese casillero (día + comida)
+    const { data: existente } = await supabase
+      .from('grupo_items')
+      .select('id, plato_id, votos')
+      .eq('grupo_id', params.id)
+      .eq('fecha', fecha)
+      .eq('tipo_comida', tipo_comida)
+      .maybeSingle();
+
+    // Acuerdo por votos:
+    // - Si se elige el MISMO plato que ya estaba, el cliente se suma a los "de acuerdo".
+    // - Si se elige un plato DISTINTO (o el casillero estaba vacío), reemplaza y los votos se reinician.
+    let votos: string[] = [cliente_id];
+    if (existente && existente.plato_id === plato_id) {
+      const previos: string[] = Array.isArray(existente.votos) ? existente.votos : [];
+      votos = Array.from(new Set([...previos, cliente_id]));
+    }
+
     console.log('🔄 Intentando upsert en grupo_items...');
-    
+
     // Upsert: insertar o actualizar si ya existe
     const { data: item, error } = await supabase
       .from('grupo_items')
@@ -68,7 +86,7 @@ export async function POST(
         cantidad,
         seleccionado_por: cliente_id,
         modificado_por: cliente_id,
-        votos: [cliente_id]
+        votos,
       }, {
         onConflict: 'grupo_id,fecha,tipo_comida'
       })

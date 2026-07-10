@@ -187,6 +187,8 @@ interface CalendarioPedidosProps {
   items: ItemPedido[];
   platos: Plato[];
   clienteActualId: string;
+  clienteNombre?: string;
+  clienteEmail?: string;
 }
 
 const TIPOS_COMIDA = [
@@ -272,6 +274,8 @@ export default function CalendarioPedidos({
   items: itemsIniciales,
   platos,
   clienteActualId: clienteActualIdProp,
+  clienteNombre = '',
+  clienteEmail = '',
 }: CalendarioPedidosProps) {
   const [items, setItems] = useState<ItemPedido[]>(itemsIniciales);
   const [modalAbierto, setModalAbierto] = useState<{ fecha: string; tipo: string } | null>(null);
@@ -279,6 +283,10 @@ export default function CalendarioPedidos({
   const [mensaje, setMensaje] = useState('');
   const [clienteActualId, setClienteActualId] = useState<string>(clienteActualIdProp);
   const [miembrosState, setMiembrosState] = useState<Miembro[]>(miembros);
+
+  // Unirse al grupo con el código (si el usuario aún no es miembro)
+  const [codigoUnirse, setCodigoUnirse] = useState('');
+  const [uniendo, setUniendo] = useState(false);
 
   // Compartir grupo
   const [shareUrl, setShareUrl] = useState('');
@@ -318,21 +326,9 @@ export default function CalendarioPedidos({
   const [informeTab, setInformeTab] = useState<'cientifico' | 'hildegardiano' | null>(null);
 
   useEffect(() => {
-    const clienteGuardado = localStorage.getItem('cliente_actual');
-    if (clienteGuardado) {
-      try {
-        const cliente = JSON.parse(clienteGuardado);
-        if (cliente.id) {
-          setClienteActualId(cliente.id);
-          console.log('✅ Cliente cargado desde localStorage:', cliente.id);
-        }
-      } catch (e) {
-        console.error('❌ Error leyendo cliente del localStorage:', e);
-      }
-    } else {
-      console.log('⚠️ No hay cliente en localStorage, usando:', clienteActualIdProp);
-    }
-  }, []);
+    // El id autoritativo es el del usuario autenticado (viene por prop desde el servidor).
+    setClienteActualId(clienteActualIdProp);
+  }, [clienteActualIdProp]);
 
   // Limpiar filtros cuando se cierra el modal
   useEffect(() => {
@@ -769,6 +765,49 @@ export default function CalendarioPedidos({
   // Una vez que el cliente confirmó su acuerdo, no puede seguir cambiando el menú.
   const menuBloqueado = !!clienteActual?.confirmado_general;
 
+  // ¿El usuario actual ya es miembro del grupo?
+  const esMiembro = miembrosState.some((m) => m.cliente_id === clienteActualId);
+
+  // Unirse al grupo con el código (palabra secreta)
+  const unirseAlGrupo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUniendo(true);
+    setMensaje('');
+    try {
+      const res = await fetch('/api/grupos/unirse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          palabra_secreta: codigoUnirse.trim().toUpperCase(),
+          cliente_id: clienteActualId,
+          nombre: clienteNombre,
+          email: clienteEmail,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo unir al grupo');
+
+      // Agregarse a la lista de miembros para desbloquear la selección
+      setMiembrosState((prev) => [
+        ...prev,
+        {
+          id: `tmp-${clienteActualId}`,
+          cliente_id: clienteActualId,
+          cliente: { id: clienteActualId, nombre: clienteNombre || 'Vos', email: clienteEmail },
+          rol: 'miembro',
+          confirmado_general: false,
+        },
+      ]);
+      setMensaje('✅ Te uniste al grupo. Ya podés elegir tus platos.');
+      setTimeout(() => setMensaje(''), 4000);
+    } catch (err: any) {
+      setMensaje(`❌ ${err.message}`);
+      setTimeout(() => setMensaje(''), 5000);
+    } finally {
+      setUniendo(false);
+    }
+  };
+
   const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos;
 
   // 🍽️ Producción por día (mismo bloque que ve el admin): platos a preparar,
@@ -941,6 +980,35 @@ export default function CalendarioPedidos({
         })()}
       </div>
 
+      {/* Puerta: si no sos miembro, unite con el código para poder elegir */}
+      {!esMiembro && (
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="bg-white rounded-xl shadow-md border-l-4 border-amber-500 p-5">
+            <h2 className="font-bold text-gray-800 text-lg mb-1">🔑 Uníte a este grupo</h2>
+            <p className="text-sm text-gray-600 mb-3">
+              Para poder elegir tus platos, ingresá el <strong>código</strong> que te compartieron.
+            </p>
+            <form onSubmit={unirseAlGrupo} className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={codigoUnirse}
+                onChange={(e) => setCodigoUnirse(e.target.value.toUpperCase())}
+                placeholder="Código (ej: SZLUUZ)"
+                className="flex-1 min-w-[180px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 font-mono tracking-widest uppercase"
+                maxLength={8}
+              />
+              <button
+                type="submit"
+                disabled={uniendo || codigoUnirse.trim().length < 4}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-2 rounded-lg disabled:opacity-50"
+              >
+                {uniendo ? '⏳ Uniéndote…' : 'Unirme'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="bg-white rounded-xl shadow-md p-4">
           <h2 className="font-bold text-gray-800 mb-3">👥 Miembros del Grupo</h2>
@@ -1012,41 +1080,82 @@ export default function CalendarioPedidos({
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   {TIPOS_COMIDA.map((tipo) => {
                     const item = getItem(fechaStr, tipo.id);
+                    const votos: string[] = Array.isArray(item?.votos) ? (item!.votos as string[]) : [];
+                    const yaVote = votos.includes(clienteActualId);
+                    const puedeInteractuar = esMiembro && !menuBloqueado;
 
                     return (
-                      <button
+                      <div
                         key={tipo.id}
-                        onClick={() => setModalAbierto({ fecha: fechaStr, tipo: tipo.id })}
-                        disabled={cargando || menuBloqueado}
-                        className={`p-3 rounded-lg text-left transition-all ${
-                          menuBloqueado
-                            ? item
-                              ? 'bg-gray-100 border-2 border-gray-300 opacity-60 cursor-not-allowed'
-                              : 'bg-gray-100 border-2 border-dashed border-gray-300 opacity-60 cursor-not-allowed'
+                        className={`p-3 rounded-lg transition-all ${
+                          !esMiembro
+                            ? 'bg-gray-100 border-2 border-dashed border-gray-300 opacity-60'
+                            : menuBloqueado
+                            ? 'bg-gray-100 border-2 border-gray-300 opacity-60'
                             : item
-                            ? 'bg-green-100 border-2 border-green-500 hover:bg-green-200'
-                            : 'bg-gray-50 border-2 border-dashed border-gray-300 hover:border-amber-500 hover:bg-amber-50'
+                            ? 'bg-green-100 border-2 border-green-500'
+                            : 'bg-gray-50 border-2 border-dashed border-gray-300'
                         }`}
                       >
-                        <p className="text-xs font-semibold text-gray-600 mb-1">
-                          {tipo.icono} {tipo.label}
-                        </p>
-                        {item ? (
-                          <>
-                            <p className="text-sm font-bold text-gray-800">
-                              {item.plato?.nombre || 'Cargando...'}
+                        <button
+                          type="button"
+                          onClick={() => puedeInteractuar && setModalAbierto({ fecha: fechaStr, tipo: tipo.id })}
+                          disabled={cargando || !puedeInteractuar}
+                          className={`w-full text-left ${puedeInteractuar ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                        >
+                          <p className="text-xs font-semibold text-gray-600 mb-1">
+                            {tipo.icono} {tipo.label}
+                          </p>
+                          {item ? (
+                            <>
+                              <p className="text-sm font-bold text-gray-800">
+                                {item.plato?.nombre || 'Cargando...'}
+                              </p>
+                              <p className="text-xs text-green-700 font-semibold mt-1">
+                                ${item.plato?.precio.toLocaleString('es-AR')}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                👤 {getNombreCliente(item.seleccionado_por)}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              {!esMiembro ? 'Uníte para elegir' : menuBloqueado ? 'Sin selección' : 'Tocá para elegir'}
                             </p>
-                            <p className="text-xs text-green-700 font-semibold mt-1">
-                              ${item.plato?.precio.toLocaleString('es-AR')}
+                          )}
+                        </button>
+
+                        {item && (
+                          <div className="mt-2 pt-2 border-t border-white/70">
+                            <p className="text-[11px] font-semibold text-gray-700">
+                              👍 {votos.length}/{miembrosState.length} de acuerdo
                             </p>
-                            <p className="text-xs text-gray-600 mt-1">
-                              👤 {getNombreCliente(item.seleccionado_por)}
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-sm text-gray-500">{menuBloqueado ? 'Sin selección' : 'Click para seleccionar'}</p>
+                            {puedeInteractuar && !yaVote && (
+                              <button
+                                type="button"
+                                onClick={() => seleccionarPlato(fechaStr, tipo.id, item.plato_id)}
+                                disabled={cargando}
+                                className="mt-1 w-full text-[11px] font-semibold bg-emerald-600 text-white rounded px-2 py-1 hover:bg-emerald-700 disabled:opacity-50"
+                              >
+                                👍 Estoy de acuerdo
+                              </button>
+                            )}
+                            {yaVote && (
+                              <p className="text-[11px] text-emerald-700 font-semibold mt-1">✓ Estás de acuerdo</p>
+                            )}
+                            {puedeInteractuar && (
+                              <button
+                                type="button"
+                                onClick={() => setModalAbierto({ fecha: fechaStr, tipo: tipo.id })}
+                                disabled={cargando}
+                                className="mt-1 w-full text-[11px] font-semibold text-amber-700 hover:underline"
+                              >
+                                ✏️ Proponer otro plato
+                              </button>
+                            )}
+                          </div>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

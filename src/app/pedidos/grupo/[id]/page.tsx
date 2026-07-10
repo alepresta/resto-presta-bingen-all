@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import CalendarioPedidos from './CalendarioPedidos';
 
@@ -60,8 +61,25 @@ export default async function GrupoPage({ params }: PageProps) {
     .eq('restaurante_id', grupo.restaurante_id)
     .eq('disponible', true);
 
-  // 4. Cliente actual
-  const clienteActualId = grupo.creado_por;
+  // 4. Cliente actual: usuario autenticado (sesión). Si no hay, cae al creador.
+  const authClient = createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  let clienteActualId = grupo.creado_por;
+  let clienteNombre = '';
+  let clienteEmail = '';
+  if (user) {
+    clienteActualId = user.id;
+    clienteEmail = user.email ?? '';
+    const { data: perfil } = await authClient
+      .from('profiles')
+      .select('nombre, apellido')
+      .eq('id', user.id)
+      .single();
+    clienteNombre = [perfil?.nombre, perfil?.apellido].filter(Boolean).join(' ') || user.email || '';
+  }
 
   return (
     <CalendarioPedidos
@@ -73,6 +91,8 @@ export default async function GrupoPage({ params }: PageProps) {
       items={items || []}
       platos={platos || []}
       clienteActualId={clienteActualId}
+      clienteNombre={clienteNombre}
+      clienteEmail={clienteEmail}
     />
   );
 }

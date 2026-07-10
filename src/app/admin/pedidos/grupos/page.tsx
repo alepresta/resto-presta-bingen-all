@@ -2,6 +2,8 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import Link from 'next/link';
 import AccionesGrupo from './AccionesGrupo';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminGruposPage() {
   const supabase = createServerSupabaseClient();
 

@@ -29,20 +29,31 @@ export default function RegistroPage() {
     }
 
     setLoading(true);
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { nombre, telefono } },
-    });
+    const emailNorm = email.trim().toLowerCase();
 
-    if (error) {
-      setError(error.message);
+    // Registro por API (crea el usuario ya confirmado, rol cliente)
+    const res = await fetch('/api/auth/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailNorm, password, nombre, telefono }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || 'Error al registrar');
       setLoading(false);
       return;
     }
 
-    // Con confirmación de email desactivada, ya queda logueado.
+    // Iniciar sesión automáticamente
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithPassword({ email: emailNorm, password });
+
+    if (error) {
+      // Cuenta creada; si el login automático falla, mandamos al login
+      router.push('/auth/login');
+      return;
+    }
+
     router.push('/menu/resto-presta-bingen-all');
     router.refresh();
   };

@@ -12,6 +12,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [verPassword, setVerPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +22,10 @@ function LoginForm() {
     setLoading(true);
 
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
 
     if (error) {
       setError('Email o contraseña incorrectos');
@@ -59,14 +63,25 @@ function LoginForm() {
 
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            placeholder="••••••••"
-          />
+          <div className="relative">
+            <input
+              type={verPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setVerPassword((v) => !v)}
+              className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+              title={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            >
+              {verPassword ? '🙈' : '👁️'}
+            </button>
+          </div>
         </div>
 
         {error && (

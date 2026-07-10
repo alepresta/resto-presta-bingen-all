@@ -34,7 +34,10 @@ function fmtCant(n: number): string {
 }
 
 function fmtFecha(fecha: string): string {
-  return new Date(fecha).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+  // Parseo estable de 'YYYY-MM-DD' como fecha local (evita desfase por zona horaria server/cliente)
+  const [y, m, d] = fecha.split('-').map(Number);
+  const dt = new Date(y, (m || 1) - 1, d || 1);
+  return dt.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 // Conversión de unidades de receta a una base real: g (masa), ml (volumen) o u (unidades).

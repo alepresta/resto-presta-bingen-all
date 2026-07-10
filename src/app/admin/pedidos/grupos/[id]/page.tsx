@@ -5,6 +5,8 @@ import GestionMiembros from './GestionMiembros';
 import AccionesGrupo from '../AccionesGrupo';
 import ProduccionPorDia from './ProduccionPorDia';
 
+export const dynamic = 'force-dynamic';
+
 // Platos a preparar de un ítem = cantidad de personas que lo eligieron (votos),
 // o la cantidad cargada, o 1 como mínimo.
 function platosDeItem(item: any): number {

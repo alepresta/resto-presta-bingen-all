@@ -103,7 +103,7 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
     router.refresh();
   };
 
-  const puedeVerPanel = usuario?.rol === 'admin' || usuario?.rol === 'lector';
+  const puedeVerPanel = usuario?.rol === 'admin';
 
   return (
     <header className="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 text-white shadow-lg">
@@ -165,19 +165,6 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
             </div>
           ) : null}
 
-          <Link
-            href="/inicio"
-            className="hidden sm:inline-block bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
-          >
-            🏠 Pedidos grupales
-          </Link>
-          <Link
-            href="/pedidos"
-            className="hidden sm:inline-block bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
-          >
-            📦 Pedidos
-          </Link>
-
           {!usuario ? (
             <>
               <Link
@@ -208,10 +195,10 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
                 </Link>
               )}
               <Link
-                href="/auth/cambiar-password"
+                href="/auth/perfil"
                 className="bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
               >
-                🔑 Contraseña
+                👤 Perfil
               </Link>
               <button
                 onClick={handleLogout}

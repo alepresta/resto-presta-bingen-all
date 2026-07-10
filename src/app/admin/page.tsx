@@ -106,6 +106,17 @@ export default async function AdminDashboardPage() {
             <p className="text-sm text-gray-600 mt-1">Gestionar órdenes</p>
           </a>
 
+          {session.rol === 'admin' && (
+            <a
+              href="/admin/usuarios"
+              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-pink-500"
+            >
+              <div className="text-3xl mb-2">👤</div>
+              <h3 className="font-bold text-gray-800">Gestión de Usuarios</h3>
+              <p className="text-sm text-gray-600 mt-1">Crear, editar, roles y contraseñas</p>
+            </a>
+          )}
+
           <a
             href="/admin/configuracion"
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all border-2 border-transparent hover:border-gray-500"
