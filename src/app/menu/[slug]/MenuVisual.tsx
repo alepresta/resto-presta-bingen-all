@@ -3,6 +3,13 @@
 import { useState } from 'react';
 import type { AnalisisPlato, ResumenLinea } from '@/lib/analisis-plato';
 
+// Convierte un paso de receta (string u objeto {descripcion/texto/paso/...}) en texto legible
+function textoDePaso(p: any): string {
+  if (typeof p === 'string') return p;
+  if (!p || typeof p !== 'object') return String(p ?? '');
+  return p.descripcion || p.texto || p.paso_texto || (typeof p.paso === 'string' ? p.paso : '') || '';
+}
+
 interface Ingrediente {
   nombre: string;
   unidad: string;
@@ -577,7 +584,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                       <span className="flex-shrink-0 w-8 h-8 bg-amber-600 text-white rounded-full flex items-center justify-center font-bold">
                         {i + 1}
                       </span>
-                      <p className="text-gray-700 pt-1">{paso}</p>
+                      <p className="text-gray-700 pt-1">{textoDePaso(paso)}</p>
                     </li>
                   ))}
                 </ol>

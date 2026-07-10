@@ -20,6 +20,19 @@ function formatFechaLocal(fecha: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+// Convierte un paso de receta (string u objeto {descripcion/texto/paso/...}) en texto legible
+function textoDePaso(p: any): string {
+  if (typeof p === 'string') return p;
+  if (!p || typeof p !== 'object') return String(p ?? '');
+  return (
+    p.descripcion ||
+    p.texto ||
+    p.paso_texto ||
+    (typeof p.paso === 'string' ? p.paso : '') ||
+    ''
+  );
+}
+
 // Conversión a gramos/ml para el cálculo nutricional
 function normalizarAGramos(cantidad: number, unidad: string): number {
   const u = (unidad || '').toLowerCase();
@@ -846,7 +859,7 @@ export default function CalendarioPedidos({
 
     const normalizarPasos = (pasos: any): string[] =>
       (Array.isArray(pasos) ? pasos : [])
-        .map((p: any) => (typeof p === 'string' ? p : p?.descripcion || p?.texto || p?.paso_texto || String(p ?? '')))
+        .map((p: any) => textoDePaso(p))
         .filter((s: string) => s && s.trim() !== '');
 
     const fechasStr = [...new Set(items.map((i) => i.fecha))].sort();
@@ -2017,7 +2030,7 @@ export default function CalendarioPedidos({
                                 <p className="text-xs font-semibold text-gray-700 mb-1">Preparación</p>
                                 <ol className="text-xs text-gray-700 list-decimal list-inside space-y-0.5">
                                   {plato.receta.pasos.map((paso, i) => (
-                                    <li key={i}>{paso}</li>
+                                    <li key={i}>{textoDePaso(paso)}</li>
                                   ))}
                                 </ol>
                               </>
