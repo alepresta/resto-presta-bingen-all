@@ -14,18 +14,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar grupo por palabra secreta
+    // Buscar grupo por palabra secreta (cualquier estado salvo cancelado)
     const { data: grupo, error: errorGrupo } = await supabase
       .from('grupos_pedido')
       .select('*')
       .eq('palabra_secreta', palabra_secreta.toUpperCase())
-      .eq('estado', 'armando')
       .single();
 
     if (errorGrupo || !grupo) {
       return NextResponse.json(
-        { error: 'Palabra secreta no válida o grupo ya no está disponible' },
+        { error: 'Palabra secreta no válida' },
         { status: 404 }
+      );
+    }
+
+    if (grupo.estado === 'cancelado') {
+      return NextResponse.json(
+        { error: 'Este grupo fue cancelado' },
+        { status: 400 }
       );
     }
 
@@ -77,6 +83,14 @@ export async function POST(request: NextRequest) {
         );
       }
       throw errorMiembro;
+    }
+
+    // Si el grupo estaba confirmado, vuelve a "armando" (el nuevo miembro aún no acordó)
+    if (grupo.estado === 'confirmado') {
+      await supabase
+        .from('grupos_pedido')
+        .update({ estado: 'armando' })
+        .eq('id', grupo.id);
     }
 
     return NextResponse.json({

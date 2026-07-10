@@ -933,6 +933,52 @@ export default function CalendarioPedidos({
     });
   }, [items, platos]);
 
+  // Si el usuario NO es miembro, sólo puede ver la tarjeta para unirse con el código.
+  if (!esMiembro) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50">
+        <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            <p className="text-teal-100 text-xs font-semibold uppercase tracking-wide">🔑 Grupo de pedido</p>
+            <h1 className="text-2xl font-bold font-serif">Uníte para participar</h1>
+          </div>
+        </header>
+
+        {mensaje && (
+          <div className="max-w-6xl mx-auto px-4 py-2">
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg">{mensaje}</div>
+          </div>
+        )}
+
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="bg-white rounded-xl shadow-md border-l-4 border-amber-500 p-5">
+            <h2 className="font-bold text-gray-800 text-lg mb-1">🔑 Uníte a este grupo</h2>
+            <p className="text-sm text-gray-600 mb-3">
+              Para poder elegir tus platos, ingresá el <strong>código</strong> que te compartieron.
+            </p>
+            <form onSubmit={unirseAlGrupo} className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={codigoUnirse}
+                onChange={(e) => setCodigoUnirse(e.target.value.toUpperCase())}
+                placeholder="Código (ej: SZLUUZ)"
+                className="flex-1 min-w-[180px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 font-mono tracking-widest uppercase"
+                maxLength={8}
+              />
+              <button
+                type="submit"
+                disabled={uniendo || codigoUnirse.trim().length < 4}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-2 rounded-lg disabled:opacity-50"
+              >
+                {uniendo ? '⏳ Uniéndote…' : 'Unirme'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50">
       <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
@@ -979,8 +1025,12 @@ export default function CalendarioPedidos({
             `🔗 O entrá directo con este enlace:\n${shareUrl}`;
 
           return (
-            <div className="bg-white rounded-xl shadow-md border-l-4 border-emerald-500 p-4">
-              <h2 className="font-bold text-gray-800 mb-1">🔗 Invitá a tu grupo</h2>
+            <details className="bg-white rounded-xl shadow-md border-l-4 border-emerald-500 group">
+              <summary className="cursor-pointer p-4 font-bold text-gray-800 list-none flex items-center justify-between [&::-webkit-details-marker]:hidden">
+                <span>🔗 Invitá a tu grupo</span>
+                <span className="text-gray-400 text-sm transition-transform group-open:rotate-180">▼</span>
+              </summary>
+              <div className="px-4 pb-4">
               <p className="text-sm text-gray-600 mb-3">
                 <span className="font-semibold">📅 Plan:</span> {rangoFechas}
                 {' · '}
@@ -1011,55 +1061,31 @@ export default function CalendarioPedidos({
               >
                 {copiado === 'url' ? '✅ Datos copiados' : '📤 Compartir (copiar datos)'}
               </button>
-            </div>
+              </div>
+            </details>
           );
         })()}
       </div>
 
-      {/* Puerta: si no sos miembro, unite con el código para poder elegir */}
-      {!esMiembro && (
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="bg-white rounded-xl shadow-md border-l-4 border-amber-500 p-5">
-            <h2 className="font-bold text-gray-800 text-lg mb-1">🔑 Uníte a este grupo</h2>
-            <p className="text-sm text-gray-600 mb-3">
-              Para poder elegir tus platos, ingresá el <strong>código</strong> que te compartieron.
-            </p>
-            <form onSubmit={unirseAlGrupo} className="flex flex-wrap items-center gap-2">
-              <input
-                type="text"
-                value={codigoUnirse}
-                onChange={(e) => setCodigoUnirse(e.target.value.toUpperCase())}
-                placeholder="Código (ej: SZLUUZ)"
-                className="flex-1 min-w-[180px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 font-mono tracking-widest uppercase"
-                maxLength={8}
-              />
-              <button
-                type="submit"
-                disabled={uniendo || codigoUnirse.trim().length < 4}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-2 rounded-lg disabled:opacity-50"
-              >
-                {uniendo ? '⏳ Uniéndote…' : 'Unirme'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
       <div className="max-w-6xl mx-auto px-4 py-4">
-        <div className="bg-white rounded-xl shadow-md p-4">
-          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <h2 className="font-bold text-gray-800">👥 Miembros del Grupo</h2>
+        <details className="bg-white rounded-xl shadow-md group">
+          <summary className="cursor-pointer p-4 font-bold text-gray-800 list-none flex items-center justify-between [&::-webkit-details-marker]:hidden">
+            <span>👥 Miembros del Grupo ({miembrosState.length})</span>
+            <span className="text-gray-400 text-sm transition-transform group-open:rotate-180">▼</span>
+          </summary>
+          <div className="px-4 pb-4">
             {esMiembro && (
-              <button
-                onClick={salirDelGrupo}
-                disabled={cargando}
-                className="text-xs font-semibold text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-lg px-3 py-1.5 disabled:opacity-50"
-              >
-                🚪 Abandonar grupo
-              </button>
+              <div className="flex justify-end mb-3">
+                <button
+                  onClick={salirDelGrupo}
+                  disabled={cargando}
+                  className="text-xs font-semibold text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-lg px-3 py-1.5 disabled:opacity-50"
+                >
+                  🚪 Abandonar grupo
+                </button>
+              </div>
             )}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {miembrosState.map((miembro) => (
               <div
                 key={miembro.id}
@@ -1086,7 +1112,8 @@ export default function CalendarioPedidos({
               </div>
             ))}
           </div>
-        </div>
+          </div>
+        </details>
       </div>
 
       {mensaje && (
