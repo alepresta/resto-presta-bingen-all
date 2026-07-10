@@ -1,41 +1,34 @@
-# 📖 Documentación Técnica – Base de Datos Hildegardiana
+# 📚 Documentación Técnica – Base de Datos Hildegardiana
 
-> Sistema de recetas y pedidos basado en la medicina de Santa Hildegarda de Bingen.
-> Backend: **PostgreSQL (Supabase)** con uso de **JSONB** y arrays para campos flexibles.
-
-> [!NOTE]
-> Este documento se construyó a partir de:
-> - El mapa de relaciones provisto por el equipo.
-> - Los tipos TypeScript en [src/types/index.ts](../src/types/index.ts).
-> - Las llamadas `.from(...)` y `.insert(...)` reales del código (API routes y `lib/`).
-> - La migración [supabase/migrations/0001_auth_profiles.sql](../supabase/migrations/0001_auth_profiles.sql).
+> Sistema de pedidos colaborativos con recetas basadas en la medicina de
+> **Santa Hildegarda de Bingen**. Backend **PostgreSQL (Supabase)** con `JSONB`
+> y arrays para campos flexibles.
 >
-> Los **tipos exactos, `NOT NULL`, `DEFAULT` y reglas `ON DELETE/UPDATE`** deben
-> confirmarse con la salida de las consultas a `information_schema`
-> (ver [§7 Consultas de introspección](#7-consultas-de-introspección)).
-> Las columnas marcadas con `≈` son inferidas del código y pendientes de verificación.
+> Documento generado a partir de la introspección real del esquema
+> (`information_schema` + `pg_indexes`). Datos verificados contra la base productiva.
 
 ---
 
 ## 1. Resumen ejecutivo
 
-| Métrica | Valor |
+| Aspecto | Detalle |
 |---|---|
-| Motor | PostgreSQL 15 (Supabase) |
-| Tablas de negocio | ~19 detectadas en código (21 según diseño) |
-| Ingredientes | ~398 (con perfil nutricional + hildegardiano completo) |
-| Recetas | ~113 |
-| Seguridad | Row Level Security (RLS) sobre `profiles`; resto vía `service_role` en API |
-| Tipos especiales | `JSONB` (recetas, votos, tema), arrays (`text[]`, `uuid[]`) |
+| **Sistema** | Plataforma de pedidos colaborativos con recetas hildegardianas |
+| **Motor BD** | PostgreSQL con JSONB |
+| **Tablas** | 21 tablas |
+| **Relaciones FK** | 27 foreign keys |
+| **Ingredientes** | ~398 (datos nutricionales + hildegardianos) |
+| **Recetas** | 113 (normalizadas a 1 porción) |
+| **Módulos** | 7 módulos funcionales |
 
-**Dominios principales**
-
-- 🍽️ **Menú & recetas**: `restaurantes`, `categorias_plato`, `dias_semana`, `platos`, `recetas`, `receta_ingredientes`, `ingredientes`.
-- 🛒 **Pedidos individuales**: `clientes`, `pedidos`, `pedido_items`.
-- 👥 **Pedidos grupales**: `grupos_pedido`, `grupo_miembros`, `grupo_items` (+ `grupo_votos`, `grupo_confirmaciones`, `grupo_notificaciones` según diseño).
-- 🔐 **Auth**: `profiles` (1‑a‑1 con `auth.users`).
-- 📅 **Capacidad operativa**: `capacidad_diaria`.
-- 🔔 **Notificaciones**: `notificaciones` (según diseño).
+### Módulos del sistema
+1. **Autenticación y administración** — `admin_users`, `profiles`
+2. **Clientes** — `clientes`
+3. **Configuración** — `configuracion`, `dias_semana`, `capacidad_diaria`
+4. **Restaurante y platos** — `restaurantes`, `categorias_plato`, `platos`
+5. **Recetas e ingredientes** ⭐ — `ingredientes`, `recetas`, `receta_ingredientes`
+6. **Pedidos** — `pedidos`, `pedido_items`, `notificaciones`
+7. **Grupos colaborativos** — `grupos_pedido`, `grupo_miembros`, `grupo_items`, `grupo_votos`, `grupo_confirmaciones`, `grupo_notificaciones`
 
 ---
 
@@ -43,419 +36,630 @@
 
 ```mermaid
 erDiagram
-    restaurantes   ||--o{ platos            : "tiene"
-    categorias_plato ||--o{ platos          : "clasifica"
-    dias_semana    ||--o{ platos            : "programa"
-    platos         ||--o| recetas           : "detalla"
-    recetas        ||--o{ receta_ingredientes : "usa"
-    ingredientes   ||--o{ receta_ingredientes : "compone"
-
-    clientes       ||--o{ pedidos           : "realiza"
-    pedidos        ||--o{ pedido_items       : "contiene"
-    platos         ||--o{ pedido_items       : "referencia"
-    pedidos        ||--o{ notificaciones     : "genera"
-
-    clientes       ||--o| profiles          : "auth (user_id)"
-
-    clientes       ||--o{ grupos_pedido      : "crea (creado_por)"
-    restaurantes   ||--o{ grupos_pedido      : "asocia"
-    grupos_pedido  ||--o{ grupo_miembros     : "agrupa"
-    clientes       ||--o{ grupo_miembros     : "participa"
-    grupos_pedido  ||--o{ grupo_items        : "planifica"
-    platos         ||--o{ grupo_items        : "referencia"
-    grupos_pedido  ||--o{ grupo_votos        : "vota"
-    grupos_pedido  ||--o{ grupo_confirmaciones : "confirma"
-    grupos_pedido  ||--o{ grupo_notificaciones : "notifica"
-
-    capacidad_diaria {
-        date fecha
-        int  capacidad_maxima
+    admin_users {
+        uuid id PK
+        text email UK
+        text password_hash
+        text nombre
+        text rol
+        boolean activo
     }
+    profiles {
+        uuid id PK "FK auth.users"
+    }
+    clientes {
+        uuid id PK
+        text nombre
+        text email UK
+        text telefono
+        text direccion
+        text notas
+        timestamptz created_at
+    }
+    configuracion {
+        integer id PK
+        integer dias_minimos_anticipacion
+        integer capacidad_maxima_diaria
+        time horario_pedidos_inicio
+        time horario_pedidos_fin
+        integer_arr dias_entrega
+        numeric costo_envio
+        boolean activo
+    }
+    dias_semana {
+        integer id PK
+        text nombre
+        text tematica
+        text descripcion
+    }
+    capacidad_diaria {
+        uuid id PK
+        date fecha UK
+        integer pedidos_confirmados
+        integer pedidos_pendientes
+        integer capacidad_maxima
+        boolean disponible
+    }
+    restaurantes {
+        uuid id PK
+        text nombre
+        text direccion
+        text telefono
+        text email
+        jsonb horario
+        boolean activo
+    }
+    categorias_plato {
+        integer id PK
+        text nombre
+        text descripcion
+        text icono
+        integer orden
+        boolean disponible_todos_dias
+    }
+    platos {
+        uuid id PK
+        text nombre
+        text descripcion
+        integer categoria_id FK
+        integer dia_semana_id FK
+        uuid restaurante_id FK
+        numeric precio
+        text imagen_url
+        boolean disponible
+    }
+    ingredientes {
+        uuid id PK
+        text nombre
+        text categoria
+        numeric calorias
+        numeric proteinas_g
+        numeric carbohidratos_g
+        numeric grasas_g
+        text temperamento
+        integer nivel_subtilitat
+        boolean es_veneno_hildegardiano
+        boolean es_base_alegria
+        text propiedades_hildegardianas
+    }
+    recetas {
+        uuid id PK
+        uuid plato_id FK
+        integer porciones
+        integer tiempo_min
+        text dificultad
+        jsonb ingredientes
+        jsonb pasos
+        text notas_hildegardianas
+    }
+    receta_ingredientes {
+        uuid id PK
+        uuid receta_id FK
+        uuid ingrediente_id FK
+        numeric cantidad
+        text unidad
+        integer orden
+    }
+    pedidos {
+        uuid id PK
+        uuid cliente_id FK
+        uuid restaurante_id FK
+        date fecha_pedido
+        text estado
+        numeric total
+        text direccion_entrega
+        timestamptz created_at
+    }
+    pedido_items {
+        uuid id PK
+        uuid pedido_id FK
+        uuid plato_id FK
+        integer cantidad
+        numeric precio_unitario
+        text notas
+    }
+    notificaciones {
+        uuid id PK
+        uuid pedido_id FK
+        text tipo
+        text mensaje
+        boolean leido
+        timestamptz created_at
+    }
+    grupos_pedido {
+        uuid id PK
+        varchar palabra_secreta
+        uuid restaurante_id FK
+        date fecha_inicio
+        date fecha_fin
+        text estado
+        uuid creado_por FK
+        uuid pedido_final_id
+    }
+    grupo_miembros {
+        uuid id PK
+        uuid grupo_id FK
+        uuid cliente_id FK
+        text rol
+        boolean confirmado_general
+        timestamptz joined_at
+    }
+    grupo_items {
+        uuid id PK
+        uuid grupo_id FK
+        date fecha
+        text tipo_comida
+        uuid plato_id FK
+        integer cantidad
+        uuid seleccionado_por FK
+        uuid modificado_por FK
+        uuid_arr votos
+    }
+    grupo_votos {
+        uuid id PK
+        uuid grupo_id FK
+        uuid cliente_id FK
+        date fecha
+        text tipo_comida
+        uuid plato_id FK
+    }
+    grupo_confirmaciones {
+        uuid id PK
+        uuid grupo_id FK
+        uuid cliente_id FK
+        date fecha
+        boolean confirmado
+    }
+    grupo_notificaciones {
+        uuid id PK
+        uuid grupo_id FK
+        uuid cliente_id FK
+        text tipo
+        text mensaje
+        boolean leido
+    }
+
+    profiles ||--|| admin_users : "1:1 auth"
+    grupos_pedido }o--|| restaurantes : "pertenece a"
+    grupos_pedido }o--|| clientes : "creado por"
+    grupo_miembros }o--|| grupos_pedido : "miembro de"
+    grupo_miembros }o--|| clientes : "cliente"
+    grupo_items }o--|| grupos_pedido : "item de"
+    grupo_items }o--|| platos : "plato elegido"
+    grupo_items }o--|| clientes : "seleccionado por"
+    grupo_votos }o--|| grupos_pedido : "voto en"
+    grupo_votos }o--|| clientes : "votante"
+    grupo_votos }o--|| platos : "plato votado"
+    grupo_confirmaciones }o--|| grupos_pedido : "confirmación de"
+    grupo_confirmaciones }o--|| clientes : "cliente"
+    grupo_notificaciones }o--|| grupos_pedido : "notificación de"
+    grupo_notificaciones }o--|| clientes : "para cliente"
+    pedidos }o--|| clientes : "hecho por"
+    pedidos }o--|| restaurantes : "de restaurante"
+    pedido_items }o--|| pedidos : "item de"
+    pedido_items }o--|| platos : "plato"
+    notificaciones }o--|| pedidos : "de pedido"
+    platos }o--|| categorias_plato : "categoría"
+    platos }o--|| dias_semana : "día"
+    platos }o--|| restaurantes : "restaurante"
+    recetas }o--|| platos : "receta de"
+    receta_ingredientes }o--|| recetas : "ingrediente de"
+    receta_ingredientes }o--|| ingredientes : "ingrediente"
 ```
 
-**Mapa de relaciones (fuente: equipo)**
-
-```text
-clientes ←── pedidos ←── pedido_items ──→ platos
-    │            │
-    │            └──→ notificaciones
-    │
-    ├──→ grupos_pedido ←── grupo_miembros
-    │              │
-    │              ├──→ grupo_items ──→ platos
-    │              ├──→ grupo_votos ──→ platos
-    │              ├──→ grupo_confirmaciones
-    │              └──→ grupo_notificaciones
-    │
-    └──→ profiles (auth)
-
-platos ←── recetas ←── receta_ingredientes ──→ ingredientes
-   │
-   ├──→ categorias_plato
-   ├──→ dias_semana
-   └──→ restaurantes
-```
-
 ---
 
-## 3. Módulos funcionales
+## 3. Módulo 1 · Autenticación y administración
 
-### 3.1 Menú & Recetas ⭐
-Núcleo del sistema. Un `restaurante` publica `platos`, cada plato pertenece a una
-`categoria_plato` y opcionalmente a un `dia_semana`. Cada plato puede tener una
-`receta`, que se descompone en `receta_ingredientes` apuntando al catálogo maestro
-`ingredientes` (con perfil nutricional y hildegardiano). El análisis nutricional y
-hildegardiano se calcula **en tiempo real** en [src/lib/analisis-plato.ts](../src/lib/analisis-plato.ts)
-y [src/lib/hildegarda.ts](../src/lib/hildegarda.ts).
+### `admin_users` (8 columnas)
+Usuarios administradores del sistema (no clientes).
 
-### 3.2 Pedidos individuales
-`clientes` → `pedidos` → `pedido_items` (cada ítem referencia un `plato`).
-Lógica en [src/lib/pedidos.ts](../src/lib/pedidos.ts). Estados del pedido:
-`pendiente_pago → confirmado → en_preparacion → listo → entregado` (o `cancelado`).
-
-### 3.3 Pedidos grupales
-Un cliente crea un `grupo_pedido` con una **palabra secreta** única; otros clientes
-se unen como `grupo_miembros` (máx. 4). Los ítems planificados por fecha/comida se
-guardan en `grupo_items` (con `votos` como array de clientes). Diseño contempla
-`grupo_votos`, `grupo_confirmaciones` y `grupo_notificaciones`.
-Rutas en [src/app/api/grupos/](../src/app/api/grupos/).
-
-### 3.4 Autenticación & Roles
-`profiles` (1‑a‑1 con `auth.users`). Roles: `admin` | `lector`. El **primer usuario**
-registrado queda como `admin`. RLS activo; un trigger evita la auto‑promoción de rol.
-
-### 3.5 Capacidad operativa
-`capacidad_diaria` controla cupos por fecha (`capacidad_maxima`,
-`pedidos_confirmados`, `pedidos_pendientes`). Ver
-[src/lib/validaciones.ts](../src/lib/validaciones.ts).
-
-### 3.6 Notificaciones (según diseño)
-`notificaciones` y `grupo_notificaciones` — pendientes de confirmar en el esquema real.
-
----
-
-## 4. Diccionario de datos
-
-> `≈` = inferido del código, pendiente de verificar con `information_schema`.
-
-### 4.1 `restaurantes`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| nombre | text | |
-| slug | text | único, usado en `/menu/[slug]` |
-| descripcion | text | |
-| logo | text | URL |
-| tagline | text | |
-| tema | jsonb | colores/branding |
-| horario_apertura | time/text | |
-| horario_cierre | time/text | |
-| telefono | text | |
-| direccion | text | |
-| instagram | text | |
-| email | text | |
-
-### 4.2 `categorias_plato`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | int PK | |
-| nombre | text | |
-| descripcion | text | |
-| icono | text | emoji |
-| orden | int | orden de visualización |
-| disponible_todos_dias | bool | |
-| horario_inicio | time/text | |
-| horario_fin | time/text | |
-
-### 4.3 `dias_semana`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | int PK | 1=lunes … 7=domingo |
-| nombre | text | |
-
-### 4.4 `platos`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| restaurante_id | uuid FK → restaurantes | |
-| categoria_id | int FK → categorias_plato | |
-| dia_semana_id | int FK → dias_semana | nullable |
-| nombre | text | |
-| descripcion | text | |
-| precio | numeric | |
-| imagen | text | URL |
-| alergenos | text[] | |
-| tags | text[] | |
-| disponible | bool | |
-| orden | int | |
-| es_estrella | bool | |
-| disponible_todos_dias | bool | |
-| propiedades_hildegardianas | text | |
-
-### 4.5 `recetas`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| plato_id | uuid FK → platos | |
-| ingredientes | jsonb | `[{nombre, cantidad, unidad}]` (legacy/desnormalizado) |
-| pasos | jsonb / text[] | |
-| tiempo_min | int | |
-| porciones | int | |
-| dificultad | text | `fácil` \| `media` \| `difícil` |
-| notas_hildegardianas | text | |
-
-### 4.6 `receta_ingredientes`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| receta_id | uuid FK → recetas | |
-| ingrediente_id | uuid FK → ingredientes | |
-| cantidad | numeric | |
-| unidad | text | |
-
-### 4.7 `ingredientes` (catálogo maestro)
-**Identidad y clasificación**
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| nombre | text | |
-| categoria | text | filtro de catálogo |
-| activo | bool | soft‑delete |
-
-**Perfil nutricional (por 100 g/ml)**
-`calorias`, `proteinas_g`, `carbohidratos_g`, `grasas_g`, `grasas_saturadas_g`,
-`fibra_g`, `azucar_g` — todos `numeric ≈`.
-
-**Minerales (mg)**: `sodio_mg`, `calcio_mg`, `hierro_mg`, `magnesio_mg`,
-`potasio_mg`, `zinc_mg`, `fosforo_mg`.
-
-**Vitaminas**: `vitamina_a_mcg`, `vitamina_c_mg`, `vitamina_d_mcg`,
-`vitamina_e_mg`, `vitamina_k_mcg`, `vitamina_b1_mg`, `vitamina_b2_mg`,
-`vitamina_b3_mg`, `vitamina_b5_mg`, `vitamina_b6_mg`, `vitamina_b9_mcg`,
-`vitamina_b12_mcg`.
-
-**Atributos hildegardianos**
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| es_veneno_hildegardiano | bool | ingrediente "veneno" según Hildegarda |
-| es_base_alegria | bool | uno de los pilares de alegría |
-| nivel_subtilitat | int/text | *subtilitas* (sutileza) |
-| requiere_coccion | bool | |
-| temperamento | text | caliente/frío/seco/húmedo |
-| propiedades_hildegardianas | text | |
-
-### 4.8 `clientes`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| user_id | uuid FK → auth.users | nullable |
-| nombre | text | |
-| email | text | |
-| telefono | text | |
-| direccion | text | |
-| barrio | text | |
-| ciudad | text | |
-| notas | text | |
-| es_vip | bool | |
-| total_pedidos | int | |
-
-### 4.9 `pedidos`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| cliente_id | uuid FK → clientes | |
-| restaurante_id | uuid FK → restaurantes | |
-| fecha_inicio / fecha_fin | date | plan de días |
-| fecha_entrega | date | |
-| horario_entrega | text | |
-| tipo_entrega | text | `domicilio` \| `retiro` |
-| direccion_entrega | text | nullable |
-| estado | text | ver §3.2 |
-| subtotal / costo_envio / descuento / total | numeric | |
-| metodo_pago | text | `transferencia` \| `mercadopago` \| `efectivo` |
-| pago_confirmado | bool | |
-| pago_referencia | text | |
-| notas_cliente / notas_admin | text | |
-| modificado_admin | bool | |
-| fecha_modificacion | timestamptz | |
-| motivo_modificacion | text | |
-| created_at | timestamptz | default now() |
-
-### 4.10 `pedido_items`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| pedido_id | uuid FK → pedidos | |
-| plato_id | uuid FK → platos | |
-| fecha | date | |
-| tipo_comida | text | |
-| cantidad | int | |
-| precio_unitario | numeric | |
-| subtotal | numeric | `cantidad × precio_unitario` |
-| notas | text | |
-
-### 4.11 `profiles` (✅ confirmado por migración)
-| Columna | Tipo | Constraint |
-|---|---|---|
-| id | uuid | PK, FK → auth.users(id) ON DELETE CASCADE |
-| email | text | |
-| nombre | text | |
-| telefono | text | (añadido en 0002) |
-| rol | text | NOT NULL, DEFAULT `'lector'`, CHECK IN (`admin`,`lector`) |
-| created_at | timestamptz | NOT NULL, DEFAULT now() |
-
-### 4.12 `grupos_pedido`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| palabra_secreta | text | única, generada 6 chars alfanuméricos |
-| restaurante_id | uuid FK → restaurantes | |
-| creado_por | uuid FK → clientes | (`grupos_pedido_creado_por_fkey`) |
-| fecha_inicio / fecha_fin | date | máx. 30 días, mín. 10 días de anticipación |
-| estado | text | `armando`, … |
-| created_at | timestamptz | |
-
-### 4.13 `grupo_miembros`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| grupo_id | uuid FK → grupos_pedido | |
-| cliente_id | uuid FK → clientes | |
-| rol | text | `creador` \| `miembro` (máx. 4 por grupo) |
-| confirmado_general | bool | default false |
-
-### 4.14 `grupo_items`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| grupo_id | uuid FK → grupos_pedido | |
-| fecha | date | |
-| tipo_comida | text | |
-| plato_id | uuid FK → platos | |
-| cantidad | int | |
-| seleccionado_por | uuid FK → clientes | |
-| modificado_por | uuid FK → clientes | |
-| votos | uuid[] / jsonb | array de cliente_id |
-| — | — | **UNIQUE(grupo_id, fecha, tipo_comida)** |
-
-### 4.15 `capacidad_diaria`
-| Columna | Tipo ≈ | Notas |
-|---|---|---|
-| id | uuid PK | |
-| fecha | date | única |
-| capacidad_maxima | int | default 50 |
-| pedidos_confirmados | int | |
-| pedidos_pendientes | int | |
-
-### 4.16 Tablas del diseño pendientes de confirmar
-`notificaciones`, `grupo_votos`, `grupo_confirmaciones`, `grupo_notificaciones`.
-No aparecen en el código actual; confirmar con las consultas de introspección.
-
----
-
-## 5. Mapa de relaciones (Foreign Keys)
-
-| Tabla | Columna | Referencia | ON DELETE ≈ | ON UPDATE ≈ |
+| Columna | Tipo | Nullable | Default | Descripción |
 |---|---|---|---|---|
-| profiles | id | auth.users(id) | **CASCADE** ✅ | NO ACTION |
-| platos | restaurante_id | restaurantes(id) | RESTRICT | NO ACTION |
-| platos | categoria_id | categorias_plato(id) | RESTRICT | NO ACTION |
-| platos | dia_semana_id | dias_semana(id) | SET NULL | NO ACTION |
-| recetas | plato_id | platos(id) | CASCADE | NO ACTION |
-| receta_ingredientes | receta_id | recetas(id) | CASCADE | NO ACTION |
-| receta_ingredientes | ingrediente_id | ingredientes(id) | RESTRICT | NO ACTION |
-| clientes | user_id | auth.users(id) | SET NULL | NO ACTION |
-| pedidos | cliente_id | clientes(id) | RESTRICT | NO ACTION |
-| pedidos | restaurante_id | restaurantes(id) | RESTRICT | NO ACTION |
-| pedido_items | pedido_id | pedidos(id) | CASCADE | NO ACTION |
-| pedido_items | plato_id | platos(id) | RESTRICT | NO ACTION |
-| grupos_pedido | creado_por | clientes(id) | RESTRICT | NO ACTION |
-| grupos_pedido | restaurante_id | restaurantes(id) | RESTRICT | NO ACTION |
-| grupo_miembros | grupo_id | grupos_pedido(id) | CASCADE | NO ACTION |
-| grupo_miembros | cliente_id | clientes(id) | CASCADE | NO ACTION |
-| grupo_items | grupo_id | grupos_pedido(id) | CASCADE | NO ACTION |
-| grupo_items | plato_id | platos(id) | RESTRICT | NO ACTION |
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `email` | text | NO | — | Email único |
+| `password_hash` | text | NO | — | Hash bcrypt |
+| `nombre` | text | NO | — | Nombre completo |
+| `rol` | text | YES | `'admin'` | admin / superadmin |
+| `activo` | boolean | YES | `true` | Estado activo |
+| `ultimo_login` | timestamptz | YES | — | Último acceso |
+| `created_at` | timestamptz | YES | `now()` | Fecha creación |
 
-> Solo `profiles.id → auth.users` está **confirmado** por migración. El resto de las
-> reglas `ON DELETE/UPDATE` son propuestas coherentes con el uso; **verificar** con §7.
+**Relaciones**: sin FK directa; se vincula con `profiles` mediante `id`.
+
+### `profiles` (6 columnas)
+Perfiles de usuario vinculados a Supabase Auth.
+
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | — | PK, FK → `auth.users` |
+| `email` | text | YES | — | Email |
+| `nombre` | text | YES | — | Nombre |
+| `telefono` | text | YES | — | Teléfono |
+| `rol` | text | NO | `'lector'` | admin / lector (CHECK) |
+| `created_at` | timestamptz | NO | `now()` | Fecha creación |
+
+**Relaciones**: FK → `auth.users(id)` **ON DELETE CASCADE**.
 
 ---
 
-## 6. Índices y performance
+## 4. Módulo 2 · Clientes
 
-**Índices confirmados / implícitos**
-- PK de cada tabla (índice B‑tree automático).
-- `profiles.id` (PK + FK a `auth.users`).
+### `clientes` (7 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `nombre` | text | NO | — | Nombre completo |
+| `email` | text | NO | — | Email único |
+| `telefono` | text | YES | — | Teléfono |
+| `direccion` | text | YES | — | Dirección de entrega |
+| `notas` | text | YES | — | Preferencias / alergias |
+| `created_at` | timestamptz | YES | `now()` | Fecha registro |
 
-**Índices recomendados** (según patrones de consulta del código)
+**Referenciado por**: `pedidos`, `grupos_pedido`, `grupo_miembros`, `grupo_items`, `grupo_votos`, `grupo_confirmaciones`, `grupo_notificaciones`.
 
-| Índice sugerido | Motivo (consulta en código) |
-|---|---|
-| `platos(restaurante_id, categoria_id, orden)` | Listado de menú por restaurante ordenado |
-| `platos(disponible)` | Filtro `.eq('disponible', true)` |
-| `recetas(plato_id)` | Join receta ↔ plato |
-| `receta_ingredientes(receta_id)` | Agrupar ingredientes por receta (`.in('receta_id', …)`) |
-| `receta_ingredientes(ingrediente_id)` | Reverse lookup / lista de compras |
-| `ingredientes(activo, nombre)` | Catálogo filtrado y ordenado |
-| `ingredientes(categoria)` | Filtro por categoría |
-| `pedidos(cliente_id, created_at DESC)` | Historial del cliente |
-| `pedido_items(pedido_id)` | Ítems de un pedido |
-| `grupos_pedido(estado, created_at DESC)` | Listado de grupos "armando" |
-| `UNIQUE grupos_pedido(palabra_secreta)` | Búsqueda por palabra secreta / unicidad |
-| `grupo_miembros(grupo_id)` | Conteo/listado de miembros |
-| `UNIQUE grupo_items(grupo_id, fecha, tipo_comida)` | Upsert `onConflict` en selección grupal |
-| `UNIQUE capacidad_diaria(fecha)` | Búsqueda de cupo por fecha |
+---
+
+## 5. Módulo 3 · Configuración del sistema
+
+### `configuracion` (8 columnas) — singleton (siempre 1 registro)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | integer | NO | `1` | PK (siempre 1) |
+| `dias_minimos_anticipacion` | integer | NO | `10` | Días mín. para pedir |
+| `capacidad_maxima_diaria` | integer | NO | `50` | Límite pedidos/día |
+| `horario_pedidos_inicio` | time | YES | `08:00` | Apertura pedidos |
+| `horario_pedidos_fin` | time | YES | `22:00` | Cierre pedidos |
+| `dias_entrega` | integer[] | YES | `{1,2,3,4,5,6,7}` | Días de entrega (1=Lun) |
+| `costo_envio` | numeric | YES | `1500` | Costo de envío |
+| `activo` | boolean | YES | `true` | Sistema activo |
+
+### `dias_semana` (4 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | integer | NO | — | PK (1–7) |
+| `nombre` | text | NO | — | Lunes, Martes… |
+| `tematica` | text | NO | — | "Día de Pastas" |
+| `descripcion` | text | YES | — | Detalle temática |
+
+**Referenciado por**: `platos(dia_semana_id)`.
+
+### `capacidad_diaria` (6 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `fecha` | date | NO | — | Fecha (UK) |
+| `pedidos_confirmados` | integer | YES | `0` | Confirmados |
+| `pedidos_pendientes` | integer | YES | `0` | Pendientes |
+| `capacidad_maxima` | integer | NO | `50` | Límite del día |
+| `disponible` | boolean | YES | `true` | Acepta pedidos |
+
+---
+
+## 6. Módulo 4 · Restaurante y platos
+
+### `restaurantes` (16 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `nombre` | text | NO | — | Nombre restaurante |
+| `direccion` | text | YES | — | Dirección física |
+| `telefono` | text | YES | — | Teléfono |
+| `email` | text | YES | — | Email |
+| `descripcion` | text | YES | — | Descripción |
+| `horario` | jsonb | YES | — | Horarios por día |
+| `activo` | boolean | YES | — | Estado activo |
+| … | … | … | … | (columnas adicionales de branding) |
+
+**Referenciado por**: `pedidos`, `grupos_pedido`, `platos`.
+
+### `categorias_plato` (8 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | integer | NO | — | PK |
+| `nombre` | text | NO | — | Nombre categoría |
+| `descripcion` | text | YES | — | Descripción |
+| `icono` | text | YES | — | Emoji |
+| `orden` | integer | YES | `0` | Orden visualización |
+| `disponible_todos_dias` | boolean | YES | `false` | Siempre disponible |
+| `horario_inicio` | time | YES | — | Hora inicio |
+| `horario_fin` | time | YES | — | Hora fin |
+
+**Referenciado por**: `platos(categoria_id)` ON DELETE NO ACTION.
+
+### `platos` (17 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `nombre` | text | NO | — | Nombre plato |
+| `descripcion` | text | YES | — | Descripción |
+| `categoria_id` | integer | YES | — | FK → categorias_plato |
+| `dia_semana_id` | integer | YES | — | FK → dias_semana |
+| `restaurante_id` | uuid | YES | — | FK → restaurantes |
+| `precio` | numeric | YES | — | Precio |
+| `imagen_url` | text | YES | — | URL imagen |
+| `disponible` | boolean | YES | — | Estado |
+| … | … | … | … | (columnas adicionales) |
+
+**Relaciones**:
+- FK → `categorias_plato(id)` ON DELETE NO ACTION
+- FK → `dias_semana(id)` ON DELETE NO ACTION
+- FK → `restaurantes(id)` ON DELETE CASCADE
+- Referenciado por: `recetas`, `pedido_items`, `grupo_items`, `grupo_votos`
+
+---
+
+## 7. Módulo 5 · Recetas e ingredientes ⭐ (núcleo)
+
+### `ingredientes` (68 columnas)
+Ingredientes con datos nutricionales + hildegardianos completos.
+
+**🔹 Datos básicos**
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `nombre` | text | NO | — | Nombre común |
+| `nombre_cientifico` | text | YES | — | Nombre científico |
+| `categoria` | text | NO | — | verduras/carnes/bebidas/… |
+| `unidad_base` | text | NO | `'gramos'` | Unidad por defecto |
+| `origen` | text | YES | — | vegetal/animal/mineral |
+| `activo` | boolean | YES | — | Estado |
+
+**🔹 Datos nutricionales (por 100 g)** — todos `numeric`, nullable
+`calorias`, `proteinas_g`, `carbohidratos_g`, `grasas_g`, `grasas_saturadas_g`,
+`grasas_monoinsaturadas_g`, `grasas_poliinsaturadas_g`, `fibra_g`, `azucares_g`,
+`sodio_mg`, `potasio_mg`, `calcio_mg`, `hierro_mg`, `vitamina_c_mg`, … (30+ micronutrientes).
+
+**🔹 Datos hildegardianos** ⭐
+| Columna | Tipo | Nullable | Descripción |
+|---|---|---|---|
+| `temperamento` | text | YES | frio/calido/frio_humedo/calido_seco |
+| `nivel_subtilitat` | integer | YES | 1–10 (fuerza vital / *subtilitas*) |
+| `es_veneno_hildegardiano` | boolean | YES | *Küchengifte* (veneno de cocina) |
+| `es_base_alegria` | boolean | YES | Genera alegría |
+| `propiedades_hildegardianas` | text | YES | Descripción completa |
+| `beneficios_hildegardianos` | text | YES | Usos medicinales |
+| `contraindicaciones` | text | YES | Precauciones |
+| `alternativa_sana` | text | YES | Ingrediente recomendado |
+
+**Referenciado por**: `receta_ingredientes(ingrediente_id)` **ON DELETE RESTRICT**.
+
+### `recetas` (9 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `plato_id` | uuid | YES | — | FK → platos |
+| `porciones` | integer | YES | `1` | Porciones (normalizado) |
+| `tiempo_min` | integer | YES | — | Tiempo en minutos |
+| `dificultad` | text | YES | — | fácil/media/difícil |
+| `ingredientes` | jsonb | YES | — | Lista con `ingrediente_id` |
+| `pasos` | jsonb | YES | — | Pasos numerados |
+| `notas_hildegardianas` | text | YES | — | Justificación hildegardiana |
+| `interpretacion_hildegardiana` | text | YES | — | Interpretación |
+
+**Relaciones**: FK → `platos(id)` ON DELETE CASCADE · Referenciado por `receta_ingredientes` ON DELETE CASCADE.
+
+### `receta_ingredientes` (8 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `receta_id` | uuid | NO | — | FK → recetas (CASCADE) |
+| `ingrediente_id` | uuid | NO | — | FK → ingredientes (RESTRICT) |
+| `cantidad` | numeric | NO | — | Cantidad |
+| `unidad` | text | NO | — | Unidad de medida |
+| `notas` | text | YES | — | Notas de preparación |
+| `orden` | integer | YES | — | Orden de aparición |
+| `opcional` | boolean | YES | `false` | Es opcional |
+
+> **Nota**: `recetas.ingredientes` (JSONB) contiene una copia desnormalizada de los
+> ingredientes con `ingrediente_id` para consultas rápidas sin JOIN.
+
+---
+
+## 8. Módulo 6 · Pedidos
+
+### `pedidos` (10 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `cliente_id` | uuid | NO | — | FK → clientes (CASCADE) |
+| `restaurante_id` | uuid | NO | — | FK → restaurantes (CASCADE) |
+| `fecha_pedido` | date | NO | — | Fecha del pedido |
+| `estado` | text | NO | — | pendiente/confirmado/en_preparacion/enviado/entregado/cancelado |
+| `total` | numeric | NO | — | Total |
+| `direccion_entrega` | text | YES | — | Dirección de entrega |
+| `notas` | text | YES | — | Notas especiales |
+| `created_at` | timestamptz | YES | `now()` | Fecha creación |
+| `updated_at` | timestamptz | YES | `now()` | Última actualización |
+
+### `pedido_items` (10 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `pedido_id` | uuid | NO | — | FK → pedidos (CASCADE) |
+| `plato_id` | uuid | NO | — | FK → platos (RESTRICT) |
+| `cantidad` | integer | NO | — | Cantidad |
+| `precio_unitario` | numeric | NO | — | Precio por unidad |
+| `subtotal` | numeric | YES | — | cantidad × precio_unitario |
+| `notas` | text | YES | — | Notas |
+| `created_at` | timestamptz | YES | `now()` | Fecha creación |
+| `updated_at` | timestamptz | YES | `now()` | Última actualización |
+
+### `notificaciones` (6 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `pedido_id` | uuid | NO | — | FK → pedidos (CASCADE) |
+| `tipo` | text | NO | — | confirmacion/preparacion/envio/entrega |
+| `mensaje` | text | NO | — | Mensaje |
+| `leido` | boolean | YES | `false` | Estado de lectura |
+| `created_at` | timestamptz | YES | `now()` | Fecha creación |
+
+---
+
+## 9. Módulo 7 · Grupos de pedido colaborativos
+
+### `grupos_pedido` (10 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `palabra_secreta` | varchar | NO | — | Código de acceso al grupo |
+| `restaurante_id` | uuid | YES | — | FK → restaurantes (CASCADE) |
+| `fecha_inicio` | date | NO | — | Inicio de vigencia |
+| `fecha_fin` | date | NO | — | Fin de vigencia |
+| `estado` | text | NO | `'armando'` | armando/votando/confirmado/cerrado/enviado |
+| `creado_por` | uuid | YES | — | FK → clientes (creador) |
+| `pedido_final_id` | uuid | YES | — | Pedido consolidado final |
+| `created_at` | timestamptz | YES | `now()` | Fecha creación |
+| `updated_at` | timestamptz | YES | `now()` | Última actualización |
+
+### `grupo_miembros` (6 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `grupo_id` | uuid | YES | — | FK → grupos_pedido (CASCADE) |
+| `cliente_id` | uuid | YES | — | FK → clientes (CASCADE) |
+| `rol` | text | NO | `'miembro'` | miembro/admin/creador |
+| `confirmado_general` | boolean | YES | `false` | Confirmó todo el pedido |
+| `joined_at` | timestamptz | YES | `now()` | Fecha de unión |
+
+**UK**: `(grupo_id, cliente_id)` — un cliente una sola vez por grupo.
+
+### `grupo_items` (12 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `grupo_id` | uuid | YES | — | FK → grupos_pedido (CASCADE) |
+| `fecha` | date | NO | — | Fecha de consumo |
+| `tipo_comida` | text | NO | — | almuerzo/cena/merienda |
+| `plato_id` | uuid | YES | — | FK → platos (RESTRICT) |
+| `cantidad` | integer | NO | `0` | Cantidad total |
+| `seleccionado_por` | uuid | YES | — | FK → clientes (propuso) |
+| `modificado_por` | uuid | YES | — | FK → clientes (último editor) |
+| `votos` | uuid[] | YES | `'{}'` | IDs de clientes que votaron |
+| `notas` | text | YES | — | Notas |
+| `created_at` | timestamptz | YES | `now()` | Fecha creación |
+| `updated_at` | timestamptz | YES | `now()` | Última actualización |
+
+### `grupo_votos` (7 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `grupo_id` | uuid | YES | — | FK → grupos_pedido (CASCADE) |
+| `cliente_id` | uuid | YES | — | FK → clientes (CASCADE) |
+| `fecha` | date | NO | — | Fecha del voto |
+| `tipo_comida` | text | NO | — | almuerzo/cena/merienda |
+| `plato_id` | uuid | YES | — | FK → platos (CASCADE) |
+| `created_at` | timestamptz | YES | `now()` | Fecha del voto |
+
+### `grupo_confirmaciones` (7 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `grupo_id` | uuid | YES | — | FK → grupos_pedido (CASCADE) |
+| `cliente_id` | uuid | YES | — | FK → clientes (CASCADE) |
+| `fecha` | date | NO | — | Fecha de confirmación |
+| `confirmado` | boolean | NO | `false` | Estado de confirmación |
+| `created_at` | timestamptz | YES | `now()` | Fecha creación |
+| `updated_at` | timestamptz | YES | `now()` | Última actualización |
+
+### `grupo_notificaciones` (7 columnas)
+| Columna | Tipo | Nullable | Default | Descripción |
+|---|---|---|---|---|
+| `id` | uuid | NO | `gen_random_uuid()` | PK |
+| `grupo_id` | uuid | YES | — | FK → grupos_pedido (CASCADE) |
+| `cliente_id` | uuid | YES | — | FK → clientes (destinatario, CASCADE) |
+| `tipo` | text | NO | — | nuevo_item/voto/confirmacion/cierre |
+| `mensaje` | text | NO | — | Mensaje |
+| `leido` | boolean | YES | `false` | Estado de lectura |
+| `created_at` | timestamptz | YES | `now()` | Fecha creación |
+
+---
+
+## 10. Mapa completo de relaciones (27 Foreign Keys)
+
+### Resumen por regla de integridad
+| Regla | Cantidad | Uso principal |
+|---|---|---|
+| **CASCADE** | 22 | Eliminar padre → eliminar hijos automáticamente |
+| **RESTRICT** | 3 | Proteger datos críticos (platos, ingredientes) |
+| **NO ACTION** | 2 | Validar sin propagar cambios |
+
+### Detalle completo
+| Tabla origen | Columna | → Tabla destino | UPDATE | DELETE |
+|---|---|---|---|---|
+| `grupo_confirmaciones` | cliente_id | clientes | NO ACTION | CASCADE |
+| `grupo_confirmaciones` | grupo_id | grupos_pedido | NO ACTION | CASCADE |
+| `grupo_items` | grupo_id | grupos_pedido | NO ACTION | CASCADE |
+| `grupo_items` | modificado_por | clientes | NO ACTION | NO ACTION |
+| `grupo_items` | plato_id | platos | NO ACTION | **RESTRICT** |
+| `grupo_items` | seleccionado_por | clientes | NO ACTION | NO ACTION |
+| `grupo_miembros` | cliente_id | clientes | NO ACTION | CASCADE |
+| `grupo_miembros` | grupo_id | grupos_pedido | NO ACTION | CASCADE |
+| `grupo_notificaciones` | cliente_id | clientes | NO ACTION | CASCADE |
+| `grupo_notificaciones` | grupo_id | grupos_pedido | NO ACTION | CASCADE |
+| `grupo_votos` | cliente_id | clientes | NO ACTION | CASCADE |
+| `grupo_votos` | grupo_id | grupos_pedido | NO ACTION | CASCADE |
+| `grupo_votos` | plato_id | platos | NO ACTION | CASCADE |
+| `grupos_pedido` | creado_por | clientes | NO ACTION | NO ACTION |
+| `grupos_pedido` | restaurante_id | restaurantes | NO ACTION | CASCADE |
+| `notificaciones` | pedido_id | pedidos | NO ACTION | CASCADE |
+| `pedido_items` | pedido_id | pedidos | NO ACTION | CASCADE |
+| `pedido_items` | plato_id | platos | NO ACTION | **RESTRICT** |
+| `pedidos` | cliente_id | clientes | NO ACTION | CASCADE |
+| `pedidos` | restaurante_id | restaurantes | NO ACTION | CASCADE |
+| `platos` | categoria_id | categorias_plato | NO ACTION | NO ACTION |
+| `platos` | dia_semana_id | dias_semana | NO ACTION | NO ACTION |
+| `platos` | restaurante_id | restaurantes | NO ACTION | CASCADE |
+| `receta_ingredientes` | ingrediente_id | ingredientes | NO ACTION | **RESTRICT** |
+| `receta_ingredientes` | receta_id | recetas | NO ACTION | CASCADE |
+| `recetas` | plato_id | platos | NO ACTION | CASCADE |
+
+### Reglas RESTRICT (protección de datos críticos)
+1. **`platos`** — no se puede eliminar un plato con pedidos o items de grupo (`pedido_items`, `grupo_items`).
+2. **`ingredientes`** — no se puede eliminar un ingrediente usado en recetas (`receta_ingredientes`).
+
+---
+
+## 11. Índices y performance
+
+```sql
+-- Ingredientes
+CREATE INDEX IF NOT EXISTS idx_ingredientes_categoria
+  ON ingredientes(categoria);
+CREATE INDEX IF NOT EXISTS idx_ingredientes_veneno
+  ON ingredientes(es_veneno_hildegardiano)
+  WHERE es_veneno_hildegardiano = true;
+CREATE INDEX IF NOT EXISTS idx_ingredientes_nombre_lower
+  ON ingredientes(LOWER(nombre));
+
+-- Recetas
+CREATE INDEX IF NOT EXISTS idx_recetas_plato
+  ON recetas(plato_id);
+
+-- Pedidos
+CREATE INDEX IF NOT EXISTS idx_pedidos_cliente_fecha
+  ON pedidos(cliente_id, fecha_pedido DESC);
+CREATE INDEX IF NOT EXISTS idx_pedidos_estado
+  ON pedidos(estado)
+  WHERE estado IN ('pendiente', 'confirmado');
+
+-- Grupos de pedido
+CREATE INDEX IF NOT EXISTS idx_grupos_estado_fechas
+  ON grupos_pedido(estado, fecha_inicio, fecha_fin);
+CREATE INDEX IF NOT EXISTS idx_grupo_items_grupo_fecha
+  ON grupo_items(grupo_id, fecha);
+CREATE INDEX IF NOT EXISTS idx_grupo_votos_grupo_fecha
+  ON grupo_votos(grupo_id, fecha);
+
+-- Capacidad
+CREATE INDEX IF NOT EXISTS idx_capacidad_diaria_fecha
+  ON capacidad_diaria(fecha);
+```
 
 **Recomendaciones adicionales**
-- Considerar `GIN` sobre `platos.tags` / `platos.alergenos` si se filtra por arrays.
-- Evaluar mover los ingredientes desnormalizados de `recetas.ingredientes` (JSONB)
-  hacia `receta_ingredientes` para evitar duplicación de la fuente de verdad.
-
----
-
-## 7. Consultas de introspección
-
-Ejecutar en el **SQL Editor de Supabase** y pegar la salida para completar/verificar
-los tipos exactos, FKs e índices de este documento.
-
-**7.1 Columnas de todas las tablas**
-```sql
-SELECT table_name, column_name, data_type, is_nullable, column_default
-FROM information_schema.columns
-WHERE table_schema = 'public'
-ORDER BY table_name, ordinal_position;
-```
-
-**7.2 Foreign keys con reglas ON UPDATE/DELETE**
-```sql
-SELECT tc.table_name, tc.constraint_name, kcu.column_name,
-       ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name,
-       rc.update_rule, rc.delete_rule
-FROM information_schema.table_constraints tc
-LEFT JOIN information_schema.key_column_usage kcu
-  ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-LEFT JOIN information_schema.constraint_column_usage ccu
-  ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
-LEFT JOIN information_schema.referential_constraints rc
-  ON tc.constraint_name = rc.constraint_name AND tc.table_schema = rc.constraint_schema
-WHERE tc.table_schema = 'public' AND tc.constraint_type = 'FOREIGN KEY'
-ORDER BY tc.table_name, kcu.column_name;
-```
-
-**7.3 Conteo de columnas por tabla**
-```sql
-SELECT table_name,
-  (SELECT COUNT(*) FROM information_schema.columns c
-   WHERE c.table_name = t.table_name AND c.table_schema = 'public') AS columnas
-FROM information_schema.tables t
-WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-ORDER BY table_name;
-```
-
-**7.4 Índices existentes**
-```sql
-SELECT tablename, indexname, indexdef
-FROM pg_indexes
-WHERE schemaname = 'public'
-ORDER BY tablename, indexname;
-```
+- `UNIQUE(grupo_id, fecha, tipo_comida)` en `grupo_items` (soporta el upsert `onConflict` del código).
+- `UNIQUE(palabra_secreta)` en `grupos_pedido` (búsqueda por código de acceso).
+- Índices `GIN` sobre `platos.tags` / `platos.alergenos` si se filtra por arrays.
+- Evaluar consolidar `recetas.ingredientes` (JSONB) con `receta_ingredientes` para
+  mantener una única fuente de verdad.
