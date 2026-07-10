@@ -49,22 +49,18 @@ interface InformeHildegardiano {
 }
 
 export default function AnalisisNutricionalPage() {
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
-  const [filtroTemperamento, setFiltroTemperamento] = useState<string>('');
   const [cargando, setCargando] = useState(false);
   const [tabActiva, setTabActiva] = useState<'nutricional' | 'hildegardiano'>('nutricional');
-  
+
   // Estado para análisis nutricional
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [porDia, setPorDia] = useState<Record<string, any>>({});
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [temperamentos, setTemperamentos] = useState<Record<string, TemperamentoData>>({});
-  const [filtroAplicado, setFiltroAplicado] = useState<string | null>(null);
-  
+
   // Estado para informe hildegardiano
   const [informe, setInforme] = useState<InformeHildegardiano | null>(null);
-  
+
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
 
@@ -78,8 +74,7 @@ export default function AnalisisNutricionalPage() {
     setError('');
     setMensaje('');
     try {
-      const urlN = `/api/admin/analisis-nutricional?grupo=${grupoId}${filtroTemperamento ? `&temperamento=${filtroTemperamento}` : ''}`;
-      const resN = await fetch(urlN);
+      const resN = await fetch(`/api/admin/analisis-nutricional?grupo=${grupoId}`);
       const dataN = await resN.json();
       if (!resN.ok) throw new Error(dataN.error);
 
@@ -91,7 +86,6 @@ export default function AnalisisNutricionalPage() {
         setPorDia(dataN.porDia);
         setAlertas(dataN.alertas);
         setTemperamentos(dataN.temperamentos);
-        setFiltroAplicado(dataN.filtroAplicado);
       }
 
       const resH = await fetch(`/api/admin/analisis-hildegardiano?grupo=${grupoId}`);
@@ -124,49 +118,6 @@ export default function AnalisisNutricionalPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const analizar = async () => {
-    if (!fechaInicio || !fechaFin) {
-      setError('Seleccioná ambas fechas');
-      return;
-    }
-    setCargando(true);
-    setError('');
-    setMensaje('');
-
-    try {
-      // Análisis nutricional
-      const urlNutricional = `/api/admin/analisis-nutricional?inicio=${fechaInicio}&fin=${fechaFin}${filtroTemperamento ? `&temperamento=${filtroTemperamento}` : ''}`;
-      const resNutricional = await fetch(urlNutricional);
-      const dataNutricional = await resNutricional.json();
-
-      if (!resNutricional.ok) throw new Error(dataNutricional.error);
-
-      if (dataNutricional.mensaje) {
-        setMensaje(dataNutricional.mensaje);
-        setResumen(null);
-      } else {
-        setResumen(dataNutricional.resumen);
-        setPorDia(dataNutricional.porDia);
-        setAlertas(dataNutricional.alertas);
-        setTemperamentos(dataNutricional.temperamentos);
-        setFiltroAplicado(dataNutricional.filtroAplicado);
-      }
-
-      // Informe hildegardiano
-      const urlHildegardiano = `/api/admin/analisis-hildegardiano?inicio=${fechaInicio}&fin=${fechaFin}`;
-      const resHildegardiano = await fetch(urlHildegardiano);
-      const dataHildegardiano = await resHildegardiano.json();
-
-      if (resHildegardiano.ok && dataHildegardiano.informe) {
-        setInforme(dataHildegardiano.informe);
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setCargando(false);
-    }
-  };
 
   const BarraProgreso = ({ valor, maximo, color }: { valor: number; maximo: number; color: string }) => {
     const porcentaje = Math.min((valor / maximo) * 100, 100);
@@ -226,68 +177,12 @@ export default function AnalisisNutricionalPage() {
           <p className="text-xs text-gray-500 mt-2">
             Analiza el grupo elegido usando sus propias fechas (sin importar si está confirmado).
           </p>
-        </div>
-
-        {/* Selector de fechas + filtro */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">📅 Seleccionar Período y Filtros</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha inicio</label>
-              <input
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha fin</label>
-              <input
-                type="date"
-                value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">🌿 Filtro Hildegardiano</label>
-              <select
-                value={filtroTemperamento}
-                onChange={(e) => setFiltroTemperamento(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="">Todos los temperamentos</option>
-                {Object.entries(TEMPERAMENTOS_INFO).map(([key, info]) => (
-                  <option key={key} value={key}>
-                    {info.icono} {info.nombre} - {info.descripcion}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={analizar}
-                disabled={cargando}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-2 px-6 rounded-lg hover:shadow-lg disabled:opacity-50"
-              >
-                {cargando ? '⏳ Analizando...' : '🔬 Analizar Menú'}
-              </button>
-            </div>
-          </div>
 
           {error && (
             <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">❌ {error}</div>
           )}
           {mensaje && (
             <div className="mt-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">ℹ️ {mensaje}</div>
-          )}
-          {filtroAplicado && (
-            <div className="mt-4 bg-amber-50 border-l-4 border-amber-500 px-4 py-3 rounded">
-              <p className="text-sm text-amber-800">
-                🔍 <strong>Filtro aplicado:</strong> Mostrando solo ingredientes con temperamento "{TEMPERAMENTOS_INFO[filtroAplicado]?.nombre}"
-              </p>
-            </div>
           )}
         </div>
 
@@ -321,7 +216,7 @@ export default function AnalisisNutricionalPage() {
             {tabActiva === 'nutricional' && (
               <>
                 {/* Balance Hildegardiano (simplificado) */}
-                {totalCaloriasTemp > 0 && !filtroAplicado && (
+                {totalCaloriasTemp > 0 && (
                   <div className="bg-white rounded-xl shadow-md p-6 mb-6">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">🌿 Balance de Temperamentos</h2>
                     <div className="space-y-3">
@@ -401,84 +296,67 @@ export default function AnalisisNutricionalPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        <tr className="bg-gray-50">
-                          <td colSpan={5} className="px-4 py-2 font-bold text-gray-700">🔥 Macronutrientes</td>
-                        </tr>
                         {[
-                          { nombre: 'Calorías', valor: resumen.promedioDiario.calorias, vdr: 2000, unidad: 'kcal', porcentaje: resumen.porcentajeVDR.calorias, rango: true },
-                          { nombre: 'Proteínas', valor: resumen.promedioDiario.proteinas, vdr: 50, unidad: 'g', porcentaje: resumen.porcentajeVDR.proteinas },
-                          { nombre: 'Carbohidratos', valor: resumen.promedioDiario.carbohidratos, vdr: 275, unidad: 'g', porcentaje: resumen.porcentajeVDR.carbohidratos },
-                          { nombre: 'Grasas totales', valor: resumen.promedioDiario.grasas, vdr: 78, unidad: 'g', porcentaje: resumen.porcentajeVDR.grasas, rango: true },
-                          { nombre: 'Fibra', valor: resumen.promedioDiario.fibra, vdr: 25, unidad: 'g', porcentaje: resumen.porcentajeVDR.fibra },
-                        ].map((n, i) => (
-                          <tr key={i}>
-                            <td className="px-4 py-3">{n.nombre}</td>
-                            <td className="px-4 py-3 text-right font-semibold">{n.valor.toFixed(1)} {n.unidad}</td>
-                            <td className="px-4 py-3 text-right text-gray-600">{n.vdr} {n.unidad}</td>
-                            <td className="px-4 py-3 text-right font-bold">{n.porcentaje.toFixed(0)}%</td>
-                            <td className="px-4 py-3 text-center">
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                n.rango
-                                  ? n.porcentaje >= 80 && n.porcentaje <= 120 ? 'bg-green-100 text-green-700' :
-                                    n.porcentaje < 80 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                                  : n.porcentaje >= 80 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                {n.rango
-                                  ? n.porcentaje >= 80 && n.porcentaje <= 120 ? '✅ OK' : n.porcentaje < 80 ? '⚠️ Bajo' : '⚠️ Alto'
-                                  : n.porcentaje >= 80 ? '✅ OK' : '⚠️ Bajo'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-
-                        <tr className="bg-gray-50">
-                          <td colSpan={5} className="px-4 py-2 font-bold text-gray-700">⚗️ Minerales Esenciales</td>
-                        </tr>
-                        {[
-                          { nombre: 'Calcio', valor: resumen.promedioDiario.calcio, vdr: 1000, unidad: 'mg', porcentaje: resumen.porcentajeVDR.calcio },
-                          { nombre: 'Hierro', valor: resumen.promedioDiario.hierro, vdr: 18, unidad: 'mg', porcentaje: resumen.porcentajeVDR.hierro },
-                          { nombre: 'Sodio', valor: resumen.promedioDiario.sodio, vdr: 2300, unidad: 'mg', porcentaje: resumen.porcentajeVDR.sodio, esMaximo: true },
-                        ].map((m, i) => (
-                          <tr key={i}>
-                            <td className="px-4 py-3">{m.nombre}</td>
-                            <td className="px-4 py-3 text-right font-semibold">{m.valor.toFixed(1)} {m.unidad}</td>
-                            <td className="px-4 py-3 text-right text-gray-600">{m.vdr} {m.unidad}{m.esMaximo ? ' (máx)' : ''}</td>
-                            <td className="px-4 py-3 text-right font-bold">{m.porcentaje.toFixed(0)}%</td>
-                            <td className="px-4 py-3 text-center">
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                m.esMaximo
-                                  ? m.porcentaje <= 100 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                  : m.porcentaje >= 80 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                {m.esMaximo ? m.porcentaje <= 100 ? '✅ OK' : '⚠️ Exceso' : m.porcentaje >= 80 ? '✅ OK' : '⚠️ Bajo'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-
-                        <tr className="bg-gray-50">
-                          <td colSpan={5} className="px-4 py-2 font-bold text-gray-700">💊 Vitaminas</td>
-                        </tr>
-                        {[
-                          { nombre: 'Vitamina A', valor: resumen.promedioDiario.vitaminaA, vdr: 900, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaA },
-                          { nombre: 'Vitamina C', valor: resumen.promedioDiario.vitaminaC, vdr: 90, unidad: 'mg', porcentaje: resumen.porcentajeVDR.vitaminaC },
-                          { nombre: 'Vitamina D', valor: resumen.promedioDiario.vitaminaD, vdr: 20, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaD },
-                          { nombre: 'Vitamina B12', valor: resumen.promedioDiario.vitaminaB12, vdr: 2.4, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaB12 },
-                          { nombre: 'Vitamina B9 (Folato)', valor: resumen.promedioDiario.vitaminaB9, vdr: 400, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaB9 },
-                        ].map((v, i) => (
-                          <tr key={i}>
-                            <td className="px-4 py-3">{v.nombre}</td>
-                            <td className="px-4 py-3 text-right font-semibold">{v.valor.toFixed(1)} {v.unidad}</td>
-                            <td className="px-4 py-3 text-right text-gray-600">{v.vdr} {v.unidad}</td>
-                            <td className="px-4 py-3 text-right font-bold">{v.porcentaje.toFixed(0)}%</td>
-                            <td className="px-4 py-3 text-center">
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                v.porcentaje >= 80 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                {v.porcentaje >= 80 ? '✅ OK' : '⚠️ Bajo'}
-                              </span>
-                            </td>
-                          </tr>
+                          { grupo: '🔥 Macronutrientes' },
+                          { nombre: 'Calorías', valor: resumen.promedioDiario.calorias, vdr: 2000, unidad: 'kcal', porcentaje: resumen.porcentajeVDR.calorias, tipo: 'rango' },
+                          { nombre: 'Proteínas', valor: resumen.promedioDiario.proteinas, vdr: 50, unidad: 'g', porcentaje: resumen.porcentajeVDR.proteinas, tipo: 'min' },
+                          { nombre: 'Carbohidratos', valor: resumen.promedioDiario.carbohidratos, vdr: 275, unidad: 'g', porcentaje: resumen.porcentajeVDR.carbohidratos, tipo: 'rango' },
+                          { nombre: 'Grasas totales', valor: resumen.promedioDiario.grasas, vdr: 78, unidad: 'g', porcentaje: resumen.porcentajeVDR.grasas, tipo: 'rango' },
+                          { nombre: 'Grasas saturadas', valor: resumen.promedioDiario.grasas_saturadas, vdr: 20, unidad: 'g', porcentaje: resumen.porcentajeVDR.grasas_saturadas, tipo: 'max' },
+                          { nombre: 'Azúcar', valor: resumen.promedioDiario.azucar, vdr: 50, unidad: 'g', porcentaje: resumen.porcentajeVDR.azucar, tipo: 'max' },
+                          { nombre: 'Fibra', valor: resumen.promedioDiario.fibra, vdr: 25, unidad: 'g', porcentaje: resumen.porcentajeVDR.fibra, tipo: 'min' },
+                          { grupo: '⚗️ Minerales' },
+                          { nombre: 'Sodio', valor: resumen.promedioDiario.sodio, vdr: 2300, unidad: 'mg', porcentaje: resumen.porcentajeVDR.sodio, tipo: 'max' },
+                          { nombre: 'Calcio', valor: resumen.promedioDiario.calcio, vdr: 1000, unidad: 'mg', porcentaje: resumen.porcentajeVDR.calcio, tipo: 'min' },
+                          { nombre: 'Hierro', valor: resumen.promedioDiario.hierro, vdr: 18, unidad: 'mg', porcentaje: resumen.porcentajeVDR.hierro, tipo: 'min' },
+                          { nombre: 'Magnesio', valor: resumen.promedioDiario.magnesio, vdr: 400, unidad: 'mg', porcentaje: resumen.porcentajeVDR.magnesio, tipo: 'min' },
+                          { nombre: 'Potasio', valor: resumen.promedioDiario.potasio, vdr: 3500, unidad: 'mg', porcentaje: resumen.porcentajeVDR.potasio, tipo: 'min' },
+                          { nombre: 'Zinc', valor: resumen.promedioDiario.zinc, vdr: 15, unidad: 'mg', porcentaje: resumen.porcentajeVDR.zinc, tipo: 'min' },
+                          { nombre: 'Fósforo', valor: resumen.promedioDiario.fosforo, vdr: 1000, unidad: 'mg', porcentaje: resumen.porcentajeVDR.fosforo, tipo: 'min' },
+                          { grupo: '💊 Vitaminas' },
+                          { nombre: 'Vitamina A', valor: resumen.promedioDiario.vitaminaA, vdr: 900, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaA, tipo: 'min' },
+                          { nombre: 'Vitamina C', valor: resumen.promedioDiario.vitaminaC, vdr: 90, unidad: 'mg', porcentaje: resumen.porcentajeVDR.vitaminaC, tipo: 'min' },
+                          { nombre: 'Vitamina D', valor: resumen.promedioDiario.vitaminaD, vdr: 20, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaD, tipo: 'min' },
+                          { nombre: 'Vitamina E', valor: resumen.promedioDiario.vitaminaE, vdr: 15, unidad: 'mg', porcentaje: resumen.porcentajeVDR.vitaminaE, tipo: 'min' },
+                          { nombre: 'Vitamina K', valor: resumen.promedioDiario.vitaminaK, vdr: 120, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaK, tipo: 'min' },
+                          { nombre: 'Vitamina B1', valor: resumen.promedioDiario.vitaminaB1, vdr: 1.2, unidad: 'mg', porcentaje: resumen.porcentajeVDR.vitaminaB1, tipo: 'min' },
+                          { nombre: 'Vitamina B2', valor: resumen.promedioDiario.vitaminaB2, vdr: 1.3, unidad: 'mg', porcentaje: resumen.porcentajeVDR.vitaminaB2, tipo: 'min' },
+                          { nombre: 'Vitamina B3', valor: resumen.promedioDiario.vitaminaB3, vdr: 16, unidad: 'mg', porcentaje: resumen.porcentajeVDR.vitaminaB3, tipo: 'min' },
+                          { nombre: 'Vitamina B5', valor: resumen.promedioDiario.vitaminaB5, vdr: 5, unidad: 'mg', porcentaje: resumen.porcentajeVDR.vitaminaB5, tipo: 'min' },
+                          { nombre: 'Vitamina B6', valor: resumen.promedioDiario.vitaminaB6, vdr: 1.7, unidad: 'mg', porcentaje: resumen.porcentajeVDR.vitaminaB6, tipo: 'min' },
+                          { nombre: 'Vitamina B9 (Folato)', valor: resumen.promedioDiario.vitaminaB9, vdr: 400, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaB9, tipo: 'min' },
+                          { nombre: 'Vitamina B12', valor: resumen.promedioDiario.vitaminaB12, vdr: 2.4, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaB12, tipo: 'min' },
+                        ].map((row: any, i: number) => (
+                          row.grupo ? (
+                            <tr key={i} className="bg-gray-50">
+                              <td colSpan={5} className="px-4 py-2 font-bold text-gray-700">{row.grupo}</td>
+                            </tr>
+                          ) : (
+                            <tr key={i}>
+                              <td className="px-4 py-3">{row.nombre}</td>
+                              <td className="px-4 py-3 text-right font-semibold">{Number(row.valor).toFixed(1)} {row.unidad}</td>
+                              <td className="px-4 py-3 text-right text-gray-600">{row.vdr} {row.unidad}{row.tipo === 'max' ? ' (máx)' : ''}</td>
+                              <td className="px-4 py-3 text-right font-bold">{Number(row.porcentaje).toFixed(0)}%</td>
+                              <td className="px-4 py-3 text-center">
+                                {(() => {
+                                  const p = Number(row.porcentaje);
+                                  let cls = 'bg-yellow-100 text-yellow-700';
+                                  let txt = '⚠️ Bajo';
+                                  if (row.tipo === 'max') {
+                                    if (p <= 100) { cls = 'bg-green-100 text-green-700'; txt = '✅ OK'; }
+                                    else { cls = 'bg-red-100 text-red-700'; txt = '⚠️ Exceso'; }
+                                  } else if (row.tipo === 'rango') {
+                                    if (p >= 80 && p <= 120) { cls = 'bg-green-100 text-green-700'; txt = '✅ OK'; }
+                                    else if (p < 80) { cls = 'bg-yellow-100 text-yellow-700'; txt = '⚠️ Bajo'; }
+                                    else { cls = 'bg-red-100 text-red-700'; txt = '⚠️ Alto'; }
+                                  } else {
+                                    if (p >= 80) { cls = 'bg-green-100 text-green-700'; txt = '✅ OK'; }
+                                  }
+                                  return <span className={`px-2 py-1 rounded text-xs font-semibold ${cls}`}>{txt}</span>;
+                                })()}
+                              </td>
+                            </tr>
+                          )
                         ))}
                       </tbody>
                     </table>

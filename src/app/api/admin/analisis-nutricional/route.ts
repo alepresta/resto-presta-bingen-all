@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const VDR = {
   calorias: 2000, proteinas: 50, carbohidratos: 275, grasas: 78,
-  grasas_saturadas: 20, fibra: 25, sodio: 2300, calcio: 1000,
+  grasas_saturadas: 20, fibra: 25, azucar: 50, sodio: 2300, calcio: 1000,
   hierro: 18, magnesio: 400, potasio: 3500, zinc: 15, fosforo: 1000,
-  vitaminaA: 900, vitaminaC: 90, vitaminaD: 20, vitaminaB12: 2.4, vitaminaB9: 400,
+  vitaminaA: 900, vitaminaC: 90, vitaminaD: 20, vitaminaE: 15, vitaminaK: 120,
+  vitaminaB1: 1.2, vitaminaB2: 1.3, vitaminaB3: 16, vitaminaB5: 5, vitaminaB6: 1.7,
+  vitaminaB9: 400, vitaminaB12: 2.4,
 };
 
 function normalizarACantidadBase(cantidad: number, unidad: string): { cantidad: number; unidadBase: string } {
@@ -225,6 +227,7 @@ export async function GET(request: NextRequest) {
       grasas: totalNutricion.grasas / diasConDatos,
       grasas_saturadas: totalNutricion.grasas_saturadas / diasConDatos,
       fibra: totalNutricion.fibra / diasConDatos,
+      azucar: totalNutricion.azucar / diasConDatos,
       sodio: totalNutricion.sodio / diasConDatos,
       calcio: totalNutricion.calcio / diasConDatos,
       hierro: totalNutricion.hierro / diasConDatos,
@@ -251,15 +254,28 @@ export async function GET(request: NextRequest) {
       proteinas: (promedioDiario.proteinas / VDR.proteinas) * 100,
       carbohidratos: (promedioDiario.carbohidratos / VDR.carbohidratos) * 100,
       grasas: (promedioDiario.grasas / VDR.grasas) * 100,
+      grasas_saturadas: (promedioDiario.grasas_saturadas / VDR.grasas_saturadas) * 100,
       fibra: (promedioDiario.fibra / VDR.fibra) * 100,
+      azucar: (promedioDiario.azucar / VDR.azucar) * 100,
       sodio: (promedioDiario.sodio / VDR.sodio) * 100,
       calcio: (promedioDiario.calcio / VDR.calcio) * 100,
       hierro: (promedioDiario.hierro / VDR.hierro) * 100,
+      magnesio: (promedioDiario.magnesio / VDR.magnesio) * 100,
+      potasio: (promedioDiario.potasio / VDR.potasio) * 100,
+      zinc: (promedioDiario.zinc / VDR.zinc) * 100,
+      fosforo: (promedioDiario.fosforo / VDR.fosforo) * 100,
       vitaminaA: (promedioDiario.vitaminaA / VDR.vitaminaA) * 100,
       vitaminaC: (promedioDiario.vitaminaC / VDR.vitaminaC) * 100,
       vitaminaD: (promedioDiario.vitaminaD / VDR.vitaminaD) * 100,
-      vitaminaB12: (promedioDiario.vitaminaB12 / VDR.vitaminaB12) * 100,
+      vitaminaE: (promedioDiario.vitaminaE / VDR.vitaminaE) * 100,
+      vitaminaK: (promedioDiario.vitaminaK / VDR.vitaminaK) * 100,
+      vitaminaB1: (promedioDiario.vitaminaB1 / VDR.vitaminaB1) * 100,
+      vitaminaB2: (promedioDiario.vitaminaB2 / VDR.vitaminaB2) * 100,
+      vitaminaB3: (promedioDiario.vitaminaB3 / VDR.vitaminaB3) * 100,
+      vitaminaB5: (promedioDiario.vitaminaB5 / VDR.vitaminaB5) * 100,
+      vitaminaB6: (promedioDiario.vitaminaB6 / VDR.vitaminaB6) * 100,
       vitaminaB9: (promedioDiario.vitaminaB9 / VDR.vitaminaB9) * 100,
+      vitaminaB12: (promedioDiario.vitaminaB12 / VDR.vitaminaB12) * 100,
     } : null;
 
     // Alertas
