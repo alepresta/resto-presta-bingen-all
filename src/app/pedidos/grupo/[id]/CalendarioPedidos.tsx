@@ -3,8 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DIAS_SEMANA, CATEGORIAS_COMIDA } from '@/lib/pedidos';
 import { evaluarReceta } from '@/lib/hildegarda';
-import AnalisisGrupo from './AnalisisGrupo';
-import InformeCompleto from './InformeCompleto';
 
 // Parseo/format de fechas 'YYYY-MM-DD' de forma estable en cualquier zona horaria
 // (evita desajustes de día entre el render del servidor y la hidratación del cliente).
@@ -72,6 +70,16 @@ const NUTRIENTES_LISTA: Array<{ key: string; l: string; u: string }> = [
   { key: 'vitaminaB9', l: 'Vitamina B9', u: 'mcg' },
   { key: 'vitaminaB12', l: 'Vitamina B12', u: 'mcg' },
 ];
+// Agrupación de nutrientes para presentar la tabla científica de forma entendible
+const NUTRIENTES_GRUPOS: Array<{ titulo: string; icono: string; keys: string[] }> = [
+  { titulo: 'Macronutrientes', icono: '🥗', keys: ['calorias', 'proteinas', 'carbohidratos', 'grasas', 'grasas_saturadas', 'fibra', 'azucar'] },
+  { titulo: 'Minerales', icono: '⛏️', keys: ['sodio', 'calcio', 'hierro', 'magnesio', 'potasio', 'zinc', 'fosforo'] },
+  { titulo: 'Vitaminas', icono: '💊', keys: ['vitaminaA', 'vitaminaC', 'vitaminaD', 'vitaminaE', 'vitaminaK', 'vitaminaB1', 'vitaminaB2', 'vitaminaB3', 'vitaminaB5', 'vitaminaB6', 'vitaminaB9', 'vitaminaB12'] },
+];
+// Metadatos (label + unidad) por clave de nutriente, para buscar rápido
+const NUTRIENTE_META: Record<string, { l: string; u: string }> = Object.fromEntries(
+  NUTRIENTES_LISTA.map((n) => [n.key, { l: n.l, u: n.u }])
+);
 // Pilares de alegría hildegardianos
 const PILARES_ALEGRIA = ['espelta', 'hinojo', 'galanga', 'castaña'];
 
@@ -207,6 +215,55 @@ const TEMPERAMENTOS = [
   { valor: 'frio_humedo', nombre: '💧 Frío-Húmedo' },
 ];
 
+// Devuelve el nombre legible (con ícono) de un temperamento hildegardiano
+function temperamentoLabel(valor: string | null | undefined): string {
+  if (!valor) return '—';
+  const t = TEMPERAMENTOS.find((x) => x.valor === valor);
+  return t ? t.nombre : valor;
+}
+
+// Estado tipo semáforo de un valor respecto a su meta diaria (calorías, proteínas)
+function estadoMeta(val: number, meta: number) {
+  const pct = meta ? (val / meta) * 100 : 0;
+  if (pct >= 130) return { emoji: '🔴', label: 'Exceso', bg: 'bg-red-100 text-red-800', bar: 'bg-red-500' };
+  if (pct >= 90) return { emoji: '🟢', label: 'Adecuado', bg: 'bg-green-100 text-green-800', bar: 'bg-green-500' };
+  if (pct >= 60) return { emoji: '🟡', label: 'Bajo', bg: 'bg-yellow-100 text-yellow-800', bar: 'bg-yellow-500' };
+  return { emoji: '🟠', label: 'Muy bajo', bg: 'bg-orange-100 text-orange-800', bar: 'bg-orange-500' };
+}
+
+// Describe en palabras simples cuánto aporta respecto a lo recomendado
+function vecesTexto(pct: number): string {
+  const veces = pct / 100;
+  if (veces >= 3) return 'más del triple de lo recomendado';
+  if (veces >= 2) return 'más del doble de lo recomendado';
+  if (veces >= 1.3) return 'por encima de lo recomendado';
+  if (veces >= 0.9) return 'una cantidad adecuada';
+  if (veces >= 0.6) return 'un poco por debajo de lo recomendado';
+  return 'muy por debajo de lo recomendado';
+}
+
+// Evalúa un perfil nutricional DIARIO (totales del día o promedio diario del plan)
+// y clasifica micronutrientes ausentes, insuficientes y nutrientes en exceso.
+function evaluarNutrientes(nDia: Record<string, number>) {
+  const micro = [...NUTRIENTES_GRUPOS[1].keys, ...NUTRIENTES_GRUPOS[2].keys];
+  const ausentes: string[] = [];
+  const insuficientes: string[] = [];
+  micro.forEach((k) => {
+    const val = nDia[k] || 0;
+    const vdr = VDR_DIA[k] || 0;
+    if (val <= 0) ausentes.push(k);
+    else if (vdr && (val / vdr) * 100 < 50) insuficientes.push(k);
+  });
+  // Nutrientes con máximo recomendado (sodio/sal, azúcar, grasas saturadas)
+  const excesos: string[] = [];
+  VDR_MAX.forEach((k) => {
+    const val = nDia[k] || 0;
+    const vdr = VDR_DIA[k] || 0;
+    if (vdr && (val / vdr) * 100 > 100) excesos.push(k);
+  });
+  return { ausentes, insuficientes, excesos, bajos: ausentes.length + insuficientes.length };
+}
+
 export default function CalendarioPedidos({
   grupoId,
   palabraSecreta,
@@ -253,6 +310,13 @@ export default function CalendarioPedidos({
   const [soloSinVenenos, setSoloSinVenenos] = useState(false);
   // Plato y vista (receta / científico / hildegardiano) desplegada en el modal
   const [vistaModal, setVistaModal] = useState<{ id: string; tipo: 'receta' | 'cientifico' | 'hildegardiano' } | null>(null);
+  // Análisis por día desplegado (científico / hildegardiano) en el calendario
+  const [analisisDia, setAnalisisDia] = useState<Record<string, 'cientifico' | 'hildegardiano' | null>>({});
+  const toggleAnalisisDia = (fecha: string, tipo: 'cientifico' | 'hildegardiano') =>
+    setAnalisisDia((prev) => ({ ...prev, [fecha]: prev[fecha] === tipo ? null : tipo }));
+  // Informe del plan completo (rango del grupo) desplegable
+  const [informeAbierto, setInformeAbierto] = useState(true);
+  const [informeTab, setInformeTab] = useState<'cientifico' | 'hildegardiano' | null>(null);
 
   useEffect(() => {
     const clienteGuardado = localStorage.getItem('cliente_actual');
@@ -391,6 +455,129 @@ export default function CalendarioPedidos({
       venenos,
       pilares: Array.from(pilares),
       evaluacion,
+    };
+  };
+
+  // Análisis agregado de todos los platos seleccionados en un día.
+  // Se recalcula automáticamente cuando cambian las selecciones (items).
+  const analizarDia = (fechaStr: string) => {
+    const itemsDia = items.filter((it) => it.fecha === fechaStr);
+    if (itemsDia.length === 0) return null;
+
+    const n: Record<string, number> = {};
+    NUTRIENTES_LISTA.forEach((nut) => {
+      n[nut.key] = 0;
+    });
+
+    let calCalido = 0;
+    let calFrio = 0;
+    let calTot = 0;
+    let sumViriditas = 0;
+    let sumCocido = 0;
+    let sumSeco = 0;
+    let sumHumedo = 0;
+    let sumPuntaje = 0;
+    let platosAnalizados = 0;
+    const venenos = new Set<string>();
+    const pilares = new Set<string>();
+
+    itemsDia.forEach((it) => {
+      const plato = platos.find((p) => p.id === it.plato_id);
+      if (!plato) return;
+      const a = analizarPlato(plato);
+      if (!a) return;
+      platosAnalizados++;
+      NUTRIENTES_LISTA.forEach((nut) => {
+        n[nut.key] += a.n[nut.key] || 0;
+      });
+      const cal = a.n.calorias || 0;
+      calCalido += a.porcCalido * cal;
+      calFrio += a.porcFrio * cal;
+      calTot += cal;
+      sumViriditas += a.viriditas;
+      sumCocido += a.porcCocido;
+      sumSeco += a.porcSeco;
+      sumHumedo += a.porcHumedo;
+      sumPuntaje += a.evaluacion.puntaje;
+      a.venenos.forEach((v) => venenos.add(v));
+      a.pilares.forEach((p) => pilares.add(p));
+    });
+
+    if (platosAnalizados === 0) return null;
+
+    return {
+      totalItems: itemsDia.length,
+      platosAnalizados,
+      n,
+      porcCalido: calTot ? calCalido / calTot : 0,
+      porcFrio: calTot ? calFrio / calTot : 0,
+      viriditas: sumViriditas / platosAnalizados,
+      porcCocido: sumCocido / platosAnalizados,
+      porcSeco: sumSeco / platosAnalizados,
+      porcHumedo: sumHumedo / platosAnalizados,
+      puntaje: sumPuntaje / platosAnalizados,
+      venenos: Array.from(venenos),
+      pilares: Array.from(pilares),
+    };
+  };
+
+  // Análisis agregado de TODO el rango elegido por el grupo (todos los platos del plan).
+  // Usa la misma lógica que el análisis por día; se recalcula al cambiar cualquier plato.
+  const analizarRango = () => {
+    if (items.length === 0) return null;
+
+    const n: Record<string, number> = {};
+    NUTRIENTES_LISTA.forEach((nut) => {
+      n[nut.key] = 0;
+    });
+
+    let calCalido = 0;
+    let calFrio = 0;
+    let calTot = 0;
+    let sumViriditas = 0;
+    let sumPuntaje = 0;
+    let platosAnalizados = 0;
+    const venenos = new Set<string>();
+    const pilares = new Set<string>();
+
+    items.forEach((it) => {
+      const plato = platos.find((p) => p.id === it.plato_id);
+      if (!plato) return;
+      const a = analizarPlato(plato);
+      if (!a) return;
+      platosAnalizados++;
+      NUTRIENTES_LISTA.forEach((nut) => {
+        n[nut.key] += a.n[nut.key] || 0;
+      });
+      const cal = a.n.calorias || 0;
+      calCalido += a.porcCalido * cal;
+      calFrio += a.porcFrio * cal;
+      calTot += cal;
+      sumViriditas += a.viriditas;
+      sumPuntaje += a.evaluacion.puntaje;
+      a.venenos.forEach((v) => venenos.add(v));
+      a.pilares.forEach((p) => pilares.add(p));
+    });
+
+    if (platosAnalizados === 0) return null;
+
+    const dias = Math.max(fechas.length, 1);
+    const nProm: Record<string, number> = {};
+    NUTRIENTES_LISTA.forEach((nut) => {
+      nProm[nut.key] = n[nut.key] / dias;
+    });
+
+    return {
+      dias,
+      platosAnalizados,
+      n, // total del rango
+      nProm, // promedio diario del plan
+      porcCalido: calTot ? calCalido / calTot : 0,
+      porcFrio: calTot ? calFrio / calTot : 0,
+      viriditas: sumViriditas / platosAnalizados,
+      puntaje: sumPuntaje / platosAnalizados,
+      venenos: Array.from(venenos),
+      pilares: Array.from(pilares),
     };
   };
 
@@ -543,6 +730,8 @@ export default function CalendarioPedidos({
 
   const clienteActual = miembrosState.find((m) => m.cliente_id === clienteActualId);
   const miembrosConfirmados = miembrosState.filter((m) => m.confirmado_general).length;
+  const miembrosConfirmadosLista = miembrosState.filter((m) => m.confirmado_general);
+  const miembrosPendientes = miembrosState.filter((m) => !m.confirmado_general);
   const todosConfirmaron = miembrosConfirmados === miembrosState.length && miembrosState.length === 4;
 
   const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos;
@@ -551,9 +740,29 @@ export default function CalendarioPedidos({
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50">
       <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold font-serif">📅 Plan de 30 Días</h1>
-          <p className="text-teal-100 mt-1">
-            {fechas.length} días · {miembrosState.length}/4 miembros · {items.length} platos seleccionados
+          <p className="text-teal-100 text-xs font-semibold uppercase tracking-wide">🔑 Código para unirse</p>
+          <h1 className="text-3xl font-bold font-serif tracking-widest">{palabraSecreta}</h1>
+          <p className="text-teal-100 mt-2 text-sm">
+            📅 Desde{' '}
+            <strong>
+              {parseFechaLocal(fechaInicio).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
+            </strong>{' '}
+            hasta{' '}
+            <strong>
+              {parseFechaLocal(fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
+            </strong>{' '}
+            · {fechas.length} días · {miembrosState.length}/4 miembros
+          </p>
+          <p className="text-teal-100 mt-1 text-sm">
+            {miembrosConfirmadosLista.length > 0 && (
+              <>✅ Confirmaron: {miembrosConfirmadosLista.map((m) => m.cliente.nombre).join(', ')}</>
+            )}
+            {miembrosConfirmadosLista.length > 0 && miembrosPendientes.length > 0 && ' · '}
+            {miembrosPendientes.length > 0 ? (
+              <>⏳ Falta confirmar: {miembrosPendientes.map((m) => m.cliente.nombre).join(', ')}</>
+            ) : (
+              miembrosConfirmadosLista.length > 0 && ' · 🎉 ¡Todos confirmaron!'
+            )}
           </p>
         </div>
       </header>
@@ -715,6 +924,271 @@ export default function CalendarioPedidos({
                     );
                   })}
                 </div>
+
+                {/* 📊 Análisis nutricional del día (se actualiza al cambiar de plato) */}
+                {(() => {
+                  const ad = analizarDia(fechaStr);
+                  if (!ad) return null;
+                  const tab = analisisDia[fechaStr] || null;
+                  const cal = ad.n.calorias || 0;
+                  const prot = ad.n.proteinas || 0;
+                  const metaCal = VDR_DIA.calorias;
+                  const metaProt = VDR_DIA.proteinas;
+                  const pctCal = metaCal ? (cal / metaCal) * 100 : 0;
+                  const pctProt = metaProt ? (prot / metaProt) * 100 : 0;
+                  const estCal = estadoMeta(cal, metaCal);
+                  const estProt = estadoMeta(prot, metaProt);
+                  // Veredicto hildegardiano resumido para la barra compacta
+                  const estHild =
+                    ad.puntaje >= 70
+                      ? { emoji: '🟢', label: 'Muy equilibrado', bg: 'bg-green-100 text-green-800' }
+                      : ad.puntaje >= 40
+                      ? { emoji: '🟡', label: 'Aceptable', bg: 'bg-yellow-100 text-yellow-800' }
+                      : { emoji: '🔴', label: 'Poco equilibrado', bg: 'bg-red-100 text-red-800' };
+                  // Micronutrientes: ausentes, insuficientes y excesos
+                  const { ausentes, insuficientes, excesos, bajos } = evaluarNutrientes(ad.n);
+                  return (
+                    <div className="mt-3 pt-3 border-t">
+                      {/* Resumen compacto siempre visible */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="font-semibold text-gray-700">📊 Resumen del día:</span>
+                        <span className={`rounded px-2 py-0.5 font-semibold ${estCal.bg}`}>
+                          {estCal.emoji} Calorías: {estCal.label}
+                        </span>
+                        <span className={`rounded px-2 py-0.5 font-semibold ${estProt.bg}`}>
+                          {estProt.emoji} Proteínas: {estProt.label}
+                        </span>
+                        {bajos > 0 ? (
+                          <span className="bg-red-100 text-red-800 rounded px-2 py-0.5 font-semibold">
+                            ⚠️ {bajos} vitaminas/minerales bajos
+                          </span>
+                        ) : (
+                          <span className="bg-green-100 text-green-800 rounded px-2 py-0.5 font-semibold">
+                            ✅ Vitaminas y minerales cubiertos
+                          </span>
+                        )}
+                        {excesos.length > 0 && (
+                          <span className="bg-orange-100 text-orange-800 rounded px-2 py-0.5 font-semibold">
+                            ⚠️ Exceso de {excesos.map((k) => NUTRIENTE_META[k].l.toLowerCase()).join(', ')}
+                          </span>
+                        )}
+                        <span className={`rounded px-2 py-0.5 font-semibold ${estHild.bg}`}>
+                          🌿 Santa Hildegarda: {estHild.label}
+                        </span>
+                        <div className="ml-auto flex gap-1">
+                          <button
+                            onClick={() => toggleAnalisisDia(fechaStr, 'cientifico')}
+                            className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                              tab === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                            }`}
+                          >
+                            🔬 Científico
+                          </button>
+                          <button
+                            onClick={() => toggleAnalisisDia(fechaStr, 'hildegardiano')}
+                            className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                              tab === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            🌿 Hildegardiano
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Detalle científico del día: en lenguaje simple */}
+                      {tab === 'cientifico' && (
+                        <div className="mt-2 bg-blue-50 rounded-lg p-3 space-y-3">
+                          <p className="text-xs text-gray-600">
+                            Esto es lo que aportan los platos elegidos para <strong>una persona en todo el día</strong>.
+                          </p>
+
+                          {/* Calorías y proteínas con lenguaje claro */}
+                          {[
+                            { l: 'Calorías', val: cal, meta: metaCal, u: 'kcal', pct: pctCal, est: estCal },
+                            { l: 'Proteínas', val: prot, meta: metaProt, u: 'g', pct: pctProt, est: estProt },
+                          ].map((g) => (
+                            <div key={g.l} className="bg-white rounded-lg p-2 border border-blue-100">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-bold text-gray-800">{g.l}</span>
+                                <span className={`text-xs font-semibold rounded px-2 py-0.5 ${g.est.bg}`}>
+                                  {g.est.emoji} {g.est.label}
+                                </span>
+                              </div>
+                              <div className="h-2 bg-gray-100 rounded-full overflow-hidden mt-1">
+                                <div className={`h-full ${g.est.bar}`} style={{ width: `${Math.min(g.pct, 100)}%` }} />
+                              </div>
+                              <p className="text-xs text-gray-600 mt-1">
+                                Aporta <strong>{g.val.toLocaleString('es-AR', { maximumFractionDigits: 0 })} {g.u}</strong> de
+                                los <strong>{g.meta} {g.u}</strong> recomendados por día — {vecesTexto(g.pct)}.
+                              </p>
+                            </div>
+                          ))}
+
+                          {/* Vitaminas y minerales */}
+                          <div className="bg-white rounded-lg p-2 border border-blue-100">
+                            <p className="text-sm font-bold text-gray-800 mb-1">🧪 Vitaminas y minerales</p>
+                            {ausentes.length === 0 && insuficientes.length === 0 ? (
+                              <p className="text-xs text-green-700">
+                                ✅ El día cubre bien las vitaminas y minerales principales.
+                              </p>
+                            ) : (
+                              <div className="space-y-2">
+                                {ausentes.length > 0 && (
+                                  <div>
+                                    <p className="text-xs text-gray-700 mb-1">
+                                      Este día <strong>no incluye</strong>:
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {ausentes.map((k) => (
+                                        <span
+                                          key={k}
+                                          className="bg-red-100 text-red-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                        >
+                                          {NUTRIENTE_META[k].l}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {insuficientes.length > 0 && (
+                                  <div>
+                                    <p className="text-xs text-gray-700 mb-1">
+                                      Incluye <strong>muy poca cantidad</strong> de (menos de la mitad de lo recomendado):
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {insuficientes.map((k) => (
+                                        <span
+                                          key={k}
+                                          className="bg-yellow-100 text-yellow-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                        >
+                                          {NUTRIENTE_META[k].l}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Nutrientes en exceso (sal, azúcar, grasas saturadas) */}
+                          {excesos.length > 0 && (
+                            <div className="bg-white rounded-lg p-2 border border-orange-200">
+                              <p className="text-sm font-bold text-gray-800 mb-1">⚠️ En exceso</p>
+                              <p className="text-xs text-gray-700 mb-1">
+                                Este día tiene <strong>más de lo recomendado</strong> de:
+                              </p>
+                              <div className="flex flex-wrap gap-1">
+                                {excesos.map((k) => (
+                                  <span
+                                    key={k}
+                                    className="bg-orange-100 text-orange-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                  >
+                                    {NUTRIENTE_META[k].l}
+                                  </span>
+                                ))}
+                              </div>
+                              <p className="text-[10px] text-gray-500 mt-1">
+                                Conviene no abusar de la sal (sodio), el azúcar y las grasas saturadas.
+                              </p>
+                            </div>
+                          )}
+
+                          <p className="text-[10px] text-gray-500">
+                            Valores de referencia para un adulto promedio ({metaCal} kcal y {metaProt} g de proteína al día).
+                            Pueden variar según edad, peso y actividad física.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Detalle hildegardiano del día: en lenguaje simple */}
+                      {tab === 'hildegardiano' && (() => {
+                        const verdicto =
+                          ad.puntaje >= 70
+                            ? { emoji: '🟢', label: 'Muy alineado con la alimentación de Santa Hildegarda', bg: 'bg-green-100 text-green-800' }
+                            : ad.puntaje >= 40
+                            ? { emoji: '🟡', label: 'Parcialmente alineado', bg: 'bg-yellow-100 text-yellow-800' }
+                            : { emoji: '🔴', label: 'Poco alineado', bg: 'bg-red-100 text-red-800' };
+                        const dif = ad.porcCalido - ad.porcFrio;
+                        const tempTexto =
+                          dif > 20
+                            ? 'Predominan los alimentos que «calientan» el cuerpo 🔥. Ideal para días fríos o personas friolentas.'
+                            : dif < -20
+                            ? 'Predominan los alimentos que «refrescan» el cuerpo ❄️. Ideal para días calurosos.'
+                            : 'Buen equilibrio entre alimentos que calientan 🔥 y que refrescan ❄️.';
+                        const viridTexto =
+                          ad.viriditas >= 7
+                            ? 'Alta: abundan los alimentos frescos y llenos de energía vital.'
+                            : ad.viriditas >= 4
+                            ? 'Media: mezcla de alimentos frescos y elaborados.'
+                            : 'Baja: predominan alimentos poco frescos o muy procesados.';
+                        return (
+                          <div className="mt-2 bg-emerald-50 rounded-lg p-3 space-y-3 text-xs text-gray-700">
+                            <p className="text-xs text-gray-600">
+                              Según la alimentación de <strong>Santa Hildegarda de Bingen</strong>, que busca el equilibrio
+                              entre alimentos que «calientan» y «refrescan» el cuerpo.
+                            </p>
+
+                            {/* Veredicto general */}
+                            <div className={`rounded-lg px-3 py-2 font-semibold ${verdicto.bg}`}>
+                              {verdicto.emoji} {verdicto.label}
+                            </div>
+
+                            {/* ¿Calienta o refresca? */}
+                            <div className="bg-white rounded-lg p-2 border border-emerald-100">
+                              <p className="text-sm font-bold text-gray-800 mb-1">🌡️ ¿Calienta o refresca?</p>
+                              {(ad.porcCalido > 0 || ad.porcFrio > 0) ? (
+                                <div className="w-full h-5 rounded-full overflow-hidden flex bg-gray-100 mb-1">
+                                  <div
+                                    className="bg-orange-500 h-full flex items-center justify-center text-[10px] text-white font-semibold"
+                                    style={{ width: `${ad.porcCalido}%` }}
+                                  >
+                                    {ad.porcCalido > 18 ? `🔥 ${ad.porcCalido.toFixed(0)}%` : ''}
+                                  </div>
+                                  <div
+                                    className="bg-blue-500 h-full flex items-center justify-center text-[10px] text-white font-semibold"
+                                    style={{ width: `${ad.porcFrio}%` }}
+                                  >
+                                    {ad.porcFrio > 18 ? `❄️ ${ad.porcFrio.toFixed(0)}%` : ''}
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-gray-400 mb-1">Sin datos suficientes.</p>
+                              )}
+                              <p className="text-xs text-gray-600">{tempTexto}</p>
+                            </div>
+
+                            {/* Frescura / energía vital */}
+                            <div className="bg-white rounded-lg p-2 border border-emerald-100">
+                              <p className="text-sm font-bold text-gray-800 mb-1">🌿 Frescura y energía vital</p>
+                              <p className="text-xs text-gray-600">{viridTexto}</p>
+                            </div>
+
+                            {/* Pilares del bienestar y venenos */}
+                            <div className="bg-white rounded-lg p-2 border border-emerald-100 space-y-1">
+                              {ad.pilares.length > 0 && (
+                                <p className="text-emerald-800 text-xs">
+                                  <strong>✨ Incluye pilares del bienestar:</strong> {ad.pilares.join(', ')}.
+                                </p>
+                              )}
+                              {ad.venenos.length > 0 ? (
+                                <p className="text-red-700 text-xs">
+                                  <strong>⚠️ Contiene ingredientes que Hildegarda desaconseja:</strong> {ad.venenos.join(', ')}.
+                                </p>
+                              ) : (
+                                <p className="text-green-700 text-xs">✅ No contiene ingredientes desaconsejados.</p>
+                              )}
+                            </div>
+
+                            <p className="text-[10px] text-gray-500">
+                              Basado en los {ad.platosAnalizados} plato{ad.platosAnalizados > 1 ? 's' : ''} con receta del día. Se actualiza al cambiar de plato.
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -765,14 +1239,280 @@ export default function CalendarioPedidos({
         </div>
       </div>
 
-      {/* Análisis nutricional e hildegardiano (en la misma página) */}
-      <div className="max-w-6xl mx-auto px-4 pb-4">
-        <AnalisisGrupo grupoId={grupoId} refreshKey={analisisVersion} />
-      </div>
-
-      {/* Informe completo (hildegardiano detallado + científico) */}
+      {/* Informe del plan completo (todo el rango del grupo, misma lógica que por día) */}
       <div className="max-w-6xl mx-auto px-4 pb-8">
-        <InformeCompleto grupoId={grupoId} refreshKey={analisisVersion} />
+        {(() => {
+          const dias = fechas.length;
+          const desde = parseFechaLocal(fechaInicio).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+          const hasta = parseFechaLocal(fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+          const ar = analizarRango();
+          return (
+            <div className="bg-white rounded-xl shadow-md">
+              <button
+                onClick={() => setInformeAbierto((v) => !v)}
+                className="w-full flex justify-between items-center gap-2 p-4 font-bold text-gray-800 text-left"
+              >
+                <span>🧪 Informe Nutricional completo ({dias} días) de {desde} a {hasta}</span>
+                <span>{informeAbierto ? '▲' : '▼'}</span>
+              </button>
+
+              {informeAbierto && (
+                <div className="p-4 pt-0">
+                  {!ar ? (
+                    <p className="text-sm text-gray-500">
+                      Todavía no hay platos con receta seleccionados para analizar el plan.
+                    </p>
+                  ) : (() => {
+                    const calProm = ar.nProm.calorias;
+                    const protProm = ar.nProm.proteinas;
+                    const estCal = estadoMeta(calProm, VDR_DIA.calorias);
+                    const estProt = estadoMeta(protProm, VDR_DIA.proteinas);
+                    const pctCal = VDR_DIA.calorias ? (calProm / VDR_DIA.calorias) * 100 : 0;
+                    const pctProt = VDR_DIA.proteinas ? (protProm / VDR_DIA.proteinas) * 100 : 0;
+                    const estHild =
+                      ar.puntaje >= 70
+                        ? { emoji: '🟢', label: 'Muy equilibrado', bg: 'bg-green-100 text-green-800' }
+                        : ar.puntaje >= 40
+                        ? { emoji: '🟡', label: 'Aceptable', bg: 'bg-yellow-100 text-yellow-800' }
+                        : { emoji: '🔴', label: 'Poco equilibrado', bg: 'bg-red-100 text-red-800' };
+                    // Micronutrientes evaluados sobre el PROMEDIO diario del plan
+                    const { ausentes, insuficientes, excesos, bajos } = evaluarNutrientes(ar.nProm);
+                    return (
+                      <>
+                        {/* Resumen compacto del plan (igual que el diario) */}
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="font-semibold text-gray-700">📊 Resumen ({dias} días):</span>
+                          <span className={`rounded px-2 py-0.5 font-semibold ${estCal.bg}`}>
+                            {estCal.emoji} Calorías/día: {estCal.label}
+                          </span>
+                          <span className={`rounded px-2 py-0.5 font-semibold ${estProt.bg}`}>
+                            {estProt.emoji} Proteínas/día: {estProt.label}
+                          </span>
+                          {bajos > 0 ? (
+                            <span className="bg-red-100 text-red-800 rounded px-2 py-0.5 font-semibold">
+                              ⚠️ {bajos} vitaminas/minerales bajos
+                            </span>
+                          ) : (
+                            <span className="bg-green-100 text-green-800 rounded px-2 py-0.5 font-semibold">
+                              ✅ Vitaminas y minerales cubiertos
+                            </span>
+                          )}
+                          {excesos.length > 0 && (
+                            <span className="bg-orange-100 text-orange-800 rounded px-2 py-0.5 font-semibold">
+                              ⚠️ Exceso de {excesos.map((k) => NUTRIENTE_META[k].l.toLowerCase()).join(', ')}
+                            </span>
+                          )}
+                          <span className={`rounded px-2 py-0.5 font-semibold ${estHild.bg}`}>
+                            🌿 Santa Hildegarda: {estHild.label}
+                          </span>
+                          <div className="ml-auto flex gap-1">
+                            <button
+                              onClick={() => setInformeTab((t) => (t === 'cientifico' ? null : 'cientifico'))}
+                              className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                informeTab === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                              }`}
+                            >
+                              🔬 Científico
+                            </button>
+                            <button
+                              onClick={() => setInformeTab((t) => (t === 'hildegardiano' ? null : 'hildegardiano'))}
+                              className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                informeTab === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              }`}
+                            >
+                              🌿 Hildegardiano
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Detalle científico del plan (promedio diario) */}
+                        {informeTab === 'cientifico' && (
+                          <div className="mt-2 bg-blue-50 rounded-lg p-3 space-y-3">
+                            <p className="text-xs text-gray-600">
+                              Promedio por día a lo largo de los {dias} días del plan, para una persona.
+                            </p>
+
+                            {[
+                              { l: 'Calorías', val: calProm, meta: VDR_DIA.calorias, u: 'kcal', pct: pctCal, est: estCal },
+                              { l: 'Proteínas', val: protProm, meta: VDR_DIA.proteinas, u: 'g', pct: pctProt, est: estProt },
+                            ].map((g) => (
+                              <div key={g.l} className="bg-white rounded-lg p-2 border border-blue-100">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-bold text-gray-800">{g.l} (promedio diario)</span>
+                                  <span className={`text-xs font-semibold rounded px-2 py-0.5 ${g.est.bg}`}>
+                                    {g.est.emoji} {g.est.label}
+                                  </span>
+                                </div>
+                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden mt-1">
+                                  <div className={`h-full ${g.est.bar}`} style={{ width: `${Math.min(g.pct, 100)}%` }} />
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  En promedio <strong>{g.val.toLocaleString('es-AR', { maximumFractionDigits: 0 })} {g.u}</strong> por
+                                  día de los <strong>{g.meta} {g.u}</strong> recomendados — {vecesTexto(g.pct)}.
+                                </p>
+                              </div>
+                            ))}
+
+                            <div className="bg-white rounded-lg p-2 border border-blue-100">
+                              <p className="text-sm font-bold text-gray-800 mb-1">🧪 Vitaminas y minerales</p>
+                              {ausentes.length === 0 && insuficientes.length === 0 ? (
+                                <p className="text-xs text-green-700">
+                                  ✅ El plan cubre bien las vitaminas y minerales principales.
+                                </p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {ausentes.length > 0 && (
+                                    <div>
+                                      <p className="text-xs text-gray-700 mb-1">
+                                        En todo el plan <strong>nunca aparecen</strong>:
+                                      </p>
+                                      <div className="flex flex-wrap gap-1">
+                                        {ausentes.map((k) => (
+                                          <span
+                                            key={k}
+                                            className="bg-red-100 text-red-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                          >
+                                            {NUTRIENTE_META[k].l}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {insuficientes.length > 0 && (
+                                    <div>
+                                      <p className="text-xs text-gray-700 mb-1">
+                                        En promedio hay <strong>muy poca cantidad</strong> de (menos de la mitad de lo recomendado):
+                                      </p>
+                                      <div className="flex flex-wrap gap-1">
+                                        {insuficientes.map((k) => (
+                                          <span
+                                            key={k}
+                                            className="bg-yellow-100 text-yellow-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                          >
+                                            {NUTRIENTE_META[k].l}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Nutrientes en exceso en promedio (sal, azúcar, grasas saturadas) */}
+                            {excesos.length > 0 && (
+                              <div className="bg-white rounded-lg p-2 border border-orange-200">
+                                <p className="text-sm font-bold text-gray-800 mb-1">⚠️ En exceso</p>
+                                <p className="text-xs text-gray-700 mb-1">
+                                  En promedio, el plan tiene <strong>más de lo recomendado</strong> de:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {excesos.map((k) => (
+                                    <span
+                                      key={k}
+                                      className="bg-orange-100 text-orange-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                    >
+                                      {NUTRIENTE_META[k].l}
+                                    </span>
+                                  ))}
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1">
+                                  Conviene no abusar de la sal (sodio), el azúcar y las grasas saturadas.
+                                </p>
+                              </div>
+                            )}
+
+                            <p className="text-[10px] text-gray-500">
+                              Referencia para un adulto promedio ({VDR_DIA.calorias} kcal y {VDR_DIA.proteinas} g de
+                              proteína al día). Basado en {ar.platosAnalizados} plato{ar.platosAnalizados > 1 ? 's' : ''} con receta.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Detalle hildegardiano del plan */}
+                        {informeTab === 'hildegardiano' && (() => {
+                          const verdicto =
+                            ar.puntaje >= 70
+                              ? { emoji: '🟢', label: 'Muy alineado con la alimentación de Santa Hildegarda', bg: 'bg-green-100 text-green-800' }
+                              : ar.puntaje >= 40
+                              ? { emoji: '🟡', label: 'Parcialmente alineado', bg: 'bg-yellow-100 text-yellow-800' }
+                              : { emoji: '🔴', label: 'Poco alineado', bg: 'bg-red-100 text-red-800' };
+                          const dif = ar.porcCalido - ar.porcFrio;
+                          const tempTexto =
+                            dif > 20
+                              ? 'El plan predomina en alimentos que «calientan» el cuerpo 🔥. Ideal para épocas frías.'
+                              : dif < -20
+                              ? 'El plan predomina en alimentos que «refrescan» el cuerpo ❄️. Ideal para épocas calurosas.'
+                              : 'El plan mantiene un buen equilibrio entre alimentos que calientan 🔥 y que refrescan ❄️.';
+                          const viridTexto =
+                            ar.viriditas >= 7
+                              ? 'Alta: el plan abunda en alimentos frescos y llenos de energía vital.'
+                              : ar.viriditas >= 4
+                              ? 'Media: mezcla de alimentos frescos y elaborados.'
+                              : 'Baja: predominan alimentos poco frescos o muy procesados.';
+                          return (
+                            <div className="mt-2 bg-emerald-50 rounded-lg p-3 space-y-3 text-xs text-gray-700">
+                              <p className="text-xs text-gray-600">
+                                Según la alimentación de <strong>Santa Hildegarda de Bingen</strong>, en todo el plan.
+                              </p>
+
+                              <div className={`rounded-lg px-3 py-2 font-semibold ${verdicto.bg}`}>
+                                {verdicto.emoji} {verdicto.label}
+                              </div>
+
+                              <div className="bg-white rounded-lg p-2 border border-emerald-100">
+                                <p className="text-sm font-bold text-gray-800 mb-1">🌡️ ¿Calienta o refresca?</p>
+                                {(ar.porcCalido > 0 || ar.porcFrio > 0) ? (
+                                  <div className="w-full h-5 rounded-full overflow-hidden flex bg-gray-100 mb-1">
+                                    <div
+                                      className="bg-orange-500 h-full flex items-center justify-center text-[10px] text-white font-semibold"
+                                      style={{ width: `${ar.porcCalido}%` }}
+                                    >
+                                      {ar.porcCalido > 18 ? `🔥 ${ar.porcCalido.toFixed(0)}%` : ''}
+                                    </div>
+                                    <div
+                                      className="bg-blue-500 h-full flex items-center justify-center text-[10px] text-white font-semibold"
+                                      style={{ width: `${ar.porcFrio}%` }}
+                                    >
+                                      {ar.porcFrio > 18 ? `❄️ ${ar.porcFrio.toFixed(0)}%` : ''}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-gray-400 mb-1">Sin datos suficientes.</p>
+                                )}
+                                <p className="text-xs text-gray-600">{tempTexto}</p>
+                              </div>
+
+                              <div className="bg-white rounded-lg p-2 border border-emerald-100">
+                                <p className="text-sm font-bold text-gray-800 mb-1">🌿 Frescura y energía vital</p>
+                                <p className="text-xs text-gray-600">{viridTexto}</p>
+                              </div>
+
+                              <div className="bg-white rounded-lg p-2 border border-emerald-100 space-y-1">
+                                {ar.pilares.length > 0 && (
+                                  <p className="text-emerald-800 text-xs">
+                                    <strong>✨ Incluye pilares del bienestar:</strong> {ar.pilares.join(', ')}.
+                                  </p>
+                                )}
+                                {ar.venenos.length > 0 ? (
+                                  <p className="text-red-700 text-xs">
+                                    <strong>⚠️ Contiene ingredientes que Hildegarda desaconseja:</strong> {ar.venenos.join(', ')}.
+                                  </p>
+                                ) : (
+                                  <p className="text-green-700 text-xs">✅ No contiene ingredientes desaconsejados.</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* MODAL DE SELECCIÓN DE PLATOS CON BUSCADOR */}
@@ -819,7 +1559,7 @@ export default function CalendarioPedidos({
                     value={textoBusqueda}
                     onChange={(e) => setTextoBusqueda(e.target.value)}
                     placeholder="🔍 Buscar por nombre o ingrediente..."
-                    className="w-full px-4 py-2 pl-10 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white"
+                    className="w-full px-4 py-2 pl-10 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white text-gray-900 placeholder-gray-400"
                   />
                   <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
                 </div>
@@ -843,7 +1583,7 @@ export default function CalendarioPedidos({
                 <select
                   value={categoriaFiltro || ''}
                   onChange={(e) => setCategoriaFiltro(e.target.value ? Number(e.target.value) : null)}
-                  className="px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
+                  className="px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900"
                 >
                   <option value="">📂 Todas las categorías</option>
                   {CATEGORIAS_FILTRO.map((cat) => (
@@ -856,7 +1596,7 @@ export default function CalendarioPedidos({
                 <select
                   value={temperamentoFiltro}
                   onChange={(e) => setTemperamentoFiltro(e.target.value)}
-                  className="px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
+                  className="px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900"
                 >
                   <option value="">🌿 Todos los temperamentos</option>
                   {TEMPERAMENTOS.map((temp) => (
@@ -1002,37 +1742,87 @@ export default function CalendarioPedidos({
 
                         {/* Sección: Análisis científico completo (por porción) */}
                         {vista === 'cientifico' && a && (
-                          <div className="mt-3 bg-blue-50 rounded-lg p-3">
-                            <p className="text-xs font-semibold text-gray-700 mb-2">🔬 Análisis nutricional científico (por porción)</p>
-                            <div className="overflow-x-auto -mx-1 px-1">
-                              <table className="w-full text-xs min-w-[300px] text-gray-800">
-                                <thead>
-                                  <tr className="text-left text-gray-600 border-b border-gray-300">
-                                    <th className="py-1 pr-2 font-semibold">Nutriente</th>
-                                    <th className="py-1 pr-2 font-semibold">Cantidad</th>
-                                    <th className="py-1 font-semibold">% VDR</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {NUTRIENTES_LISTA.map((nut) => {
-                                    const val = a.n[nut.key] || 0;
-                                    const vdr = VDR_DIA[nut.key] || 0;
-                                    const pct = vdr ? (val / vdr) * 100 : 0;
-                                    return (
-                                      <tr key={nut.key} className="border-b border-gray-200 last:border-0">
-                                        <td className="py-1 pr-2 text-gray-700">{nut.l}</td>
-                                        <td className="py-1 pr-2 whitespace-nowrap font-semibold text-gray-900">
-                                          {val.toLocaleString('es-AR', { maximumFractionDigits: 1 })} {nut.u}
-                                        </td>
-                                        <td className="py-1 whitespace-nowrap font-semibold text-blue-700">
-                                          {pct.toFixed(0)}%{VDR_MAX.has(nut.key) ? ' (máx)' : ''}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
+                          <div className="mt-3 bg-blue-50 rounded-lg p-3 space-y-3">
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700">🔬 Análisis nutricional científico</p>
+                              <p className="text-[11px] text-gray-500">
+                                Valores estimados por porción
+                                {plato.receta?.porciones ? ` · rinde ${plato.receta.porciones} porciones` : ''}
+                                {plato.receta?.tiempo_min ? ` · ${plato.receta.tiempo_min} min` : ''}
+                                {plato.receta?.dificultad ? ` · ${plato.receta.dificultad}` : ''}
+                              </p>
                             </div>
+
+                            {/* Resumen rápido de macronutrientes */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              {[
+                                { k: 'calorias', l: 'Calorías', u: 'kcal', c: 'text-orange-600' },
+                                { k: 'proteinas', l: 'Proteínas', u: 'g', c: 'text-red-600' },
+                                { k: 'carbohidratos', l: 'Carbohid.', u: 'g', c: 'text-amber-600' },
+                                { k: 'grasas', l: 'Grasas', u: 'g', c: 'text-yellow-600' },
+                              ].map((m) => (
+                                <div key={m.k} className="bg-white rounded-lg p-2 text-center border border-blue-100">
+                                  <p className={`text-base font-bold ${m.c}`}>
+                                    {(a.n[m.k] || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 })}
+                                  </p>
+                                  <p className="text-[10px] text-gray-500">{m.l} ({m.u})</p>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Tablas agrupadas con barra de % VDR */}
+                            {NUTRIENTES_GRUPOS.map((grupo) => (
+                              <div key={grupo.titulo}>
+                                <p className="text-[11px] font-bold text-gray-700 mb-1 mt-1">
+                                  {grupo.icono} {grupo.titulo}
+                                </p>
+                                <div className="overflow-x-auto -mx-1 px-1">
+                                  <table className="w-full text-xs text-gray-800">
+                                    <tbody>
+                                      {grupo.keys.map((key) => {
+                                        const meta = NUTRIENTE_META[key];
+                                        const val = a.n[key] || 0;
+                                        const vdr = VDR_DIA[key] || 0;
+                                        const pct = vdr ? (val / vdr) * 100 : 0;
+                                        const esMax = VDR_MAX.has(key);
+                                        const barColor = esMax
+                                          ? pct > 100
+                                            ? 'bg-red-500'
+                                            : 'bg-yellow-500'
+                                          : pct >= 50
+                                          ? 'bg-green-500'
+                                          : pct >= 20
+                                          ? 'bg-blue-500'
+                                          : 'bg-gray-300';
+                                        return (
+                                          <tr key={key} className="border-b border-gray-200 last:border-0">
+                                            <td className="py-1 pr-2 text-gray-700 w-1/3">{meta.l}</td>
+                                            <td className="py-1 pr-2 whitespace-nowrap font-semibold text-gray-900 w-1/4">
+                                              {val.toLocaleString('es-AR', { maximumFractionDigits: 1 })} {meta.u}
+                                            </td>
+                                            <td className="py-1">
+                                              <div className="flex items-center gap-1">
+                                                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden min-w-[40px]">
+                                                  <div className={`h-full ${barColor}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                                                </div>
+                                                <span className="text-[10px] text-gray-600 whitespace-nowrap w-10 text-right">
+                                                  {pct.toFixed(0)}%{esMax ? '*' : ''}
+                                                </span>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            ))}
+
+                            <p className="text-[10px] text-gray-500 border-t border-blue-200 pt-2">
+                              % VDR = porcentaje del valor diario recomendado (dieta de referencia de 2000 kcal).
+                              <br />* = límite máximo recomendado (conviene no superarlo).
+                            </p>
                           </div>
                         )}
 
@@ -1075,12 +1865,16 @@ export default function CalendarioPedidos({
                             ) : (
                               <p className="text-[11px] text-gray-400">Sin datos de temperamento</p>
                             )}
+                            <p className="text-[11px] font-semibold text-gray-700 mt-1">📊 Cualidades del plato</p>
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700">
                               <span>🟢 Viriditas: <strong>{a.viriditas.toFixed(1)}</strong>/10</span>
                               <span>🔥 Cocido: <strong>{a.porcCocido.toFixed(0)}%</strong></span>
                               <span>☀️ Seco: <strong>{a.porcSeco.toFixed(0)}%</strong></span>
                               <span>💧 Húmedo: <strong>{a.porcHumedo.toFixed(0)}%</strong></span>
                             </div>
+                            <p className="text-[10px] text-gray-500">
+                              Viriditas = fuerza vital / frescura del alimento (0 a 10). El equilibrio 🔥/❄️ indica si el plato «calienta» o «enfría» según Hildegarda.
+                            </p>
 
                             {/* Pilares de vigor (reglas por nombre) */}
                             {a.evaluacion.pilares.length > 0 && (
@@ -1136,6 +1930,58 @@ export default function CalendarioPedidos({
                                     <li key={i}>{r}</li>
                                   ))}
                                 </ul>
+                              </div>
+                            )}
+
+                            {/* Cualidades por ingrediente (todos los datos de la BD) */}
+                            {plato.receta?.ingredientes && plato.receta.ingredientes.length > 0 && (
+                              <div className="border-t border-emerald-200 pt-2">
+                                <p className="text-[11px] font-semibold text-gray-700 mb-1">🧾 Cualidades por ingrediente</p>
+                                <div className="overflow-x-auto -mx-1 px-1">
+                                  <table className="w-full text-[11px] text-gray-800 min-w-[340px]">
+                                    <thead>
+                                      <tr className="text-left text-gray-600 border-b border-emerald-300">
+                                        <th className="py-1 pr-2 font-semibold">Ingrediente</th>
+                                        <th className="py-1 pr-2 font-semibold">Temperamento</th>
+                                        <th className="py-1 pr-2 font-semibold">Sutileza</th>
+                                        <th className="py-1 font-semibold">Notas</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {plato.receta.ingredientes.map((ri, i) => {
+                                        const ing = ri.ingrediente;
+                                        if (!ing) return null;
+                                        return (
+                                          <tr key={i} className="border-b border-emerald-100 last:border-0 align-top">
+                                            <td className="py-1 pr-2 text-gray-800">{ing.nombre}</td>
+                                            <td className="py-1 pr-2 whitespace-nowrap">{temperamentoLabel(ing.temperamento)}</td>
+                                            <td className="py-1 pr-2 whitespace-nowrap">
+                                              {ing.nivel_subtilitat != null ? `${ing.nivel_subtilitat}/10` : '—'}
+                                            </td>
+                                            <td className="py-1">
+                                              <div className="flex flex-wrap gap-1">
+                                                {ing.es_base_alegria && (
+                                                  <span className="bg-green-100 text-green-800 rounded px-1">✨ Alegría</span>
+                                                )}
+                                                {ing.es_veneno_hildegardiano && (
+                                                  <span className="bg-red-100 text-red-800 rounded px-1">🚫 Veneno</span>
+                                                )}
+                                                {ing.requiere_coccion ? (
+                                                  <span className="bg-orange-100 text-orange-800 rounded px-1">🔥 Cocción</span>
+                                                ) : (
+                                                  <span className="bg-blue-100 text-blue-800 rounded px-1">🥗 Crudo</span>
+                                                )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1">
+                                  Sutileza (subtilitas) = qué tan «fino» o digerible es el alimento (0 a 10). ✨ Alegría = pilar del bienestar; 🚫 Veneno = ingrediente que Hildegarda desaconseja.
+                                </p>
                               </div>
                             )}
                           </div>

@@ -41,6 +41,49 @@ export async function PUT(
   const { accion } = body;
 
   try {
+    // Edición de datos del pedido (fechas y palabra secreta)
+    if (accion === 'editar') {
+      const { fecha_inicio, fecha_fin, palabra_secreta } = body;
+
+      if (!fecha_inicio || !fecha_fin || !palabra_secreta) {
+        return NextResponse.json(
+          { error: 'Faltan campos obligatorios' },
+          { status: 400 }
+        );
+      }
+
+      if (new Date(fecha_inicio) > new Date(fecha_fin)) {
+        return NextResponse.json(
+          { error: 'La fecha de inicio debe ser anterior a la fecha de fin' },
+          { status: 400 }
+        );
+      }
+
+      // Verificar que la palabra secreta no esté en uso por otro pedido
+      const { data: existente } = await supabase
+        .from('grupos_pedido')
+        .select('id')
+        .eq('palabra_secreta', palabra_secreta)
+        .neq('id', params.id)
+        .maybeSingle();
+
+      if (existente) {
+        return NextResponse.json(
+          { error: 'Ya existe otro pedido con esa palabra secreta' },
+          { status: 400 }
+        );
+      }
+
+      const { error } = await supabase
+        .from('grupos_pedido')
+        .update({ fecha_inicio, fecha_fin, palabra_secreta })
+        .eq('id', params.id);
+
+      if (error) throw error;
+
+      return NextResponse.json({ mensaje: 'Pedido actualizado' });
+    }
+
     let nuevoEstado = '';
 
     if (accion === 'confirmar') {
