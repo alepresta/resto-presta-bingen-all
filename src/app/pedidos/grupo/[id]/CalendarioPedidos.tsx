@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DIAS_SEMANA, CATEGORIAS_COMIDA } from '@/lib/pedidos';
 import { evaluarHildegardianoDB } from '@/lib/analisis-plato';
+import ProduccionPorDia from '@/app/admin/pedidos/grupos/[id]/ProduccionPorDia';
 
 // Parseo/format de fechas 'YYYY-MM-DD' de forma estable en cualquier zona horaria
 // (evita desajustes de día entre el render del servidor y la hidratación del cliente).
@@ -716,6 +717,44 @@ export default function CalendarioPedidos({
     }
   };
 
+  // Deshacer la confirmación para volver a habilitar el menú.
+  const desconfirmarGeneral = async () => {
+    setCargando(true);
+    setMensaje('');
+
+    try {
+      const response = await fetch(`/api/grupos/${grupoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accion: 'desconfirmar',
+          cliente_id: clienteActualId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al reactivar');
+      }
+
+      const data = await response.json();
+      setMensaje(data.mensaje);
+
+      setMiembrosState((prev) =>
+        prev.map((m) =>
+          m.cliente_id === clienteActualId ? { ...m, confirmado_general: false } : m
+        )
+      );
+
+      setTimeout(() => setMensaje(''), 5000);
+    } catch (error: any) {
+      setMensaje(`❌ ${error.message}`);
+      setTimeout(() => setMensaje(''), 5000);
+    } finally {
+      setCargando(false);
+    }
+  };
+
   const total = items.reduce((sum, item) => {
     const plato = platos.find((p) => p.id === item.plato_id);
     return sum + (plato?.precio || 0) * item.cantidad;
@@ -727,7 +766,97 @@ export default function CalendarioPedidos({
   const miembrosPendientes = miembrosState.filter((m) => !m.confirmado_general);
   const todosConfirmaron = miembrosConfirmados === miembrosState.length && miembrosState.length === 4;
 
+  // Una vez que el cliente confirmó su acuerdo, no puede seguir cambiando el menú.
+  const menuBloqueado = !!clienteActual?.confirmado_general;
+
   const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos;
+
+  // 🍽️ Producción por día (mismo bloque que ve el admin): platos a preparar,
+  // recetas escalables por porciones e ingredientes/lista de compras por día.
+  const produccionPorDia = useMemo(() => {
+    const platosPorId = new Map<string, Plato>();
+    platos.forEach((p) => platosPorId.set(p.id, p));
+
+    const platosDeItem = (item: ItemPedido) => {
+      const votos = Array.isArray(item.votos) ? item.votos.length : 0;
+      return Math.max(votos, item.cantidad || 0, 1);
+    };
+
+    const normalizarPasos = (pasos: any): string[] =>
+      (Array.isArray(pasos) ? pasos : [])
+        .map((p: any) => (typeof p === 'string' ? p : p?.descripcion || p?.texto || p?.paso_texto || String(p ?? '')))
+        .filter((s: string) => s && s.trim() !== '');
+
+    const fechasStr = [...new Set(items.map((i) => i.fecha))].sort();
+
+    return fechasStr.map((fecha) => {
+      const itemsDia = items.filter((i) => i.fecha === fecha);
+
+      const platosMap = new Map<
+        string,
+        { platoId: string; nombre: string; precio: number; platos: number; subtotal: number; porcionesBase: number; pasos: string[]; ingredientes: { nombre: string; cantidad: number; unidad: string }[] }
+      >();
+      itemsDia.forEach((item) => {
+        const n = platosDeItem(item);
+        const full = platosPorId.get(item.plato_id);
+        const precio = item.plato?.precio ?? full?.precio ?? 0;
+        const key = item.plato_id;
+        let prev = platosMap.get(key);
+        if (!prev) {
+          const receta = full?.receta || null;
+          const ingr = (receta?.ingredientes || []).map((ri) => ({
+            nombre: ri.ingrediente?.nombre || 'Ingrediente',
+            cantidad: Number(ri.cantidad) || 0,
+            unidad: ri.unidad || 'u',
+          }));
+          prev = {
+            platoId: key,
+            nombre: item.plato?.nombre || full?.nombre || 'Plato',
+            precio,
+            platos: 0,
+            subtotal: 0,
+            porcionesBase: receta?.porciones || 1,
+            pasos: normalizarPasos(receta?.pasos),
+            ingredientes: ingr,
+          };
+        }
+        prev.platos += n;
+        prev.subtotal = prev.precio * prev.platos;
+        platosMap.set(key, prev);
+      });
+      const platosAgg = Array.from(platosMap.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+      const totalDia = platosAgg.reduce((s, p) => s + p.subtotal, 0);
+
+      const ingMap = new Map<string, { nombre: string; cantidad: number; unidad: string; categoria: string | null }>();
+      itemsDia.forEach((item) => {
+        const full = platosPorId.get(item.plato_id);
+        const receta = full?.receta;
+        if (!receta) return;
+        const n = platosDeItem(item);
+        const factor = n / (receta.porciones || 1);
+        (receta.ingredientes || []).forEach((ri) => {
+          const ing = ri.ingrediente;
+          if (!ing) return;
+          const unidad = ri.unidad || 'g';
+          const key = `${ing.nombre}|${unidad}`;
+          const prevIng = ingMap.get(key) || { nombre: ing.nombre, cantidad: 0, unidad, categoria: null };
+          prevIng.cantidad += (Number(ri.cantidad) || 0) * factor;
+          ingMap.set(key, prevIng);
+        });
+      });
+      const ingredientes = Array.from(ingMap.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+      const totalPlatosDia = platosAgg.reduce((s, p) => s + p.platos, 0);
+
+      return {
+        fecha,
+        platosAgg,
+        totalDia,
+        ingredientes,
+        totalPlatosDia,
+        conReceta: itemsDia.some((i) => !!platosPorId.get(i.plato_id)?.receta),
+      };
+    });
+  }, [items, platos]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50">
@@ -888,9 +1017,13 @@ export default function CalendarioPedidos({
                       <button
                         key={tipo.id}
                         onClick={() => setModalAbierto({ fecha: fechaStr, tipo: tipo.id })}
-                        disabled={cargando}
+                        disabled={cargando || menuBloqueado}
                         className={`p-3 rounded-lg text-left transition-all ${
-                          item
+                          menuBloqueado
+                            ? item
+                              ? 'bg-gray-100 border-2 border-gray-300 opacity-60 cursor-not-allowed'
+                              : 'bg-gray-100 border-2 border-dashed border-gray-300 opacity-60 cursor-not-allowed'
+                            : item
                             ? 'bg-green-100 border-2 border-green-500 hover:bg-green-200'
                             : 'bg-gray-50 border-2 border-dashed border-gray-300 hover:border-amber-500 hover:bg-amber-50'
                         }`}
@@ -911,7 +1044,7 @@ export default function CalendarioPedidos({
                             </p>
                           </>
                         ) : (
-                          <p className="text-sm text-gray-500">Click para seleccionar</p>
+                          <p className="text-sm text-gray-500">{menuBloqueado ? 'Sin selección' : 'Click para seleccionar'}</p>
                         )}
                       </button>
                     );
@@ -1203,20 +1336,20 @@ export default function CalendarioPedidos({
           </div>
 
           <button
-            onClick={confirmarGeneral}
-            disabled={cargando || clienteActual?.confirmado_general || todosConfirmaron}
+            onClick={clienteActual?.confirmado_general ? desconfirmarGeneral : confirmarGeneral}
+            disabled={cargando}
             className={`w-full py-4 rounded-lg font-bold text-lg transition-all ${
               clienteActual?.confirmado_general
-                ? 'bg-green-500 text-white cursor-not-allowed'
+                ? 'bg-green-500 text-white hover:bg-green-600'
                 : todosConfirmaron
                 ? 'bg-blue-500 text-white cursor-not-allowed'
                 : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:shadow-lg disabled:opacity-50'
             }`}
           >
             {cargando
-              ? '⏳ Confirmando...'
+              ? '⏳ Procesando...'
               : clienteActual?.confirmado_general
-              ? '✅ Ya confirmaste tu acuerdo'
+              ? '✅ Ya confirmaste — tocá para volver a cambiar tu menú'
               : todosConfirmaron
               ? '🎉 ¡Todos confirmaron! Pedido enviado'
               : '✅ Confirmar que estoy de acuerdo con el menú'}
@@ -1507,6 +1640,25 @@ export default function CalendarioPedidos({
           );
         })()}
       </div>
+
+      {/* 🛒 Lista de compras (colapsada): platos a preparar, recetas escalables por porciones e ingredientes por día */}
+      {produccionPorDia.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 pb-8">
+          <details className="bg-white rounded-xl shadow-md group">
+            <summary className="cursor-pointer p-4 font-bold text-gray-800 list-none flex items-center justify-between [&::-webkit-details-marker]:hidden">
+              <span>
+                🛒 Lista de compras ({fechas.length} días) de{' '}
+                {parseFechaLocal(fechaInicio).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })} a{' '}
+                {parseFechaLocal(fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
+              </span>
+              <span className="text-gray-400 text-sm transition-transform group-open:rotate-180">▼</span>
+            </summary>
+            <div className="border-t">
+              <ProduccionPorDia dias={produccionPorDia} />
+            </div>
+          </details>
+        </div>
+      )}
 
       {/* MODAL DE SELECCIÓN DE PLATOS CON BUSCADOR */}
       {modalAbierto && (

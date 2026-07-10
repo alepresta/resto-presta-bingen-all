@@ -55,6 +55,37 @@ export async function PUT(
       return NextResponse.json({ mensaje, confirmados, total });
     }
 
+    if (accion === 'desconfirmar') {
+      if (!cliente_id) {
+        return NextResponse.json(
+          { error: 'Falta el cliente' },
+          { status: 400 }
+        );
+      }
+
+      // Quitar la confirmación del miembro para que pueda volver a editar su menú
+      const { error: errorMiembro } = await supabase
+        .from('grupo_miembros')
+        .update({ confirmado_general: false })
+        .eq('grupo_id', params.id)
+        .eq('cliente_id', cliente_id);
+
+      if (errorMiembro) {
+        return NextResponse.json(
+          { error: errorMiembro.message },
+          { status: 500 }
+        );
+      }
+
+      // Si el grupo estaba confirmado, vuelve a "armando"
+      await supabase
+        .from('grupos_pedido')
+        .update({ estado: 'armando' })
+        .eq('id', params.id);
+
+      return NextResponse.json({ mensaje: '✏️ Reactivaste tu menú, ya podés volver a cambiarlo' });
+    }
+
     return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json(
