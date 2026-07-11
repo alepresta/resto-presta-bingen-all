@@ -146,6 +146,7 @@ interface Plato {
   nombre: string;
   descripcion: string;
   precio: number;
+  imagen?: string | null;
   categoria_id: number;
   dia_semana_id: number | null;
   disponible_todos_dias: boolean;
@@ -719,6 +720,14 @@ export default function CalendarioPedidos({
         )
       );
 
+      // Al confirmar, quedo "de acuerdo" con todos los platos propuestos
+      setItems((prev) =>
+        prev.map((it) => {
+          const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
+          return votos.includes(clienteActualId) ? it : { ...it, votos: [...votos, clienteActualId] };
+        })
+      );
+
       setTimeout(() => setMensaje(''), 5000);
     } catch (error: any) {
       setMensaje(`❌ ${error.message}`);
@@ -755,6 +764,14 @@ export default function CalendarioPedidos({
         prev.map((m) =>
           m.cliente_id === clienteActualId ? { ...m, confirmado_general: false } : m
         )
+      );
+
+      // Al reactivar, retiro mi voto de todos los platos
+      setItems((prev) =>
+        prev.map((it) => {
+          const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
+          return votos.includes(clienteActualId) ? { ...it, votos: votos.filter((v) => v !== clienteActualId) } : it;
+        })
       );
 
       setTimeout(() => setMensaje(''), 5000);
@@ -853,8 +870,18 @@ export default function CalendarioPedidos({
     platos.forEach((p) => platosPorId.set(p.id, p));
 
     const platosDeItem = (item: ItemPedido) => {
-      const votos = Array.isArray(item.votos) ? item.votos.length : 0;
-      return Math.max(votos, item.cantidad || 0, 1);
+      // Cantidad = miembros que quieren ese plato (quien lo propuso + los de acuerdo),
+      // contando solo miembros actuales.
+      const acuerdo = new Set<string>();
+      if (Array.isArray(item.votos)) {
+        item.votos.forEach((v: string) => {
+          if (miembrosState.some((m) => m.cliente_id === v)) acuerdo.add(v);
+        });
+      }
+      if (item.seleccionado_por && miembrosState.some((m) => m.cliente_id === item.seleccionado_por)) {
+        acuerdo.add(item.seleccionado_por);
+      }
+      return Math.max(acuerdo.size, 1);
     };
 
     const normalizarPasos = (pasos: any): string[] =>
@@ -931,7 +958,7 @@ export default function CalendarioPedidos({
         conReceta: itemsDia.some((i) => !!platosPorId.get(i.plato_id)?.receta),
       };
     });
-  }, [items, platos]);
+  }, [items, platos, miembrosState]);
 
   // Si el usuario NO es miembro, sólo puede ver la tarjeta para unirse con el código.
   if (!esMiembro) {
@@ -1155,14 +1182,29 @@ export default function CalendarioPedidos({
                   {TIPOS_COMIDA.map((tipo) => {
                     const item = getItem(fechaStr, tipo.id);
                     const votos: string[] = Array.isArray(item?.votos) ? (item!.votos as string[]) : [];
-                    const yaVote = votos.includes(clienteActualId);
+                    // Están "de acuerdo": quien propuso el plato + quienes votaron, contando solo miembros actuales
+                    const acuerdoIds = new Set<string>();
+                    votos.forEach((v) => {
+                      if (miembrosState.some((m) => m.cliente_id === v)) acuerdoIds.add(v);
+                    });
+                    if (item?.seleccionado_por && miembrosState.some((m) => m.cliente_id === item.seleccionado_por)) {
+                      acuerdoIds.add(item.seleccionado_por);
+                    }
+                    const cantAcuerdo = acuerdoIds.size;
+                    const yaVote = acuerdoIds.has(clienteActualId);
                     const puedeInteractuar = esMiembro && !menuBloqueado;
+                    const platoFull = item ? platos.find((p) => p.id === item.plato_id) : undefined;
+                    // Una vez confirmado, mostrar la foto del plato como fondo (si tiene)
+                    const imagenFondo = menuBloqueado && item && platoFull?.imagen ? platoFull.imagen : null;
 
                     return (
                       <div
                         key={tipo.id}
-                        className={`p-3 rounded-lg transition-all ${
-                          !esMiembro
+                        style={imagenFondo ? { backgroundImage: `url("${imagenFondo}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                        className={`relative overflow-hidden p-3 rounded-lg transition-all ${
+                          imagenFondo
+                            ? 'border-2 border-green-500 text-white min-h-[120px]'
+                            : !esMiembro
                             ? 'bg-gray-100 border-2 border-dashed border-gray-300 opacity-60'
                             : menuBloqueado
                             ? 'bg-gray-100 border-2 border-gray-300 opacity-60'
@@ -1171,24 +1213,26 @@ export default function CalendarioPedidos({
                             : 'bg-gray-50 border-2 border-dashed border-gray-300'
                         }`}
                       >
+                        {imagenFondo && <div className="absolute inset-0 bg-black/45" />}
+                        <div className="relative">
                         <button
                           type="button"
                           onClick={() => puedeInteractuar && setModalAbierto({ fecha: fechaStr, tipo: tipo.id })}
                           disabled={cargando || !puedeInteractuar}
                           className={`w-full text-left ${puedeInteractuar ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                         >
-                          <p className="text-xs font-semibold text-gray-600 mb-1">
+                          <p className={`text-xs font-semibold mb-1 ${imagenFondo ? 'text-white/90' : 'text-gray-600'}`}>
                             {tipo.icono} {tipo.label}
                           </p>
                           {item ? (
                             <>
-                              <p className="text-sm font-bold text-gray-800">
+                              <p className={`text-sm font-bold ${imagenFondo ? 'text-white drop-shadow' : 'text-gray-800'}`}>
                                 {item.plato?.nombre || 'Cargando...'}
                               </p>
-                              <p className="text-xs text-green-700 font-semibold mt-1">
+                              <p className={`text-xs font-semibold mt-1 ${imagenFondo ? 'text-emerald-200' : 'text-green-700'}`}>
                                 ${item.plato?.precio.toLocaleString('es-AR')}
                               </p>
-                              <p className="text-xs text-gray-600 mt-1">
+                              <p className={`text-xs mt-1 ${imagenFondo ? 'text-white/80' : 'text-gray-600'}`}>
                                 👤 {getNombreCliente(item.seleccionado_por)}
                               </p>
                             </>
@@ -1200,9 +1244,9 @@ export default function CalendarioPedidos({
                         </button>
 
                         {item && (
-                          <div className="mt-2 pt-2 border-t border-white/70">
-                            <p className="text-[11px] font-semibold text-gray-700">
-                              👍 {votos.length}/{miembrosState.length} de acuerdo
+                          <div className={`mt-2 pt-2 border-t ${imagenFondo ? 'border-white/30' : 'border-white/70'}`}>
+                            <p className={`text-[11px] font-semibold ${imagenFondo ? 'text-white' : 'text-gray-700'}`}>
+                              👍 {cantAcuerdo}/{miembrosState.length} de acuerdo
                             </p>
                             {puedeInteractuar && !yaVote && (
                               <button
@@ -1215,7 +1259,7 @@ export default function CalendarioPedidos({
                               </button>
                             )}
                             {yaVote && (
-                              <p className="text-[11px] text-emerald-700 font-semibold mt-1">✓ Estás de acuerdo</p>
+                              <p className={`text-[11px] font-semibold mt-1 ${imagenFondo ? 'text-emerald-200' : 'text-emerald-700'}`}>✓ Estás de acuerdo</p>
                             )}
                             {puedeInteractuar && (
                               <button
@@ -1229,6 +1273,7 @@ export default function CalendarioPedidos({
                             )}
                           </div>
                         )}
+                        </div>
                       </div>
                     );
                   })}

@@ -99,6 +99,13 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
           porciones,
           dificultad,
           pasos: pasos.filter((p) => p.trim()),
+          // Mantener el JSONB `recetas.ingredientes` sincronizado con el guardado relacional
+          ingredientes: ingredientes.map((i) => ({
+            ingrediente_id: i.ingrediente_id,
+            nombre: i.nombre,
+            cantidad: i.cantidad,
+            unidad: i.unidad,
+          })),
           notas_hildegardianas: notasHildegardianas,
           interpretacion_hildegardiana: interpretacionHildegardiana,
         }),
@@ -138,6 +145,9 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
       }
 
       setMensaje('✅ Receta guardada exitosamente');
+      // Invalidar la Router Cache del cliente para que al reabrir la receta
+      // se vuelvan a leer los datos frescos del servidor (Next.js App Router).
+      router.refresh();
       setTimeout(() => router.push('/admin/recetas'), 1500);
     } catch (err: any) {
       setError(err.message);

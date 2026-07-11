@@ -663,3 +663,48 @@ CREATE INDEX IF NOT EXISTS idx_capacidad_diaria_fecha
 - Índices `GIN` sobre `platos.tags` / `platos.alergenos` si se filtra por arrays.
 - Evaluar consolidar `recetas.ingredientes` (JSONB) con `receta_ingredientes` para
   mantener una única fuente de verdad.
+
+---
+
+## 12. Seguridad · Row Level Security (RLS)
+
+Al ser un backend **Supabase**, el acceso a datos se gobierna con políticas RLS por rol.
+
+| Tabla | Lectura (SELECT) | Escritura (INSERT/UPDATE/DELETE) |
+|---|---|---|
+| `profiles` | Propietario (`auth.uid() = id`) | Propietario |
+| `admin_users` | Solo rol `admin`/`superadmin` | Solo `superadmin` |
+| `restaurantes`, `platos`, `categorias_plato`, `dias_semana` | Público (catálogo) | Solo `admin` |
+| `ingredientes`, `recetas`, `receta_ingredientes` | Público | Solo `admin` |
+| `clientes` | Propietario o `admin` | Propietario o `admin` |
+| `pedidos`, `pedido_items`, `notificaciones` | Cliente dueño o `admin` | Cliente dueño o `admin` |
+| `grupos_pedido` y tablas `grupo_*` | Miembros del grupo (`grupo_miembros`) o `admin` | Miembros según `rol` o `admin` |
+
+**Buenas prácticas**
+- Habilitar `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` en **todas** las tablas.
+- Denegar por defecto y abrir con políticas explícitas.
+- Validar la pertenencia a grupos vía subconsulta sobre `grupo_miembros`.
+- Nunca exponer `admin_users.password_hash` al cliente (usar vistas o columnas seleccionadas).
+
+---
+
+## 13. Glosario hildegardiano
+
+| Término | Significado |
+|---|---|
+| **Subtilitas** | Fuerza vital / sutileza curativa de un alimento (`nivel_subtilitat`, 1–10). |
+| **Temperamento** | Cualidad humoral del alimento: frío/cálido · seco/húmedo. |
+| **Küchengifte** | "Venenos de cocina" — ingredientes desaconsejados (`es_veneno_hildegardiano`). |
+| **Base de alegría** | Alimentos que, según Hildegarda, generan bienestar (`es_base_alegria`). |
+| **Viriditas** | Fuerza verde/vital de la creación, principio rector de la dieta hildegardiana. |
+
+---
+
+## 14. Notas de cierre
+
+- **Fuente**: introspección real del esquema (`information_schema` + `pg_indexes`), verificada contra la base productiva.
+- **Estado**: 21 tablas · 27 foreign keys · ~398 ingredientes · 113 recetas normalizadas a 1 porción.
+- **Convenciones**: claves primarias `uuid` con `gen_random_uuid()`; timestamps `timestamptz` con `now()`; integridad referencial mayoritariamente `CASCADE`, con `RESTRICT` para proteger `platos` e `ingredientes`.
+- **Mantenimiento**: regenerar este documento tras cada migración en `supabase/migrations/` para mantenerlo sincronizado con el esquema real.
+
+> _Documentación técnica de la Base de Datos Hildegardiana — fin del documento._

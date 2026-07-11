@@ -7,11 +7,19 @@ import ProduccionPorDia from './ProduccionPorDia';
 
 export const dynamic = 'force-dynamic';
 
-// Platos a preparar de un ítem = cantidad de personas que lo eligieron (votos),
-// o la cantidad cargada, o 1 como mínimo.
-function platosDeItem(item: any): number {
-  const votos = Array.isArray(item.votos) ? item.votos.length : 0;
-  return Math.max(votos, item.cantidad || 0, 1);
+// Platos a preparar de un ítem = miembros que quieren ese plato
+// (quien lo propuso + quienes están de acuerdo), contando solo miembros actuales.
+function platosDeItem(item: any, miembrosIds: Set<string>): number {
+  const acuerdo = new Set<string>();
+  if (Array.isArray(item.votos)) {
+    item.votos.forEach((v: string) => {
+      if (miembrosIds.has(v)) acuerdo.add(v);
+    });
+  }
+  if (item.seleccionado_por && miembrosIds.has(item.seleccionado_por)) {
+    acuerdo.add(item.seleccionado_por);
+  }
+  return Math.max(acuerdo.size, 1);
 }
 
 function normalizarAGramos(cantidad: number, unidad: string): number {
@@ -58,6 +66,9 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
   const miembrosConfirmados = grupo.miembros?.filter((m: any) => m.confirmado_general).length || 0;
   const totalMiembros = grupo.miembros?.length || 0;
 
+  // Ids de miembros actuales (para contar cuántos quieren cada plato)
+  const miembrosIds = new Set<string>((grupo.miembros || []).map((m: any) => m.cliente_id));
+
   const items = grupo.items || [];
 
   // Recetas + ingredientes de los platos elegidos (para la lista de compras por día)
@@ -97,7 +108,7 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
     // Agregar platos por plato_id
     const platosMap = new Map<string, { platoId: string; nombre: string; precio: number; platos: number; subtotal: number; porcionesBase: number; pasos: string[]; ingredientes: { nombre: string; cantidad: number; unidad: string }[] }>();
     itemsDia.forEach((item: any) => {
-      const n = platosDeItem(item);
+      const n = platosDeItem(item, miembrosIds);
       const precio = item.plato?.precio || 0;
       const key = item.plato_id;
       let prev = platosMap.get(key);
@@ -133,7 +144,7 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
     itemsDia.forEach((item: any) => {
       const receta = recetaPorPlato.get(item.plato_id);
       if (!receta) return;
-      const n = platosDeItem(item);
+      const n = platosDeItem(item, miembrosIds);
       const factor = n / (receta.porciones || 1);
       (ingredientesPorReceta.get(receta.id) || []).forEach((ri: any) => {
         const ing = ri.ingrediente;

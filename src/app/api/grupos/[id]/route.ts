@@ -33,6 +33,22 @@ export async function PUT(
         );
       }
 
+      // Al confirmar el menú, el cliente queda "de acuerdo" con TODOS los platos propuestos.
+      const { data: itemsGrupo } = await supabase
+        .from('grupo_items')
+        .select('id, votos')
+        .eq('grupo_id', params.id);
+
+      for (const it of itemsGrupo || []) {
+        const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
+        if (!votos.includes(cliente_id)) {
+          await supabase
+            .from('grupo_items')
+            .update({ votos: [...votos, cliente_id] })
+            .eq('id', it.id);
+        }
+      }
+
       // Verificar si todos confirmaron
       const { data: miembros } = await supabase
         .from('grupo_miembros')
@@ -75,6 +91,22 @@ export async function PUT(
           { error: errorMiembro.message },
           { status: 500 }
         );
+      }
+
+      // Al reactivar, se retira su "de acuerdo" masivo de los platos
+      const { data: itemsDes } = await supabase
+        .from('grupo_items')
+        .select('id, votos')
+        .eq('grupo_id', params.id);
+
+      for (const it of itemsDes || []) {
+        const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
+        if (votos.includes(cliente_id)) {
+          await supabase
+            .from('grupo_items')
+            .update({ votos: votos.filter((v) => v !== cliente_id) })
+            .eq('id', it.id);
+        }
       }
 
       // Si el grupo estaba confirmado, vuelve a "armando"

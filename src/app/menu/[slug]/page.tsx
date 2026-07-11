@@ -9,6 +9,21 @@ interface PageProps {
   };
 }
 
+// Mapa de categorías de ingredientes destacables → tag mostrado en la tarjeta.
+// Solo se usa como respaldo cuando el plato no tiene tags curados.
+const MAPA_CATEGORIA_TAG: Record<string, string> = {
+  pescados: 'pescado',
+  carnes: 'carne',
+  frutas: 'fruta',
+  verduras: 'verdura',
+  lacteos: 'lácteo',
+  legumbres: 'legumbre',
+  granos: 'grano',
+  frutos_secos: 'frutos secos',
+  hierbas: 'hierbas',
+  especias: 'especias',
+};
+
 export default async function MenuPage({ params }: PageProps) {
   const supabase = createServerSupabaseClient();
 
@@ -69,7 +84,7 @@ export default async function MenuPage({ params }: PageProps) {
     .select(`
       receta_id, cantidad, unidad,
       ingrediente:ingredientes(
-        id, nombre,
+        id, nombre, categoria, alergenos,
         calorias, proteinas_g, carbohidratos_g, grasas_g, grasas_saturadas_g, fibra_g, azucar_g,
         sodio_mg, calcio_mg, hierro_mg, magnesio_mg, potasio_mg, zinc_mg, fosforo_mg,
         vitamina_a_mcg, vitamina_c_mg, vitamina_d_mcg, vitamina_e_mg, vitamina_k_mcg,
@@ -98,8 +113,34 @@ export default async function MenuPage({ params }: PageProps) {
     const receta = recetasMap.get(plato.id) || null;
     const ingredientes = receta ? ingredientesPorReceta.get(receta.id) || [] : [];
     const analisis = receta ? analizarPlato(ingredientes, receta.porciones || 1) : null;
+
+    // Alérgenos: combinar los cargados en el plato con los derivados de los
+    // ingredientes de la receta (crítico para salud: nunca omitir uno presente).
+    const alergenosSet = new Set<string>(
+      Array.isArray(plato.alergenos) ? plato.alergenos.filter(Boolean) : []
+    );
+    ingredientes.forEach((ri) => {
+      const lista = (ri.ingrediente as any)?.alergenos;
+      if (Array.isArray(lista)) lista.forEach((a: string) => a && alergenosSet.add(a));
+    });
+    const alergenos = Array.from(alergenosSet);
+
+    // Tags: respetar los curados del plato; si están vacíos, derivarlos de las
+    // categorías destacables de los ingredientes.
+    let tags = Array.isArray(plato.tags) ? plato.tags.filter(Boolean) : [];
+    if (tags.length === 0) {
+      const tagsSet = new Set<string>();
+      ingredientes.forEach((ri) => {
+        const tag = MAPA_CATEGORIA_TAG[(ri.ingrediente as any)?.categoria];
+        if (tag) tagsSet.add(tag);
+      });
+      tags = Array.from(tagsSet);
+    }
+
     return {
       ...plato,
+      alergenos,
+      tags,
       receta,
       analisis,
     };
