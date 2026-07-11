@@ -64,10 +64,12 @@ export default async function MenuPage({ params }: PageProps) {
     .order('categoria_id')
     .order('orden');
 
-  // 6. Obtener TODAS las recetas
+  // 6. Obtener las recetas de los platos de este restaurante
+  const platoIds = (platos || []).map((p) => p.id);
   const { data: recetas } = await supabase
     .from('recetas')
-    .select('*');
+    .select('*')
+    .in('plato_id', platoIds.length ? platoIds : ['00000000-0000-0000-0000-000000000000']);
 
   // 7. Crear un mapa de recetas por plato_id
   const recetasMap = new Map();
@@ -77,24 +79,36 @@ export default async function MenuPage({ params }: PageProps) {
     });
   }
 
-  // 7b. Obtener los ingredientes con datos nutricionales de todas las recetas
+  // 7b. Obtener los ingredientes con datos nutricionales de todas las recetas.
+  //     Se pagina porque Supabase limita las respuestas a 1000 filas por defecto
+  //     y un menú puede superar ese número de líneas de receta.
   const recetaIds = (recetas || []).map((r) => r.id);
-  const { data: recetaIngredientes } = await supabase
-    .from('receta_ingredientes')
-    .select(`
-      receta_id, cantidad, unidad,
-      ingrediente:ingredientes(
-        id, nombre, categoria, alergenos,
-        calorias, proteinas_g, carbohidratos_g, grasas_g, grasas_saturadas_g, fibra_g, azucar_g,
-        sodio_mg, calcio_mg, hierro_mg, magnesio_mg, potasio_mg, zinc_mg, fosforo_mg,
-        vitamina_a_mcg, vitamina_c_mg, vitamina_d_mcg, vitamina_e_mg, vitamina_k_mcg,
-        vitamina_b1_mg, vitamina_b2_mg, vitamina_b3_mg, vitamina_b5_mg,
-        vitamina_b6_mg, vitamina_b9_mcg, vitamina_b12_mcg,
-        es_veneno_hildegardiano, es_base_alegria, nivel_subtilitat, requiere_coccion,
-        temperamento, propiedades_hildegardianas
-      )
-    `)
-    .in('receta_id', recetaIds.length ? recetaIds : ['00000000-0000-0000-0000-000000000000']);
+  const recetaIngredientes: any[] = [];
+  if (recetaIds.length) {
+    const PAGE = 1000;
+    for (let desde = 0; ; desde += PAGE) {
+      const { data: pagina, error } = await supabase
+        .from('receta_ingredientes')
+        .select(`
+          receta_id, cantidad, unidad,
+          ingrediente:ingredientes(
+            id, nombre, categoria, alergenos,
+            calorias, proteinas_g, carbohidratos_g, grasas_g, grasas_saturadas_g, fibra_g, azucar_g,
+            sodio_mg, calcio_mg, hierro_mg, magnesio_mg, potasio_mg, zinc_mg, fosforo_mg,
+            vitamina_a_mcg, vitamina_c_mg, vitamina_d_mcg, vitamina_e_mg, vitamina_k_mcg,
+            vitamina_b1_mg, vitamina_b2_mg, vitamina_b3_mg, vitamina_b5_mg,
+            vitamina_b6_mg, vitamina_b9_mcg, vitamina_b12_mcg,
+            es_veneno_hildegardiano, es_base_alegria, nivel_subtilitat, requiere_coccion,
+            temperamento, propiedades_hildegardianas
+          )
+        `)
+        .in('receta_id', recetaIds)
+        .range(desde, desde + PAGE - 1);
+      if (error || !pagina || pagina.length === 0) break;
+      recetaIngredientes.push(...pagina);
+      if (pagina.length < PAGE) break;
+    }
+  }
 
   // 7c. Agrupar ingredientes por receta
   const ingredientesPorReceta = new Map<string, RecetaIngredienteEntrada[]>();
