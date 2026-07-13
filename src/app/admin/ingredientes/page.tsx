@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import Link from 'next/link';
+import TablaIngredientes from './TablaIngredientes';
 
 export default async function AdminIngredientesPage({
   searchParams,
@@ -10,16 +11,10 @@ export default async function AdminIngredientesPage({
   const categoria = searchParams?.categoria;
   const busqueda = searchParams?.q;
 
-  // Construir query con filtros - AHORA TRAEMOS MÁS COLUMNAS
+  // Construir query con filtros - TRAEMOS TODAS LAS COLUMNAS DE LA BD
   let query = supabase
     .from('ingredientes')
-    .select(`
-      id, nombre, categoria, unidad_base, activo,
-      calorias, proteinas_g, carbohidratos_g, grasas_g, fibra_g,
-      calcio_mg, hierro_mg, potasio_mg,
-      vitamina_a_mcg, vitamina_c_mg,
-      indice_glucemico, origen, temperamento
-    `)
+    .select('*')
     .order('nombre');
 
   if (categoria && categoria !== 'todos') {
@@ -151,127 +146,20 @@ export default async function AdminIngredientesPage({
           </form>
         </div>
 
-        {/* Lista de ingredientes - TABLA EXPANDIDA */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Nombre</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Categoría</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">🔥 Cal</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">💪 Prot</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">🍞 Carbs</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">🥑 Grasas</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">🌾 Fibra</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">⚗️ Ca/Fe</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">💊 Vit A/C</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">📊 IG</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {ingredientes?.map((ing: any) => {
-                  const catInfo = categorias.find((c) => c.id === ing.categoria);
-                  return (
-                    <tr key={ing.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-semibold text-gray-800">
-                        <div className="flex items-center gap-2">
-                          <span>{ing.nombre}</span>
-                          {ing.origen && (
-                            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                              {ing.origen === 'vegetal' ? '🌱' : ing.origen === 'animal' ? '🐄' : '⚗️'}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-xs font-semibold">
-                          {catInfo?.icono} {catInfo?.nombre || ing.categoria}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`font-semibold ${ing.calorias !== null ? 'text-amber-600' : 'text-gray-400'}`}>
-                          {ing.calorias !== null ? ing.calorias : '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={ing.proteinas_g !== null ? 'text-blue-600' : 'text-gray-400'}>
-                          {ing.proteinas_g !== null ? ing.proteinas_g : '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={ing.carbohidratos_g !== null ? 'text-orange-600' : 'text-gray-400'}>
-                          {ing.carbohidratos_g !== null ? ing.carbohidratos_g : '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={ing.grasas_g !== null ? 'text-yellow-600' : 'text-gray-400'}>
-                          {ing.grasas_g !== null ? ing.grasas_g : '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={ing.fibra_g !== null ? 'text-green-600' : 'text-gray-400'}>
-                          {ing.fibra_g !== null ? ing.fibra_g : '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center text-xs">
-                        <div className={ing.calcio_mg !== null || ing.hierro_mg !== null ? 'text-gray-700' : 'text-gray-400'}>
-                          {ing.calcio_mg !== null ? `${ing.calcio_mg}` : '-'} / {ing.hierro_mg !== null ? ing.hierro_mg : '-'}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center text-xs">
-                        <div className={ing.vitamina_a_mcg !== null || ing.vitamina_c_mg !== null ? 'text-gray-700' : 'text-gray-400'}>
-                          {ing.vitamina_a_mcg !== null ? ing.vitamina_a_mcg : '-'} / {ing.vitamina_c_mg !== null ? ing.vitamina_c_mg : '-'}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {ing.indice_glucemico !== null ? (
-                          <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${
-                            ing.indice_glucemico < 55 ? 'bg-green-100 text-green-700' :
-                            ing.indice_glucemico < 70 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
-                            {ing.indice_glucemico}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Link
-                          href={`/admin/ingredientes/${ing.id}`}
-                          className="text-green-600 hover:text-green-800 font-semibold text-sm"
-                        >
-                          ✏️ Editar
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {(!ingredientes || ingredientes.length === 0) && (
-            <div className="p-12 text-center text-gray-500">
-              <p className="text-lg">No se encontraron ingredientes</p>
-            </div>
-          )}
-        </div>
+        {/* Lista de ingredientes - TABLA COMPLETA con selector de grupos de columnas */}
+        <TablaIngredientes ingredientes={ingredientes || []} categorias={categorias} />
 
         {/* Leyenda */}
         <div className="mt-6 bg-white rounded-xl shadow-md p-4">
           <h3 className="font-bold text-gray-800 mb-2">📖 Leyenda de columnas</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-gray-600">
-            <div><span className="font-semibold">🔥 Cal:</span> Calorías (kcal/100g)</div>
-            <div><span className="font-semibold">💪 Prot:</span> Proteínas (g/100g)</div>
-            <div><span className="font-semibold">🍞 Carbs:</span> Carbohidratos (g/100g)</div>
-            <div><span className="font-semibold">🥑 Grasas:</span> Grasas totales (g/100g)</div>
-            <div><span className="font-semibold">🌾 Fibra:</span> Fibra dietética (g/100g)</div>
-            <div><span className="font-semibold">⚗️ Ca/Fe:</span> Calcio/Hierro (mg/100g)</div>
-            <div><span className="font-semibold">💊 Vit A/C:</span> Vitamina A/C (mcg/mg)</div>
-            <div><span className="font-semibold">📊 IG:</span> Índice Glucémico (0-100)</div>
+          <div className="space-y-2 text-xs text-gray-600">
+            <p><span className="font-semibold text-gray-700">General:</span> 🔬 Nombre científico · 🧬 Origen (vegetal/animal/mineral) · 📏 Unidad base · 🌱 Parte útil · 📅 Estacionalidad</p>
+            <p><span className="font-semibold text-amber-700">Macros:</span> 🔥 Cal (kcal) · 💪 Prot · 🍞 Carbs · 🥑 Grasas · 🌾 Fibra · 🍬 Azúcar · 💧 Agua · ⬜ Cenizas · 🍷 Alcohol · ☕ Cafeína (por 100 g)</p>
+            <p><span className="font-semibold text-yellow-700">Grasas:</span> Sat · Mono · Poli (g) · Ω3 · Ω6 · Colest (mg)</p>
+            <p><span className="font-semibold text-slate-700">Minerales:</span> Na, K, Ca, Mg, P, Fe, Zn, Cu, Mn, Cl, S (mg) · Se, I, F (mcg)</p>
+            <p><span className="font-semibold text-pink-700">Vitaminas:</span> A, D, K, B9, B12 (mcg) · C, E, B1, B2, B3, B5, B6 (mg)</p>
+            <p><span className="font-semibold text-purple-700">Índices:</span> 📊 IG (Índice Glucémico 0-100) · CG (Carga Glucémica) · ORAC (antioxidantes) · PRAL (carga ácida renal) · pH</p>
+            <p><span className="font-semibold text-emerald-700">Hildegarda:</span> 🌿 Temperamento · ✨ Subtilitas (fuerza vital 1-10) · ☠️ Veneno · 😊 Base de alegría · 🔥 Requiere cocción · ⚠️ Alérgenos · 📜 Propiedades · 💚 Beneficios · 🚫 Contraindicaciones · 🔄 Alternativa sana</p>
           </div>
         </div>
       </main>
