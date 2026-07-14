@@ -130,6 +130,7 @@ const MICROS_MODAL: Array<{ clave: string; label: string; unidad: string }> = [
   { clave: 'vitaminaB1', label: 'Vit. B1', unidad: 'mg' },
   { clave: 'vitaminaB2', label: 'Vit. B2', unidad: 'mg' },
   { clave: 'vitaminaB3', label: 'Vit. B3', unidad: 'mg' },
+  { clave: 'vitaminaB5', label: 'Vit. B5', unidad: 'mg' },
   { clave: 'vitaminaB6', label: 'Vit. B6', unidad: 'mg' },
   { clave: 'vitaminaB9', label: 'Vit. B9', unidad: 'µg' },
   { clave: 'vitaminaB12', label: 'Vit. B12', unidad: 'µg' },
@@ -155,6 +156,14 @@ function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
       <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
         🔬 Datos nutricionales (por porción)
       </h3>
+      {analisis.porcionesEstimadas && analisis.pesoTotalGramos ? (
+        <p className="text-xs text-gray-500 mb-3">
+          Calculado sobre {(analisis.pesoTotalGramos / 1000).toFixed(2)} kg totales ÷{' '}
+          {analisis.porcionesEstimadas}{' '}
+          {analisis.porcionesEstimadas === 1 ? 'porción' : 'porciones'} (~
+          {Math.round(analisis.pesoTotalGramos / analisis.porcionesEstimadas)} g por porción).
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
         {MACROS_MODAL.map((m) => (
           <div key={m.clave} className="bg-purple-50 rounded-lg p-3 text-center">

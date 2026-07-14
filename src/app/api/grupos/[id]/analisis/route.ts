@@ -1,24 +1,12 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizarAGramos, estimarPorciones } from '@/lib/analisis-plato';
 
 // Valores diarios de referencia (aprox.)
 const VDR = {
   calorias: 2000, proteinas: 50, carbohidratos: 275, grasas: 78,
   fibra: 25, sodio: 2300, calcio: 1000, hierro: 18, vitaminaC: 90,
 };
-
-function normalizarAGramos(cantidad: number, unidad: string): number {
-  const u = (unidad || '').toLowerCase();
-  if (u === 'kg' || u === 'kilogramos') return cantidad * 1000;
-  if (u === 'gramos' || u === 'g') return cantidad;
-  if (u === 'litros' || u === 'l') return cantidad * 1000;
-  if (u === 'ml' || u === 'mililitros') return cantidad;
-  if (u === 'tazas') return cantidad * 240;
-  if (u === 'cucharadas') return cantidad * 15;
-  if (u === 'cucharadita') return cantidad * 5;
-  if (u === 'unidades' || u === 'unidad') return cantidad * 100; // estimación
-  return cantidad;
-}
 
 function nutricionVacia() {
   return {
@@ -107,6 +95,14 @@ export async function GET(
       const porciones = receta?.porciones || 1;
       const ings = (recetaIngredientes || []).filter((ri: any) => receta && ri.receta_id === receta.id);
 
+      // Porciones confiables a partir del peso total del plato (evita que una
+      // olla para varios marcada como "1 porción" infle la nutrición por porción).
+      const pesoTotalReceta = ings.reduce(
+        (s: number, ri: any) => s + (ri.ingrediente ? normalizarAGramos(ri.cantidad, ri.unidad) : 0),
+        0
+      );
+      const porcionesEfectivas = estimarPorciones(pesoTotalReceta, porciones);
+
       ings.forEach((ri: any) => {
         const ing = ri.ingrediente;
         if (!ing) return;
@@ -121,7 +117,7 @@ export async function GET(
 
         // Nutrición por porción
         const gramosTotales = normalizarAGramos(ri.cantidad, ri.unidad);
-        const gramosPorPorcion = gramosTotales / porciones;
+        const gramosPorPorcion = gramosTotales / porcionesEfectivas;
         const factor = gramosPorPorcion / 100;
 
         nutricion.calorias += (ing.calorias || 0) * factor;

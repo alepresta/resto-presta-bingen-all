@@ -127,6 +127,13 @@ export default async function MenuPage({ params }: PageProps) {
     const receta = recetasMap.get(plato.id) || null;
     const ingredientes = receta ? ingredientesPorReceta.get(receta.id) || [] : [];
     const analisis = receta ? analizarPlato(ingredientes, receta.porciones || 1) : null;
+    const ingredientesParaVista = ingredientes.length > 0
+      ? ingredientes.map((ri) => ({
+          nombre: (ri.ingrediente as any)?.nombre || 'Ingrediente',
+          cantidad: ri.cantidad,
+          unidad: ri.unidad,
+        }))
+      : (Array.isArray(receta?.ingredientes) ? receta.ingredientes : []);
 
     // Alérgenos: combinar los cargados en el plato con los derivados de los
     // ingredientes de la receta (crítico para salud: nunca omitir uno presente).
@@ -155,7 +162,12 @@ export default async function MenuPage({ params }: PageProps) {
       ...plato,
       alergenos,
       tags,
-      receta,
+      receta: receta
+        ? {
+            ...receta,
+            ingredientes: ingredientesParaVista,
+          }
+        : null,
       analisis,
     };
   });

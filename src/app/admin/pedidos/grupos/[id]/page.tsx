@@ -4,6 +4,7 @@ import Link from 'next/link';
 import GestionMiembros from './GestionMiembros';
 import AccionesGrupo from '../AccionesGrupo';
 import ProduccionPorDia from './ProduccionPorDia';
+import { normalizarAGramos } from '@/lib/analisis-plato';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,19 +21,6 @@ function platosDeItem(item: any, miembrosIds: Set<string>): number {
     acuerdo.add(item.seleccionado_por);
   }
   return Math.max(acuerdo.size, 1);
-}
-
-function normalizarAGramos(cantidad: number, unidad: string): number {
-  const u = (unidad || '').toLowerCase();
-  if (u === 'kg' || u === 'kilogramos') return cantidad * 1000;
-  if (u === 'gramos' || u === 'g') return cantidad;
-  if (u === 'litros' || u === 'l') return cantidad * 1000;
-  if (u === 'ml' || u === 'mililitros') return cantidad;
-  if (u === 'tazas') return cantidad * 240;
-  if (u === 'cucharadas') return cantidad * 15;
-  if (u === 'cucharadita' || u === 'cucharaditas') return cantidad * 5;
-  if (u === 'unidades' || u === 'unidad') return cantidad * 100;
-  return cantidad;
 }
 
 export default async function DetalleGrupoPage({ params }: { params: { id: string } }) {

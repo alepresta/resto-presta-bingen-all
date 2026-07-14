@@ -19,6 +19,43 @@ export const VDR: Record<string, number> = {
 
 const COMIDAS_POR_DIA = 3;
 
+// Peso de referencia de una porción de plato principal ya emplatado (g).
+const PESO_PORCION_REFERENCIA_G = 400;
+// Rango plausible de peso por porción para confiar en las porciones cargadas.
+const PESO_PORCION_MIN_G = 150;
+const PESO_PORCION_MAX_G = 700;
+
+/**
+ * Determina un número de porciones confiable a partir del peso total del plato.
+ *
+ * - Si las porciones declaradas producen un peso por porción plausible
+ *   (150–700 g), se respetan tal cual.
+ * - Si no (caso típico: una olla para varios comensales cargada como
+ *   "1 porción"), se estima el número de porciones a partir del peso total
+ *   usando una ración de referencia. Así el cálculo por porción es fiable
+ *   aunque el campo `porciones` esté mal cargado.
+ */
+export function estimarPorciones(
+  pesoTotalGramos: number,
+  porcionesDeclaradas?: number | null
+): number {
+  const declaradas =
+    porcionesDeclaradas && porcionesDeclaradas > 0 ? Math.round(porcionesDeclaradas) : 0;
+
+  if (!Number.isFinite(pesoTotalGramos) || pesoTotalGramos <= 0) {
+    return declaradas || 1;
+  }
+
+  if (declaradas > 0) {
+    const pesoPorPorcion = pesoTotalGramos / declaradas;
+    if (pesoPorPorcion >= PESO_PORCION_MIN_G && pesoPorPorcion <= PESO_PORCION_MAX_G) {
+      return declaradas;
+    }
+  }
+
+  return Math.max(1, Math.round(pesoTotalGramos / PESO_PORCION_REFERENCIA_G));
+}
+
 export interface IngredienteNutricion {
   nombre: string;
   calorias?: number | null;
@@ -80,6 +117,10 @@ export interface AnalisisPlato {
   excesos: string[];
   hildegardiano: EvaluacionReceta;
   resumen: ResumenLinea[];
+  /** Porciones usadas realmente para el cálculo (declaradas o estimadas). */
+  porcionesEstimadas?: number;
+  /** Peso total del plato en gramos (suma de ingredientes normalizados). */
+  pesoTotalGramos?: number;
 }
 
 // Micronutrientes que "conviene cubrir" (excluye sodio, que se limita)
@@ -112,15 +153,38 @@ const A_LIMITAR: Array<{ clave: keyof typeof VDR; label: string }> = [
 ];
 
 export function normalizarAGramos(cantidad: number, unidad: string): number {
-  const u = (unidad || '').toLowerCase();
-  if (u === 'kg' || u === 'kilogramos') return cantidad * 1000;
-  if (u === 'gramos' || u === 'g') return cantidad;
-  if (u === 'litros' || u === 'l') return cantidad * 1000;
-  if (u === 'ml' || u === 'mililitros') return cantidad;
-  if (u === 'tazas') return cantidad * 240;
-  if (u === 'cucharadas') return cantidad * 15;
-  if (u === 'cucharadita' || u === 'cucharaditas') return cantidad * 5;
-  if (u === 'unidades' || u === 'unidad') return cantidad * 100; // estimación
+  if (!Number.isFinite(cantidad) || cantidad <= 0) return 0;
+  const u = (unidad || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+  // Masa
+  if (u === 'kg' || u === 'kilo' || u === 'kilos' || u === 'kilogramo' || u === 'kilogramos') return cantidad * 1000;
+  if (u === 'gramo' || u === 'gramos' || u === 'g') return cantidad;
+
+  // Volumen (se aproxima 1 ml ~= 1 g para líquidos tipo agua/caldo)
+  if (u === 'litro' || u === 'litros' || u === 'l') return cantidad * 1000;
+  if (u === 'ml' || u === 'mililitro' || u === 'mililitros' || u === 'cc') return cantidad;
+
+  // Medidas de cocina comunes
+  if (u === 'taza' || u === 'tazas') return cantidad * 240;
+  if (u === 'cucharada' || u === 'cucharadas' || u === 'cda') return cantidad * 15;
+  if (u === 'cucharadita' || u === 'cucharaditas' || u === 'cdta') return cantidad * 5;
+
+  // Piezas
+  if (u === 'unidad' || u === 'unidades') return cantidad * 100; // estimación conservadora
+
+  // Medidas cualitativas frecuentes en recetas editoriales
+  if (u.includes('pizca')) return cantidad * 0.4;
+  if (u.includes('punado')) return cantidad * 30;
+  if (u.includes('chorrito')) return cantidad * 10;
+  if (u.includes('poco')) return cantidad * 5;
+  if (u.includes('moderad')) return cantidad * 2.5;
+  if (u.includes('generos')) return cantidad * 7.5;
+
+  // Fallback histórico: asumir gramos para no romper recetas existentes.
   return cantidad;
 }
 
@@ -137,10 +201,10 @@ export function analizarPlato(
   ingredientes: RecetaIngredienteEntrada[],
   porciones: number
 ): AnalisisPlato {
-  const nutricion = nutricionVacia();
-  const ingsHildegarda: Array<{ ing: IngredienteNutricion; gramos: number }> = [];
-  const porcion = porciones && porciones > 0 ? porciones : 1;
-
+  // 1) Se totaliza el plato COMPLETO (no por porción) y su peso real.
+  const totalReceta = nutricionVacia();
+  const ingsPeso: Array<{ ing: IngredienteNutricion; gramos: number }> = [];
+  let pesoTotalReceta = 0;
   let hayIngredientes = false;
 
   ingredientes.forEach((ri) => {
@@ -148,37 +212,63 @@ export function analizarPlato(
     if (!ing) return;
     hayIngredientes = true;
 
-    const gramosPorPorcion = normalizarAGramos(ri.cantidad, ri.unidad) / porcion;
-    const f = gramosPorPorcion / 100; // los valores están por 100 g
-    ingsHildegarda.push({ ing, gramos: gramosPorPorcion });
+    const gramos = normalizarAGramos(ri.cantidad, ri.unidad);
+    if (gramos <= 0) return;
+    pesoTotalReceta += gramos;
+    const f = gramos / 100; // los valores están por 100 g
+    ingsPeso.push({ ing, gramos });
 
-    nutricion.calorias += (ing.calorias || 0) * f;
-    nutricion.proteinas += (ing.proteinas_g || 0) * f;
-    nutricion.carbohidratos += (ing.carbohidratos_g || 0) * f;
-    nutricion.grasas += (ing.grasas_g || 0) * f;
-    nutricion.grasas_saturadas += (ing.grasas_saturadas_g || 0) * f;
-    nutricion.fibra += (ing.fibra_g || 0) * f;
-    nutricion.azucar += (ing.azucar_g || 0) * f;
-    nutricion.sodio += (ing.sodio_mg || 0) * f;
-    nutricion.calcio += (ing.calcio_mg || 0) * f;
-    nutricion.hierro += (ing.hierro_mg || 0) * f;
-    nutricion.magnesio += (ing.magnesio_mg || 0) * f;
-    nutricion.potasio += (ing.potasio_mg || 0) * f;
-    nutricion.zinc += (ing.zinc_mg || 0) * f;
-    nutricion.fosforo += (ing.fosforo_mg || 0) * f;
-    nutricion.vitaminaA += (ing.vitamina_a_mcg || 0) * f;
-    nutricion.vitaminaC += (ing.vitamina_c_mg || 0) * f;
-    nutricion.vitaminaD += (ing.vitamina_d_mcg || 0) * f;
-    nutricion.vitaminaE += (ing.vitamina_e_mg || 0) * f;
-    nutricion.vitaminaK += (ing.vitamina_k_mcg || 0) * f;
-    nutricion.vitaminaB1 += (ing.vitamina_b1_mg || 0) * f;
-    nutricion.vitaminaB2 += (ing.vitamina_b2_mg || 0) * f;
-    nutricion.vitaminaB3 += (ing.vitamina_b3_mg || 0) * f;
-    nutricion.vitaminaB5 += (ing.vitamina_b5_mg || 0) * f;
-    nutricion.vitaminaB6 += (ing.vitamina_b6_mg || 0) * f;
-    nutricion.vitaminaB9 += (ing.vitamina_b9_mcg || 0) * f;
-    nutricion.vitaminaB12 += (ing.vitamina_b12_mcg || 0) * f;
+    // Coherencia nutricional a nivel de ingrediente: un subnutriente nunca
+    // puede superar a su nutriente padre. Protege contra datos inconsistentes
+    // en la BD (p. ej. grasas saturadas > grasas totales).
+    const grasas = Math.max(0, ing.grasas_g || 0);
+    const grasasSaturadas = Math.min(Math.max(0, ing.grasas_saturadas_g || 0), grasas);
+    const carbohidratos = Math.max(0, ing.carbohidratos_g || 0);
+    const azucar = Math.min(Math.max(0, ing.azucar_g || 0), carbohidratos);
+    const fibra = Math.min(Math.max(0, ing.fibra_g || 0), carbohidratos);
+
+    totalReceta.calorias += (ing.calorias || 0) * f;
+    totalReceta.proteinas += (ing.proteinas_g || 0) * f;
+    totalReceta.carbohidratos += carbohidratos * f;
+    totalReceta.grasas += grasas * f;
+    totalReceta.grasas_saturadas += grasasSaturadas * f;
+    totalReceta.fibra += fibra * f;
+    totalReceta.azucar += azucar * f;
+    totalReceta.sodio += (ing.sodio_mg || 0) * f;
+    totalReceta.calcio += (ing.calcio_mg || 0) * f;
+    totalReceta.hierro += (ing.hierro_mg || 0) * f;
+    totalReceta.magnesio += (ing.magnesio_mg || 0) * f;
+    totalReceta.potasio += (ing.potasio_mg || 0) * f;
+    totalReceta.zinc += (ing.zinc_mg || 0) * f;
+    totalReceta.fosforo += (ing.fosforo_mg || 0) * f;
+    totalReceta.vitaminaA += (ing.vitamina_a_mcg || 0) * f;
+    totalReceta.vitaminaC += (ing.vitamina_c_mg || 0) * f;
+    totalReceta.vitaminaD += (ing.vitamina_d_mcg || 0) * f;
+    totalReceta.vitaminaE += (ing.vitamina_e_mg || 0) * f;
+    totalReceta.vitaminaK += (ing.vitamina_k_mcg || 0) * f;
+    totalReceta.vitaminaB1 += (ing.vitamina_b1_mg || 0) * f;
+    totalReceta.vitaminaB2 += (ing.vitamina_b2_mg || 0) * f;
+    totalReceta.vitaminaB3 += (ing.vitamina_b3_mg || 0) * f;
+    totalReceta.vitaminaB5 += (ing.vitamina_b5_mg || 0) * f;
+    totalReceta.vitaminaB6 += (ing.vitamina_b6_mg || 0) * f;
+    totalReceta.vitaminaB9 += (ing.vitamina_b9_mcg || 0) * f;
+    totalReceta.vitaminaB12 += (ing.vitamina_b12_mcg || 0) * f;
   });
+
+  // 2) Porciones confiables: se respeta el dato cargado sólo si da una ración
+  //    plausible; si no, se estima a partir del peso total del plato.
+  const porcionesEfectivas = estimarPorciones(pesoTotalReceta, porciones);
+
+  // 3) Nutrición POR PORCIÓN = total del plato / porciones efectivas.
+  const nutricion = nutricionVacia();
+  (Object.keys(totalReceta) as Array<keyof typeof VDR>).forEach((k) => {
+    nutricion[k] = totalReceta[k] / porcionesEfectivas;
+  });
+
+  const ingsHildegarda = ingsPeso.map((x) => ({
+    ing: x.ing,
+    gramos: x.gramos / porcionesEfectivas,
+  }));
 
   // % del VDR diario que aporta la porción
   const porcentajeVDR: Record<string, number> = {};
@@ -198,6 +288,8 @@ export function analizarPlato(
       excesos: [],
       hildegardiano,
       resumen: construirResumen(0, 0, [], [], [], [], hildegardiano, false),
+      porcionesEstimadas: porcionesEfectivas,
+      pesoTotalGramos: pesoTotalReceta,
     };
   }
 
@@ -247,6 +339,8 @@ export function analizarPlato(
     excesos,
     hildegardiano,
     resumen,
+    porcionesEstimadas: porcionesEfectivas,
+    pesoTotalGramos: pesoTotalReceta,
   };
 }
 

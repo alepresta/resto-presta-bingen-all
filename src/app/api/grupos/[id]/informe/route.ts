@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizarAGramos, estimarPorciones } from '@/lib/analisis-plato';
 
 // ============================================================
 // Informe COMPLETO de un grupo: nutricional científico + hildegardiano
@@ -17,19 +18,6 @@ const VDR = {
 
 // Nutrientes cuyo VDR es un máximo recomendado (no un mínimo)
 const NUTRIENTES_MAX = new Set(['grasas_saturadas', 'azucar', 'sodio']);
-
-function normalizarAGramos(cantidad: number, unidad: string): number {
-  const u = (unidad || '').toLowerCase();
-  if (u === 'kg' || u === 'kilogramos') return cantidad * 1000;
-  if (u === 'gramos' || u === 'g') return cantidad;
-  if (u === 'litros' || u === 'l') return cantidad * 1000;
-  if (u === 'ml' || u === 'mililitros') return cantidad;
-  if (u === 'tazas') return cantidad * 240;
-  if (u === 'cucharadas') return cantidad * 15;
-  if (u === 'cucharadita') return cantidad * 5;
-  if (u === 'unidades' || u === 'unidad') return cantidad * 100;
-  return cantidad;
-}
 
 function obtenerRazonVeneno(nombre: string): string {
   const n = nombre.toLowerCase();
@@ -159,10 +147,18 @@ export async function GET(
     };
     const ingredientesPorDia: Record<string, Array<{ seco: boolean; nombre: string }>> = {};
 
+    // Peso total por receta, para estimar porciones confiables por plato.
+    const pesoTotalPorReceta = new Map<string, number>();
+    (recetaIngredientes || []).forEach((ri: any) => {
+      const g = ri.ingrediente ? normalizarAGramos(ri.cantidad, ri.unidad) : 0;
+      pesoTotalPorReceta.set(ri.receta_id, (pesoTotalPorReceta.get(ri.receta_id) || 0) + g);
+    });
+
     items.forEach((item) => {
       const receta = recetaPorPlato.get(item.plato_id);
       if (!receta) return;
-      const factorEscala = (item.cantidad || 1) / receta.porciones;
+      const porcionesEfectivas = estimarPorciones(pesoTotalPorReceta.get(receta.id) || 0, receta.porciones);
+      const factorEscala = (item.cantidad || 1) / porcionesEfectivas;
 
       (recetaIngredientes || [])
         .filter((ri: any) => ri.receta_id === receta.id)

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DIAS_SEMANA, CATEGORIAS_COMIDA } from '@/lib/pedidos';
-import { evaluarHildegardianoDB } from '@/lib/analisis-plato';
+import { evaluarHildegardianoDB, normalizarAGramos, estimarPorciones } from '@/lib/analisis-plato';
 import ProduccionPorDia from '@/app/admin/pedidos/grupos/[id]/ProduccionPorDia';
 
 // Parseo/format de fechas 'YYYY-MM-DD' de forma estable en cualquier zona horaria
@@ -31,20 +31,6 @@ function textoDePaso(p: any): string {
     (typeof p.paso === 'string' ? p.paso : '') ||
     ''
   );
-}
-
-// Conversión a gramos/ml para el cálculo nutricional
-function normalizarAGramos(cantidad: number, unidad: string): number {
-  const u = (unidad || '').toLowerCase();
-  if (u === 'kg' || u === 'kilogramos') return cantidad * 1000;
-  if (u === 'gramos' || u === 'g') return cantidad;
-  if (u === 'litros' || u === 'l') return cantidad * 1000;
-  if (u === 'ml' || u === 'mililitros') return cantidad;
-  if (u === 'tazas') return cantidad * 240;
-  if (u === 'cucharadas') return cantidad * 15;
-  if (u === 'cucharadita') return cantidad * 5;
-  if (u === 'unidades' || u === 'unidad') return cantidad * 100;
-  return cantidad;
 }
 
 // Valores diarios de referencia (aprox.)
@@ -380,7 +366,14 @@ export default function CalendarioPedidos({
     const receta = plato.receta;
     if (!receta || !receta.ingredientes || receta.ingredientes.length === 0) return null;
 
-    const porciones = receta.porciones || 1;
+    // Peso total real del plato y porciones confiables (mismo criterio que el
+    // motor central): si las porciones cargadas dan una ración implausible, se
+    // estiman a partir del peso total.
+    const pesoTotalReceta = receta.ingredientes.reduce(
+      (s, ri) => s + (ri.ingrediente ? normalizarAGramos(ri.cantidad || 0, ri.unidad || '') : 0),
+      0
+    );
+    const porciones = estimarPorciones(pesoTotalReceta, receta.porciones);
     const n: Record<string, number> = {
       calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0, grasas_saturadas: 0, fibra: 0, azucar: 0,
       sodio: 0, calcio: 0, hierro: 0, magnesio: 0, potasio: 0, zinc: 0, fosforo: 0,
@@ -402,13 +395,20 @@ export default function CalendarioPedidos({
       const gramos = normalizarAGramos(ri.cantidad || 0, ri.unidad || '') / porciones;
       const f = gramos / 100;
 
+      // Coherencia nutricional: un subnutriente no puede superar a su padre.
+      const grasas = Math.max(0, ing.grasas_g || 0);
+      const grasasSaturadas = Math.min(Math.max(0, ing.grasas_saturadas_g || 0), grasas);
+      const carbohidratos = Math.max(0, ing.carbohidratos_g || 0);
+      const azucar = Math.min(Math.max(0, ing.azucar_g || 0), carbohidratos);
+      const fibra = Math.min(Math.max(0, ing.fibra_g || 0), carbohidratos);
+
       n.calorias += (ing.calorias || 0) * f;
       n.proteinas += (ing.proteinas_g || 0) * f;
-      n.carbohidratos += (ing.carbohidratos_g || 0) * f;
-      n.grasas += (ing.grasas_g || 0) * f;
-      n.grasas_saturadas += (ing.grasas_saturadas_g || 0) * f;
-      n.fibra += (ing.fibra_g || 0) * f;
-      n.azucar += (ing.azucar_g || 0) * f;
+      n.carbohidratos += carbohidratos * f;
+      n.grasas += grasas * f;
+      n.grasas_saturadas += grasasSaturadas * f;
+      n.fibra += fibra * f;
+      n.azucar += azucar * f;
       n.sodio += (ing.sodio_mg || 0) * f;
       n.calcio += (ing.calcio_mg || 0) * f;
       n.hierro += (ing.hierro_mg || 0) * f;
