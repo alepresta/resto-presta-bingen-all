@@ -172,12 +172,12 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
                   setMostrarResultados(false);
                   setBusqueda(ing.nombre);
                 }}
-                className={`w-full text-left px-4 py-2 hover:bg-green-50 border-b last:border-b-0 ${
-                  ingredienteSeleccionado?.id === ing.id ? 'bg-green-100' : ''
+                className={`w-full text-left px-4 py-2 hover:bg-green-50 border-b last:border-b-0 text-gray-900 ${
+                  ingredienteSeleccionado?.id === ing.id ? 'bg-green-100' : 'bg-white'
                 }`}
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold">{ing.nombre}</span>
+                  <span className="font-semibold text-gray-900">{ing.nombre}</span>
                   <span className="text-xs text-gray-500">
                     {ing.calorias !== null ? `${ing.calorias} kcal` : 'Sin datos'}
                   </span>
