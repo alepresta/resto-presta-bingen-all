@@ -289,7 +289,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
                 value={textoBusqueda}
                 onChange={(e) => setTextoBusqueda(e.target.value)}
                 placeholder="Buscar por plato o ingrediente..."
-                className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white text-gray-900"
+                className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
               <span className="absolute left-3 top-3.5 text-gray-400">🔍</span>
             </div>
@@ -310,7 +310,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               <select
                 value={categoriaFiltro || ''}
                 onChange={(e) => setCategoriaFiltro(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500"
               >
                 <option value="">Todas</option>
                 {Object.entries(CATEGORIAS).map(([id, cat]) => (
@@ -323,7 +323,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               <select
                 value={temperamentoFiltro}
                 onChange={(e) => setTemperamentoFiltro(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500"
               >
                 <option value="">Todos</option>
                 {TEMPERAMENTOS.map((temp) => (
@@ -351,7 +351,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">📅 Día</label>
-              <select value={diaFiltro} onChange={(e) => setDiaFiltro(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900">
+              <select value={diaFiltro} onChange={(e) => setDiaFiltro(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="">Todos</option>
                 <option value="todos_dias">🗓️ Todos los días</option>
                 {DIAS_SEMANA.map((d) => (
@@ -361,7 +361,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">👁️ Estado</label>
-              <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900">
+              <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="publicados">🟢 Publicados</option>
                 <option value="despublicados">⚪ Despublicados</option>
@@ -369,7 +369,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">💲 Precio</label>
-              <select value={precioFiltro} onChange={(e) => setPrecioFiltro(e.target.value as typeof precioFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900">
+              <select value={precioFiltro} onChange={(e) => setPrecioFiltro(e.target.value as typeof precioFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="con_precio">💰 Con precio</option>
                 <option value="gratis">🎁 Gratis</option>
@@ -377,7 +377,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">🌾 Gluten</label>
-              <select value={glutenFiltro} onChange={(e) => setGlutenFiltro(e.target.value as typeof glutenFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900">
+              <select value={glutenFiltro} onChange={(e) => setGlutenFiltro(e.target.value as typeof glutenFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="con">Con gluten</option>
                 <option value="sin">Sin gluten</option>
@@ -385,7 +385,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">📈 Índice glucémico</label>
-              <select value={igFiltro} onChange={(e) => setIgFiltro(e.target.value as typeof igFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white text-gray-900">
+              <select value={igFiltro} onChange={(e) => setIgFiltro(e.target.value as typeof igFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="bajo">🟢 Bajo (≤ 55)</option>
                 <option value="medio">🟡 Medio (56–69)</option>

@@ -196,7 +196,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 <select
                   value={platoId}
                   onChange={(e) => seleccionarPlato(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="">Seleccioná un plato...</option>
                   {platos.map((plato) => (
@@ -212,7 +212,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                   type="number"
                   value={tiempoMin}
                   onChange={(e) => setTiempoMin(parseInt(e.target.value) || 0)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               <div>
@@ -221,7 +221,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                   type="number"
                   value={porciones}
                   onChange={(e) => setPorciones(parseInt(e.target.value) || 1)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               <div className="md:col-span-2">
@@ -229,7 +229,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 <select
                   value={dificultad}
                   onChange={(e) => setDificultad(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="fácil">Fácil</option>
                   <option value="media">Media</option>
@@ -241,7 +241,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 <select
                   value={diaSemanaId}
                   onChange={(e) => setDiaSemanaId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="">🗓️ Todos los días</option>
                   {DIAS_SEMANA.map((d) => (
@@ -281,7 +281,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                     onChange={(e) => actualizarPaso(i, e.target.value)}
                     placeholder={`Paso ${i + 1}...`}
                     rows={2}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
                   />
                   <button
                     onClick={() => eliminarPaso(i)}
@@ -302,7 +302,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
               onChange={(e) => setNotasHildegardianas(e.target.value)}
               placeholder="Sabiduría de Santa Hildegarda sobre este plato..."
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 text-gray-900 bg-white"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
             />
           </div>
 
@@ -318,7 +318,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
               onChange={(e) => setInterpretacionHildegardiana(e.target.value)}
               placeholder="Ej: Acción principal: Cardiotónica y reconstructora. Efecto en el ánimo: Antimelancólico..."
               rows={8}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 

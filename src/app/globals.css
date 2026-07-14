@@ -6,6 +6,19 @@
   body {
     @apply bg-gradient-to-b from-amber-50 to-orange-50 text-gray-900;
   }
+
+  /* Fuerza contraste legible en controles de formulario entre navegadores */
+  input,
+  select,
+  textarea {
+    @apply text-gray-900 bg-white;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #6b7280;
+    opacity: 1;
+  }
 }
 
 @layer components {

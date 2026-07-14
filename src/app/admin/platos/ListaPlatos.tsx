@@ -214,7 +214,7 @@ function ModalEditarPlato({
               value={imagen}
               onChange={(e) => setImagen(e.target.value)}
               placeholder="…o pegá una URL: https://…/foto.jpg"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
             />
 
             {errorImagen && (
@@ -257,7 +257,7 @@ function ModalEditarPlato({
                 value={precio}
                 onChange={(e) => setPrecio(e.target.value)}
                 placeholder="Gratis"
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               />
               {!sinPrecio && (
                 <button
@@ -284,7 +284,7 @@ function ModalEditarPlato({
             <select
               value={diaSemana}
               onChange={(e) => setDiaSemana(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
             >
               <option value="">🗓️ Todos los días</option>
               {DIAS_SEMANA.map((d) => (
@@ -574,7 +574,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                 value={textoBusqueda}
                 onChange={(e) => setTextoBusqueda(e.target.value)}
                 placeholder="Buscar por nombre, descripción o ingrediente..."
-                className="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               />
               <span className="absolute left-3 top-3.5 text-gray-400">🔍</span>
             </div>
@@ -610,7 +610,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
               <select
                 value={categoriaFiltro || ''}
                 onChange={(e) => setCategoriaFiltro(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="">Todas</option>
                 {Object.entries(CATEGORIAS).map(([id, cat]) => (
@@ -626,7 +626,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
               <select
                 value={temperamentoFiltro}
                 onChange={(e) => setTemperamentoFiltro(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="">Todos</option>
                 {TEMPERAMENTOS.map((temp) => (
@@ -671,7 +671,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
               <select
                 value={diaFiltro}
                 onChange={(e) => setDiaFiltro(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="">Todos</option>
                 <option value="todos_dias">🗓️ Todos los días</option>
@@ -685,7 +685,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
               <select
                 value={estadoFiltro}
                 onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="todos">Todos</option>
                 <option value="publicados">🟢 Publicados</option>
@@ -698,7 +698,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
               <select
                 value={precioFiltro}
                 onChange={(e) => setPrecioFiltro(e.target.value as typeof precioFiltro)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="todos">Todos</option>
                 <option value="con_precio">💰 Con precio</option>
@@ -711,7 +711,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
               <select
                 value={glutenFiltro}
                 onChange={(e) => setGlutenFiltro(e.target.value as typeof glutenFiltro)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="todos">Todos</option>
                 <option value="con">Con gluten</option>
@@ -724,7 +724,7 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
               <select
                 value={igFiltro}
                 onChange={(e) => setIgFiltro(e.target.value as typeof igFiltro)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="todos">Todos</option>
                 <option value="bajo">🟢 Bajo (≤ 55)</option>
