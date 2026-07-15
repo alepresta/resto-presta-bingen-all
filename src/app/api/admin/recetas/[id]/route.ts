@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
-import { actualizarDiaPlato, autorizarRecetas, reemplazarIngredientesReceta } from '../_shared';
+import { actualizarDatosPlato, autorizarRecetas, reemplazarIngredientesReceta } from '../_shared';
 
 // GET: Obtener receta por ID
 export async function GET(
@@ -49,6 +49,7 @@ export async function PUT(
     notas_hildegardianas,
     interpretacion_hildegardiana,
     dia_semana_id,
+    plato_nombre,
   } = body;
 
   if (!plato_id) {
@@ -77,7 +78,7 @@ export async function PUT(
     }
 
     await reemplazarIngredientesReceta(supabase, params.id, ingredientes);
-    await actualizarDiaPlato(supabase, plato_id, dia_semana_id);
+    await actualizarDatosPlato(supabase, plato_id, plato_nombre, dia_semana_id);
 
     return NextResponse.json({ receta });
   } catch (error: any) {

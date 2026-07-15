@@ -132,6 +132,21 @@ function temperamentoDominante(r: RecetaItem): string | null {
   return entries.sort((a, b) => b[1] - a[1])[0][0];
 }
 
+function normalizarTextoBusqueda(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function extraerTerminosBusqueda(valor: string): string[] {
+  return normalizarTextoBusqueda(valor)
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((termino) => termino !== 'de' && termino !== 'del' && termino !== 'la' && termino !== 'las' && termino !== 'el' && termino !== 'los' && termino !== 'con');
+}
+
 export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, cobertura, error }: ListaRecetasProps) {
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<number | null>(null);
@@ -154,12 +169,15 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
   const recetasFiltradas = useMemo(() => {
     return recetas.filter((r) => {
       if (textoBusqueda) {
-        const texto = textoBusqueda.toLowerCase();
-        const coincideNombre = r.nombrePlato.toLowerCase().includes(texto);
-        const coincideIngrediente = r.ingredientes?.some((ri) =>
-          ri.ingrediente?.nombre?.toLowerCase().includes(texto)
-        ) || false;
-        if (!coincideNombre && !coincideIngrediente) return false;
+        const terminos = extraerTerminosBusqueda(textoBusqueda);
+        const nombreNormalizado = normalizarTextoBusqueda(r.nombrePlato);
+        const ingredientesNormalizados = (r.ingredientes || [])
+          .map((ri) => normalizarTextoBusqueda(ri.ingrediente?.nombre || ''))
+          .join(' ');
+        const textoCompleto = `${nombreNormalizado} ${ingredientesNormalizados}`.trim();
+        const coincideNombre = terminos.every((termino) => nombreNormalizado.includes(termino));
+        const coincideTextoCompleto = terminos.every((termino) => textoCompleto.includes(termino));
+        if (!coincideNombre && !coincideTextoCompleto) return false;
       }
 
       if (estadoFiltro === 'publicados' && !r.disponible) return false;

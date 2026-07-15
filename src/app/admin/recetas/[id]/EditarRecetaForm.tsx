@@ -21,6 +21,7 @@ interface PlatoOpcion {
 
 interface DatosIniciales {
   platoId: string;
+  platoNombre: string;
   tiempoMin: number;
   porciones: number;
   dificultad: string;
@@ -45,7 +46,9 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
   const esNueva = recetaId === 'nueva';
 
-  const [platoId, setPlatoId] = useState(initial.platoId);  const [tiempoMin, setTiempoMin] = useState(initial.tiempoMin);
+  const [platoId, setPlatoId] = useState(initial.platoId);
+  const [platoNombre, setPlatoNombre] = useState(initial.platoNombre);
+  const [tiempoMin, setTiempoMin] = useState(initial.tiempoMin);
   const [porciones, setPorciones] = useState(initial.porciones);
   const [dificultad, setDificultad] = useState(initial.dificultad);
   const [diaSemanaId, setDiaSemanaId] = useState(initial.diaSemanaId);
@@ -70,6 +73,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
     }
 
     setPlatoId(id);
+    setPlatoNombre(p?.nombre || '');
     setDiaSemanaId(p?.dia_semana_id != null ? String(p.dia_semana_id) : '');
   };
 
@@ -112,6 +116,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
     try {
       if (!platoId) throw new Error('Debés seleccionar un plato');
+      if (!platoNombre.trim()) throw new Error('Debés indicar el nombre del plato');
       if (pasos.some((p) => !p.trim())) throw new Error('Todos los pasos deben estar completos');
       if (ingredientes.length === 0) throw new Error('Debés agregar al menos un ingrediente');
 
@@ -125,6 +130,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plato_id: platoId,
+          plato_nombre: platoNombre.trim(),
           dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId),
           tiempo_min: tiempoMin,
           porciones,
@@ -222,6 +228,19 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                     Si el plato ya tiene receta, al seleccionarlo se abrirá esa receta para edición.
                   </p>
                 )}
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre del plato *</label>
+                <input
+                  type="text"
+                  value={platoNombre}
+                  onChange={(e) => setPlatoNombre(e.target.value)}
+                  placeholder="Ej: Sopa de calabaza con hinojo"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Este nombre actualiza el plato asociado y se reflejará también fuera de la receta.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">⏱️ Tiempo (minutos)</label>

@@ -28,6 +28,19 @@ export function normalizarDiaSemana(valor: unknown): number | null {
   return dia;
 }
 
+export function normalizarNombrePlato(valor: unknown): string {
+  if (typeof valor !== 'string') {
+    throw new Error('plato_nombre debe ser texto');
+  }
+
+  const nombre = valor.trim();
+  if (!nombre) {
+    throw new Error('Debés indicar el nombre del plato');
+  }
+
+  return nombre;
+}
+
 export function normalizarIngredientes(valor: unknown): IngredienteEntrada[] {
   if (!Array.isArray(valor)) return [];
 
@@ -84,6 +97,27 @@ export async function actualizarDiaPlato(
   const { error } = await supabase
     .from('platos')
     .update({
+      dia_semana_id: diaNormalizado,
+      disponible_todos_dias: diaNormalizado === null,
+    })
+    .eq('id', platoId);
+
+  if (error) throw error;
+}
+
+export async function actualizarDatosPlato(
+  supabase: SupabaseClientLike,
+  platoId: string,
+  nombre: unknown,
+  diaSemanaId: unknown
+) {
+  const diaNormalizado = normalizarDiaSemana(diaSemanaId);
+  const nombreNormalizado = normalizarNombrePlato(nombre);
+
+  const { error } = await supabase
+    .from('platos')
+    .update({
+      nombre: nombreNormalizado,
       dia_semana_id: diaNormalizado,
       disponible_todos_dias: diaNormalizado === null,
     })

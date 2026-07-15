@@ -11,6 +11,19 @@ interface IngredienteSeleccionado {
   unidad: string;
 }
 
+interface DatosInicialesReceta {
+  platoId: string;
+  platoNombre: string;
+  tiempoMin: number;
+  porciones: number;
+  dificultad: string;
+  diaSemanaId: string;
+  pasos: string[];
+  ingredientes: IngredienteSeleccionado[];
+  notasHildegardianas: string;
+  interpretacionHildegardiana: string;
+}
+
 // Los pasos pueden estar guardados como strings o como objetos {paso, descripcion}.
 // Normalizamos siempre a un arreglo de textos.
 function normalizarPasos(pasos: any): string[] {
@@ -50,8 +63,9 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
     }));
 
   // Datos iniciales por defecto (receta nueva)
-  let initial = {
+  let initial: DatosInicialesReceta = {
     platoId: '',
+    platoNombre: '',
     tiempoMin: 30,
     porciones: 4,
     dificultad: 'media',
@@ -102,6 +116,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
 
       initial = {
         platoId: r.plato_id || '',
+        platoNombre: (platosData || []).find((x) => x.id === r.plato_id)?.nombre || '',
         tiempoMin: r.tiempo_min || 30,
         porciones: r.porciones || 4,
         dificultad: r.dificultad || 'media',
