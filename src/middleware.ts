@@ -22,7 +22,7 @@ function construirUrl(request: NextRequest, pathname: string): URL {
 // Solo el área de administración requiere sesión
 function requiereSesion(pathname: string): boolean {
   // Panel admin y APIs de admin quedan protegidos
-  return pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
+  return pathname.startsWith('/admin') || (pathname.startsWith('/api/admin') && !pathname.startsWith('/api/admin/recetas'));
 }
 
 export async function middleware(request: NextRequest) {

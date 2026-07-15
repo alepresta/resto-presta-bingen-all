@@ -1,11 +1,15 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { actualizarDiaPlato, autorizarRecetas, reemplazarIngredientesReceta } from '../_shared';
 
 // GET: Obtener receta por ID
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const autorizacion = await autorizarRecetas(request.method);
+  if (autorizacion) return autorizacion;
+
   const supabase = createServerSupabaseClient();
   
   const { data: receta, error } = await supabase
@@ -29,31 +33,60 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const autorizacion = await autorizarRecetas(request.method);
+  if (autorizacion) return autorizacion;
+
   const supabase = createServerSupabaseClient();
   const body = await request.json();
 
-  const { tiempo_min, porciones, dificultad, pasos, ingredientes, notas_hildegardianas, interpretacion_hildegardiana } = body;
+  const {
+    plato_id,
+    tiempo_min,
+    porciones,
+    dificultad,
+    pasos,
+    ingredientes,
+    notas_hildegardianas,
+    interpretacion_hildegardiana,
+    dia_semana_id,
+  } = body;
 
-  const { data: receta, error } = await supabase
-    .from('recetas')
-    .update({
-      tiempo_min,
-      porciones,
-      dificultad,
-      pasos,
-      ingredientes,
-      notas_hildegardianas,
-      interpretacion_hildegardiana,
-    })
-    .eq('id', params.id)
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!plato_id) {
+    return NextResponse.json({ error: 'plato_id es obligatorio' }, { status: 400 });
   }
 
-  return NextResponse.json({ receta });
+  try {
+    const { data: receta, error } = await supabase
+      .from('recetas')
+      .update({
+        plato_id,
+        tiempo_min,
+        porciones,
+        dificultad,
+        pasos,
+        ingredientes,
+        notas_hildegardianas,
+        interpretacion_hildegardiana,
+      })
+      .eq('id', params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    await reemplazarIngredientesReceta(supabase, params.id, ingredientes);
+    await actualizarDiaPlato(supabase, plato_id, dia_semana_id);
+
+    return NextResponse.json({ receta });
+  } catch (error: any) {
+    if (error?.code === '23505') {
+      return NextResponse.json({ error: 'Ese plato ya tiene otra receta asociada' }, { status: 409 });
+    }
+
+    return NextResponse.json({ error: error.message || 'Error al actualizar receta' }, { status: 500 });
+  }
 }
 
 // DELETE: Eliminar receta
@@ -61,6 +94,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const autorizacion = await autorizarRecetas(request.method);
+  if (autorizacion) return autorizacion;
+
   const supabase = createServerSupabaseClient();
   
   const { error } = await supabase
@@ -80,6 +116,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const autorizacion = await autorizarRecetas(request.method);
+  if (autorizacion) return autorizacion;
+
   const formData = await request.formData();
   const method = formData.get('_method');
 

@@ -29,17 +29,25 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
   const supabase = createServerSupabaseClient();
   const esNueva = params.id === 'nueva';
 
+  const { data: recetasExistentes } = await supabase.from('recetas').select('id, plato_id');
+  const platoIdPorReceta = new Map<string, string>((recetasExistentes || []).map((r) => [r.id, r.plato_id]));
+  const recetaIdPorPlato = new Map<string, string>((recetasExistentes || []).map((r) => [r.plato_id, r.id]));
+  const platoActualId = esNueva ? null : platoIdPorReceta.get(params.id) || null;
+
   // Platos disponibles para el selector
   const { data: platosData } = await supabase
     .from('platos')
     .select('id, nombre, categoria_id, dia_semana_id')
     .eq('disponible', true)
     .order('nombre');
-  const platos = (platosData || []).map((p) => ({
-    id: p.id,
-    nombre: p.nombre,
-    dia_semana_id: p.dia_semana_id ?? null,
-  }));
+  const platos = (platosData || [])
+    .map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      dia_semana_id: p.dia_semana_id ?? null,
+      receta_existente_id: recetaIdPorPlato.get(p.id) ?? null,
+      ocupado: recetaIdPorPlato.has(p.id) && p.id !== platoActualId,
+    }));
 
   // Datos iniciales por defecto (receta nueva)
   let initial = {

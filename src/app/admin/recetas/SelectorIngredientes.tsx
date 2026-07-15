@@ -52,14 +52,12 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
   });
 
   // Agregar ingrediente a la receta
-  const agregarIngrediente = () => {
-    if (!ingredienteSeleccionado) return;
-
+  const agregarIngrediente = (ingrediente: Ingrediente, cantidadInicial: number, unidadInicial: string) => {
     const nuevo: IngredienteSeleccionado = {
-      ingrediente_id: ingredienteSeleccionado.id,
-      nombre: ingredienteSeleccionado.nombre,
-      cantidad,
-      unidad,
+      ingrediente_id: ingrediente.id,
+      nombre: ingrediente.nombre,
+      cantidad: cantidadInicial,
+      unidad: unidadInicial,
     };
 
     // Verificar si ya existe
@@ -84,6 +82,10 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
   // Actualizar cantidad
   const actualizarCantidad = (id: string, nuevaCantidad: number) => {
     onChange(value.map((i) => (i.ingrediente_id === id ? { ...i, cantidad: nuevaCantidad } : i)));
+  };
+
+  const actualizarUnidad = (id: string, nuevaUnidad: string) => {
+    onChange(value.map((i) => (i.ingrediente_id === id ? { ...i, unidad: nuevaUnidad } : i)));
   };
 
   // Calcular nutrición total
@@ -167,10 +169,8 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
                 key={ing.id}
                 type="button"
                 onClick={() => {
-                  setIngredienteSeleccionado(ing);
-                  setUnidad(ing.unidad_base);
-                  setMostrarResultados(false);
-                  setBusqueda(ing.nombre);
+                  const unidadBase = ing.unidad_base || 'gramos';
+                  agregarIngrediente(ing, 100, unidadBase);
                 }}
                 className={`w-full text-left px-4 py-2 hover:bg-green-50 border-b last:border-b-0 text-gray-900 ${
                   ingredienteSeleccionado?.id === ing.id ? 'bg-green-100' : 'bg-white'
@@ -227,7 +227,10 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
             </div>
             <button
               type="button"
-              onClick={agregarIngrediente}
+              onClick={() => {
+                if (!ingredienteSeleccionado) return;
+                agregarIngrediente(ingredienteSeleccionado, cantidad, unidad);
+              }}
               className="mt-3 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 font-semibold"
             >
               ➕ Agregar a la receta
@@ -258,7 +261,20 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
                       step="0.1"
                       className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
                     />
-                    <span className="text-sm text-gray-600">{item.unidad}</span>
+                    <select
+                      value={item.unidad}
+                      onChange={(e) => actualizarUnidad(item.ingrediente_id, e.target.value)}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm text-gray-600"
+                    >
+                      <option value="gramos">gramos</option>
+                      <option value="kg">kg</option>
+                      <option value="ml">ml</option>
+                      <option value="litros">litros</option>
+                      <option value="unidades">unidades</option>
+                      <option value="cucharadas">cucharadas</option>
+                      <option value="cucharadita">cucharadita</option>
+                      <option value="tazas">tazas</option>
+                    </select>
                   </div>
                 </div>
                 <button

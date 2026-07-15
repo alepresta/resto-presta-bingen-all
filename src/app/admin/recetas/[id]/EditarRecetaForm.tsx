@@ -15,6 +15,8 @@ interface PlatoOpcion {
   id: string;
   nombre: string;
   dia_semana_id?: number | null;
+  receta_existente_id?: string | null;
+  ocupado?: boolean;
 }
 
 interface DatosIniciales {
@@ -61,8 +63,13 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
   // Al elegir un plato, precargar su día actual
   const seleccionarPlato = (id: string) => {
-    setPlatoId(id);
     const p = platos.find((x) => x.id === id);
+    if (p?.receta_existente_id && p.receta_existente_id !== recetaId) {
+      router.push(`/admin/recetas/${p.receta_existente_id}`);
+      return;
+    }
+
+    setPlatoId(id);
     setDiaSemanaId(p?.dia_semana_id != null ? String(p.dia_semana_id) : '');
   };
 
@@ -75,6 +82,28 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
     { id: 6, nombre: 'Sábado', icono: '🍕' },
     { id: 7, nombre: 'Domingo', icono: '🍝' },
   ];
+
+  const leerErrorHttp = async (res: Response, mensajeFallback: string) => {
+    const contentType = res.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+      const data = await res.json().catch(() => null);
+      if (data?.error) return data.error as string;
+    } else {
+      const text = await res.text().catch(() => '');
+      if (text.includes('/auth/login')) return 'La sesión expiró. Volvé a iniciar sesión.';
+      if (text.trim()) return `${mensajeFallback} (HTTP ${res.status})`;
+    }
+
+    return mensajeFallback;
+  };
+
+  const mostrarErrorVisible = (mensaje: string) => {
+    setError(mensaje);
+    if (typeof window !== 'undefined') {
+      window.alert(mensaje);
+    }
+  };
 
   const guardarReceta = async () => {
     setLoading(true);
@@ -92,9 +121,11 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
       const resReceta = await fetch(urlReceta, {
         method: methodReceta,
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plato_id: platoId,
+          dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId),
           tiempo_min: tiempoMin,
           porciones,
           dificultad,
@@ -111,37 +142,17 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
         }),
       });
 
-      const dataReceta = await resReceta.json();
-      if (!resReceta.ok) throw new Error(dataReceta.error || 'Error al guardar receta');
-
-      // 2. Guardar ingredientes en la tabla relacional (ignora los no resueltos)
-      const nuevoId = esNueva ? dataReceta.receta.id : recetaId;
-
-      const resIngredientes = await fetch(`/api/admin/recetas/${nuevoId}/ingredientes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ingredientes: ingredientes
-            .filter((i) => !i.ingrediente_id.startsWith('jsonb:'))
-            .map((i) => ({
-              ingrediente_id: i.ingrediente_id,
-              cantidad: i.cantidad,
-              unidad: i.unidad,
-            })),
-        }),
-      });
-
-      if (!resIngredientes.ok) throw new Error('Error al guardar ingredientes');
-
-      // 3. Guardar el día de la semana en el plato asociado
-      const resPlato = await fetch(`/api/admin/platos/${platoId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId) }),
-      });
-      if (!resPlato.ok) {
-        const dataPlato = await resPlato.json().catch(() => ({}));
-        throw new Error(dataPlato.error || 'Error al guardar el día del plato');
+      const dataReceta = resReceta.ok ? await resReceta.json() : null;
+      if (!resReceta.ok) {
+        const mensaje = await leerErrorHttp(resReceta, 'Error al guardar receta');
+        console.error('Error guardando receta', {
+          status: resReceta.status,
+          statusText: resReceta.statusText,
+          url: urlReceta,
+          method: methodReceta,
+          mensaje,
+        });
+        throw new Error(mensaje);
       }
 
       setMensaje('✅ Receta guardada exitosamente');
@@ -150,7 +161,8 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
       router.refresh();
       setTimeout(() => router.push('/admin/recetas'), 1500);
     } catch (err: any) {
-      setError(err.message);
+      console.error('Fallo en guardarReceta', err);
+      mostrarErrorVisible(err.message || 'Error al guardar receta');
     } finally {
       setLoading(false);
     }
@@ -201,10 +213,15 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                   <option value="">Seleccioná un plato...</option>
                   {platos.map((plato) => (
                     <option key={plato.id} value={plato.id}>
-                      {plato.nombre}
+                      {plato.nombre}{plato.receta_existente_id && plato.receta_existente_id !== recetaId ? ' · editar receta existente' : ''}
                     </option>
                   ))}
                 </select>
+                {esNueva && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Si el plato ya tiene receta, al seleccionarlo se abrirá esa receta para edición.
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">⏱️ Tiempo (minutos)</label>
