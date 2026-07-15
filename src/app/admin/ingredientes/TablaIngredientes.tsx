@@ -423,8 +423,8 @@ export default function TablaIngredientes({
               {ingredientes?.map((ing: any) => {
                 const catInfo = categorias.find((c) => c.id === ing.categoria);
                 return (
-                  <tr key={ing.id} className="odd:bg-white even:bg-gray-50/40 hover:bg-gray-100/60 transition-colors">
-                    <td className="px-4 py-2.5 font-semibold text-gray-800 sticky left-0 bg-inherit z-10">
+                  <tr key={ing.id} className="bg-white hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-2.5 font-semibold text-gray-800 sticky left-0 bg-white z-10">
                       {ing.nombre}
                     </td>
                     <td className="px-4 py-2.5 text-gray-800">
@@ -444,7 +444,7 @@ export default function TablaIngredientes({
                         </td>
                       ))
                     )}
-                    <td className="px-4 py-2.5 text-center sticky right-0 bg-inherit z-10">
+                    <td className="px-4 py-2.5 text-center sticky right-0 bg-white z-10">
                       <Link
                         href={`/admin/ingredientes/${ing.id}`}
                         className="text-green-700 hover:text-green-900 font-semibold text-sm"
