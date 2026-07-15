@@ -110,7 +110,7 @@ const GRUPOS: Grupo[] = [
       { key: 'origen', label: '🧬 Origen', render: origenBadge },
       { key: 'unidad_base', label: '📏 Unidad' },
       { key: 'parte_util', label: '🌱 Parte' },
-      { key: 'estacionalidad', label: '📅 Estación' },
+      { key: 'estacion_ideal', label: '📅 Estación' },
     ],
   },
   {
@@ -202,9 +202,15 @@ const GRUPOS: Grupo[] = [
     columnas: [
       { key: 'temperamento', label: '🌿 Temp.', render: tempBadge },
       { key: 'nivel_subtilitat', label: '✨ Subtilitas', render: subtilitasBadge },
+      { key: 'viriditas_index', label: '💚 Viriditas' },
       { key: 'es_veneno_hildegardiano', label: '☠️ Veneno', render: (ing) => boolEmoji(ing.es_veneno_hildegardiano, '☠️', '✅') },
       { key: 'es_base_alegria', label: '😊 Alegría', render: (ing) => boolEmoji(ing.es_base_alegria, '😊', '—') },
       { key: 'requiere_coccion', label: '🔥 Cocción', render: (ing) => boolEmoji(ing.requiere_coccion, '🔥', '—') },
+      { key: 'apto_para_enfermos', label: '🏥 Enfermos', render: (ing) => boolEmoji(ing.apto_para_enfermos, '✅', '❌') },
+      { key: 'frecuencia_recomendada', label: '🔄 Frecuencia' },
+      { key: 'impacto_livor', label: '💧 Livor' },
+      { key: 'impacto_bilis_negra', label: '🖤 Bilis N.' },
+      { key: 'humor_principal', label: '🧠 Humor', align: 'left', render: (ing) => textoLargo(ing.humor_principal) },
       { key: 'alergenos', label: '⚠️ Alérgenos', render: alergenosChips },
       { key: 'propiedades_hildegardianas', label: '📜 Propiedades', align: 'left', render: (ing) => textoLargo(ing.propiedades_hildegardianas) },
       { key: 'beneficios_hildegardianos', label: '💚 Beneficios', align: 'left', render: (ing) => textoLargo(ing.beneficios_hildegardianos) },
@@ -225,7 +231,7 @@ const KEYS_CIENTIFICO = [
   'origen',
   'unidad_base',
   'parte_util',
-  'estacionalidad',
+  'estacion_ideal',
   ...keysDeGrupos(['macros', 'grasas', 'minerales', 'vitaminas', 'indices']),
 ];
 
@@ -247,7 +253,7 @@ export default function TablaIngredientes({
   ingredientes: any[];
   categorias: Categoria[];
 }) {
-  const [grupoActivo, setGrupoActivo] = useState<string>('macros');
+  const [grupoActivo, setGrupoActivo] = useState<string>('todas');
   const [ambito, setAmbito] = useState<Ambito>('todo');
 
   const gruposVisibles =
