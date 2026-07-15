@@ -446,8 +446,9 @@ export default function CalendarioPedidos({
     const humedo = (temp.calido_humedo || 0) + (temp.frio_humedo || 0);
     const tot = calido + frio;
     const pesoTot = pesoCocido + pesoCrudo;
-    const bajaConfianza = pesoTotalReceta > 0 && receta.porciones > 0
-      ? pesoTotalReceta / receta.porciones < 150 || pesoTotalReceta / receta.porciones > 700
+    const porcionesReceta = receta.porciones ?? 0;
+    const bajaConfianza = pesoTotalReceta > 0 && porcionesReceta > 0
+      ? pesoTotalReceta / porcionesReceta < 150 || pesoTotalReceta / porcionesReceta > 700
       : false;
 
     // Evaluación hildegardiana por los flags reales de la BD (no por nombre)
@@ -488,6 +489,7 @@ export default function CalendarioPedidos({
     let sumHumedo = 0;
     let sumPuntaje = 0;
     let platosAnalizados = 0;
+    let algunaBajaConfianza = false;
     const venenos = new Set<string>();
     const pilares = new Set<string>();
 
@@ -498,6 +500,7 @@ export default function CalendarioPedidos({
       if (!a) return;
       const cantidad = it.cantidad || 1;
       platosAnalizados += cantidad;
+      if (a.bajaConfianza) algunaBajaConfianza = true;
       NUTRIENTES_LISTA.forEach((nut) => {
         n[nut.key] += (a.n[nut.key] || 0) * cantidad;
       });
@@ -527,6 +530,7 @@ export default function CalendarioPedidos({
       porcSeco: sumSeco / platosAnalizados,
       porcHumedo: sumHumedo / platosAnalizados,
       puntaje: sumPuntaje / platosAnalizados,
+      bajaConfianza: algunaBajaConfianza,
       venenos: Array.from(venenos),
       pilares: Array.from(pilares),
     };

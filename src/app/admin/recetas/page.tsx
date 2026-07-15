@@ -78,7 +78,9 @@ export default async function AdminRecetasPage() {
       numIngredientes: (Array.isArray(r.ingredientes) ? r.ingredientes.length : 0) || ingredientes.length,
       numPasos: Array.isArray(r.pasos) ? r.pasos.length : 0,
       notas: r.notas_hildegardianas ?? null,
-      ingredientes: ingredientes.map((i) => ({ ingrediente: i.ingrediente })),
+      ingredientes: ingredientes
+        .filter((i) => i.ingrediente)
+        .map((i) => ({ ingrediente: i.ingrediente as any })),
       analisis,
       indiceGlucemico,
     };

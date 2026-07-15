@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { AnalisisPlato, ResumenLinea } from '@/lib/analisis-plato';
+import InformeDualView from '@/app/admin/recetas/[id]/InformeDualView';
 
 // Convierte un paso de receta (string u objeto {descripcion/texto/paso/...}) en texto legible
 function textoDePaso(p: any): string {
@@ -569,14 +570,23 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
             )}
 
             <div className="p-6 space-y-6">
-              {/* Datos nutricionales científicos */}
-              {platoSeleccionado.analisis && (
-                <DatosCientificos analisis={platoSeleccionado.analisis} />
-              )}
-
-              {/* Análisis hildegardiano dinámico */}
-              {platoSeleccionado.analisis && (
-                <DatosHildegardianos analisis={platoSeleccionado.analisis} />
+              {/* Informe dual completo (científico + hildegardiano, escalable por porciones).
+                  Es el bloque principal del modal según el plan. */}
+              {platoSeleccionado.receta?.id ? (
+                <InformeDualView
+                  recetaId={platoSeleccionado.receta.id}
+                  endpoint="/api/menu/receta"
+                  mostrarExport={false}
+                />
+              ) : (
+                <>
+                  {platoSeleccionado.analisis && (
+                    <DatosCientificos analisis={platoSeleccionado.analisis} />
+                  )}
+                  {platoSeleccionado.analisis && (
+                    <DatosHildegardianos analisis={platoSeleccionado.analisis} />
+                  )}
+                </>
               )}
 
               {/* Ingredientes */}

@@ -88,7 +88,7 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
   });
 
   // Agrupar por fecha
-  const fechas = [...new Set(items.map((i: any) => i.fecha))].sort();
+  const fechas = ([...new Set(items.map((i: any) => i.fecha))] as string[]).sort();
 
   const resumenPorDia = fechas.map((fecha) => {
     const itemsDia = items.filter((i: any) => i.fecha === fecha);

@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import EditarRecetaForm from './EditarRecetaForm';
+import InformeDualView from './InformeDualView';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,5 +109,10 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
     }
   }
 
-  return <EditarRecetaForm recetaId={params.id} platos={platos} initial={initial} />;
+  return (
+    <>
+      <EditarRecetaForm recetaId={params.id} platos={platos} initial={initial} />
+      {!esNueva && <InformeDualView recetaId={params.id} />}
+    </>
+  );
 }

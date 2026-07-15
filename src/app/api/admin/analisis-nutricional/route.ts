@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
     });
 
     const diasConDatos = Object.keys(porDia).length;
-    const diasTotalesEnRango = Math.ceil((new Date(fechaFin).getTime() - new Date(fechaInicio).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const diasTotalesEnRango = Math.ceil((new Date(fechaFin as string).getTime() - new Date(fechaInicio as string).getTime()) / (1000 * 60 * 60 * 24)) + 1;
     const diasSinDatos = diasTotalesEnRango - diasConDatos;
 
     const promedioDiario = diasConDatos > 0 ? {

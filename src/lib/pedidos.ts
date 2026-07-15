@@ -130,7 +130,7 @@ export function validarPlatoParaDia(
   disponibleTodosDias: boolean,
   diaPedido: number
 ): { valido: boolean; mensaje?: string } {
-  if ([CATEGORIAS_COMIDA.DESAYUNO, CATEGORIAS_COMIDA.GUARNICION, CATEGORIAS_COMIDA.POSTRE, CATEGORIAS_COMIDA.BEBIDA].includes(categoriaId)) {
+  if (([CATEGORIAS_COMIDA.DESAYUNO, CATEGORIAS_COMIDA.GUARNICION, CATEGORIAS_COMIDA.POSTRE, CATEGORIAS_COMIDA.BEBIDA] as number[]).includes(categoriaId)) {
     return { valido: true };
   }
   if (categoriaId === CATEGORIAS_COMIDA.PLATO_PRINCIPAL) {
