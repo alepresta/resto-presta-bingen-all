@@ -446,6 +446,9 @@ export default function CalendarioPedidos({
     const humedo = (temp.calido_humedo || 0) + (temp.frio_humedo || 0);
     const tot = calido + frio;
     const pesoTot = pesoCocido + pesoCrudo;
+    const bajaConfianza = pesoTotalReceta > 0 && receta.porciones > 0
+      ? pesoTotalReceta / receta.porciones < 150 || pesoTotalReceta / receta.porciones > 700
+      : false;
 
     // Evaluación hildegardiana por los flags reales de la BD (no por nombre)
     const evaluacion = evaluarHildegardianoDB(ingsHildegarda);
@@ -458,6 +461,7 @@ export default function CalendarioPedidos({
       porcHumedo: tot ? (humedo / tot) * 100 : 0,
       viriditas: peso ? subtilitatPond / peso : 0,
       porcCocido: pesoTot ? (pesoCocido / pesoTot) * 100 : 0,
+      bajaConfianza,
       venenos,
       pilares: Array.from(pilares),
       evaluacion,
@@ -1329,6 +1333,11 @@ export default function CalendarioPedidos({
                         <span className={`rounded px-2 py-0.5 font-semibold ${estHild.bg}`}>
                           🌿 Santa Hildegarda: {estHild.label}
                         </span>
+                        {ad.bajaConfianza && (
+                          <span className="rounded px-2 py-0.5 font-semibold bg-amber-100 text-amber-800">
+                            ⚠️ Análisis aproximado
+                          </span>
+                        )}
                         <div className="ml-auto flex gap-1">
                           <button
                             onClick={() => toggleAnalisisDia(fechaStr, 'cientifico')}

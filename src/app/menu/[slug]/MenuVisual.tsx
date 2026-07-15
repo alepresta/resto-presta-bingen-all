@@ -153,15 +153,23 @@ function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
   const { nutricion, porcentajeVDR } = analisis;
   return (
     <div>
+      {analisis.bajaConfianza ? (
+        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          ⚠️ Este análisis es aproximado: la receta declarada no cuadra con el peso total cargado.
+        </div>
+      ) : null}
       <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
         🔬 Datos nutricionales (por porción)
       </h3>
       {analisis.porcionesEstimadas && analisis.pesoTotalGramos ? (
         <p className="text-xs text-gray-500 mb-3">
-          Calculado sobre {(analisis.pesoTotalGramos / 1000).toFixed(2)} kg totales ÷{' '}
+          Ingredientes totales: {(analisis.pesoTotalGramos / 1000).toFixed(2)} kg · cocido estimado:{' '}
+          {analisis.pesoCocidoEstimadoGramos ? `${(analisis.pesoCocidoEstimadoGramos / 1000).toFixed(2)} kg` : 'n/d'} ·{' '}
           {analisis.porcionesEstimadas}{' '}
           {analisis.porcionesEstimadas === 1 ? 'porción' : 'porciones'} (~
-          {Math.round(analisis.pesoTotalGramos / analisis.porcionesEstimadas)} g por porción).
+          {analisis.pesoCocidoEstimadoGramos
+            ? Math.round(analisis.pesoCocidoEstimadoGramos / analisis.porcionesEstimadas)
+            : Math.round(analisis.pesoTotalGramos / analisis.porcionesEstimadas)} g cocidos por porción).
         </p>
       ) : null}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
@@ -539,7 +547,13 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
               </div>
               <div className="flex gap-4 mt-4 text-sm">
                 <span>⏱️ {platoSeleccionado.receta.tiempo_min} min</span>
-                <span>👥 {platoSeleccionado.receta.porciones} porciones</span>
+                <span>
+                  👥 {platoSeleccionado.analisis?.porcionesEstimadas ?? platoSeleccionado.receta.porciones} porciones
+                  {platoSeleccionado.analisis?.porcionesEstimadas &&
+                  platoSeleccionado.receta.porciones !== platoSeleccionado.analisis.porcionesEstimadas ? (
+                    <span className="text-amber-100"> · declaradas {platoSeleccionado.receta.porciones}</span>
+                  ) : null}
+                </span>
                 <span>📊 {platoSeleccionado.receta.dificultad}</span>
               </div>
             </div>

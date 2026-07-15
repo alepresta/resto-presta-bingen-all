@@ -56,8 +56,15 @@ export function estimarPorciones(
   return Math.max(1, Math.round(pesoTotalGramos / PESO_PORCION_REFERENCIA_G));
 }
 
+function tieneInconsistenciaDeRendimiento(pesoTotalGramos: number, porciones: number): boolean {
+  if (!Number.isFinite(pesoTotalGramos) || pesoTotalGramos <= 0 || porciones <= 0) return false;
+  const pesoPorPorcion = pesoTotalGramos / porciones;
+  return pesoPorPorcion < PESO_PORCION_MIN_G || pesoPorPorcion > PESO_PORCION_MAX_G;
+}
+
 export interface IngredienteNutricion {
   nombre: string;
+  categoria?: string | null;
   calorias?: number | null;
   proteinas_g?: number | null;
   carbohidratos_g?: number | null;
@@ -121,6 +128,10 @@ export interface AnalisisPlato {
   porcionesEstimadas?: number;
   /** Peso total del plato en gramos (suma de ingredientes normalizados). */
   pesoTotalGramos?: number;
+  /** Estimación del peso ya cocido/emplatado, usando heurísticas de rendimiento. */
+  pesoCocidoEstimadoGramos?: number;
+  /** Indica que la receta y sus porciones no son consistentes y el análisis es aproximado. */
+  bajaConfianza?: boolean;
 }
 
 // Micronutrientes que "conviene cubrir" (excluye sodio, que se limita)
@@ -188,6 +199,22 @@ export function normalizarAGramos(cantidad: number, unidad: string): number {
   return cantidad;
 }
 
+function estimarFactorRendimiento(ing: IngredienteNutricion): number {
+  if (!ing.requiere_coccion) return 1;
+
+  const nombre = (ing.nombre || '').toLowerCase();
+
+  if (/(espinaca|acelga|lechuga|rucula|rúcula|berro|espárrago|esparrago)/.test(nombre)) return 0.15;
+  if (/(zanahoria|remolacha|betabel|pimiento|morr[oó]n|cebolla|ajo|apio|calabaza|zapallo|zapall[oó]|berenjena|champiñ|champin)/.test(nombre)) {
+    return 0.8;
+  }
+  if (/(harina|espelta|masa|pasta|raviol|fideo|tallar[ií]n|ñoqui|gnocchi|pan)/.test(nombre)) return 1;
+  if (/(ricota|queso|huevo|mantequilla|manteca|crema)/.test(nombre)) return 0.98;
+
+  if ((ing.categoria || '').toLowerCase().includes('verd')) return 0.7;
+  return 0.9;
+}
+
 function nutricionVacia(): Nutricion {
   const n = {} as Nutricion;
   (Object.keys(VDR) as Array<keyof typeof VDR>).forEach((k) => (n[k] = 0));
@@ -205,6 +232,7 @@ export function analizarPlato(
   const totalReceta = nutricionVacia();
   const ingsPeso: Array<{ ing: IngredienteNutricion; gramos: number }> = [];
   let pesoTotalReceta = 0;
+  let pesoCocidoEstimadoReceta = 0;
   let hayIngredientes = false;
 
   ingredientes.forEach((ri) => {
@@ -215,6 +243,7 @@ export function analizarPlato(
     const gramos = normalizarAGramos(ri.cantidad, ri.unidad);
     if (gramos <= 0) return;
     pesoTotalReceta += gramos;
+    pesoCocidoEstimadoReceta += gramos * estimarFactorRendimiento(ing);
     const f = gramos / 100; // los valores están por 100 g
     ingsPeso.push({ ing, gramos });
 
@@ -258,6 +287,7 @@ export function analizarPlato(
   // 2) Porciones confiables: se respeta el dato cargado sólo si da una ración
   //    plausible; si no, se estima a partir del peso total del plato.
   const porcionesEfectivas = estimarPorciones(pesoTotalReceta, porciones);
+  const bajaConfianza = tieneInconsistenciaDeRendimiento(pesoTotalReceta, porciones);
 
   // 3) Nutrición POR PORCIÓN = total del plato / porciones efectivas.
   const nutricion = nutricionVacia();
@@ -290,12 +320,16 @@ export function analizarPlato(
       resumen: construirResumen(0, 0, [], [], [], [], hildegardiano, false),
       porcionesEstimadas: porcionesEfectivas,
       pesoTotalGramos: pesoTotalReceta,
+      pesoCocidoEstimadoGramos: pesoCocidoEstimadoReceta,
+      bajaConfianza,
     };
   }
 
   // Estados de macros: referencia por comida = VDR / 3
   const estadoCalorias = clasificarMacro(nutricion.calorias, VDR.calorias / COMIDAS_POR_DIA);
-  const estadoProteinas = clasificarMacro(nutricion.proteinas, VDR.proteinas / COMIDAS_POR_DIA);
+  // Proteínas: en platos mixtos suele ser más útil comparar contra el VDR diario
+  // completo para evitar falsos excesos en recetas con queso, huevo o legumbres.
+  const estadoProteinas = clasificarMacro(nutricion.proteinas, VDR.proteinas);
 
   // Micronutrientes bajos: aportan < 15% del VDR diario
   const micronutrientesBajos = MICRONUTRIENTES
@@ -341,6 +375,8 @@ export function analizarPlato(
     resumen,
     porcionesEstimadas: porcionesEfectivas,
     pesoTotalGramos: pesoTotalReceta,
+    pesoCocidoEstimadoGramos: pesoCocidoEstimadoReceta,
+    bajaConfianza,
   };
 }
 

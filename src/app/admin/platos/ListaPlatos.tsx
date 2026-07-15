@@ -903,6 +903,11 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                           ✨ Alegría
                         </span>
                       )}
+                      {plato.analisis?.bajaConfianza && (
+                        <span className="px-2 py-1 rounded text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                          ⚠️ Aproximado
+                        </span>
+                      )}
                       {numIngredientes > 0 && (
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                           🥕 {numIngredientes} ing.

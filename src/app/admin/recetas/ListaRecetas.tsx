@@ -497,6 +497,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
                         {tempInfo && <span className={`px-2 py-1 rounded text-xs font-semibold ${tempInfo.color}`}>{tempInfo.nombre}</span>}
                         {tieneVeneno && <span className="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-700">🚫 Veneno</span>}
                         {tieneBaseAlegria && <span className="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-700">✨ Alegría</span>}
+                        {r.analisis?.bajaConfianza && <span className="px-2 py-1 rounded text-xs font-semibold bg-amber-100 text-amber-700">⚠️ Aproximado</span>}
                       </div>
 
                       {r.notas && (
