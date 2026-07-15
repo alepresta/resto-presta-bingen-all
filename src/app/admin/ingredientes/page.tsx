@@ -85,23 +85,27 @@ export default async function AdminIngredientesPage({
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
-            <p className="text-xs text-gray-600 font-semibold">TOTAL</p>
-            <p className="text-2xl font-bold">{ingredientes?.length || 0}</p>
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500 text-gray-900">
+            <p className="text-xs text-gray-700 font-semibold">TOTAL</p>
+            <p className="text-3xl font-extrabold text-gray-900 leading-none" style={{ color: '#111827', opacity: 1 }}>
+              {ingredientes?.length || 0}
+            </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-amber-500">
-            <p className="text-xs text-gray-600 font-semibold">CATEGORÍAS</p>
-            <p className="text-2xl font-bold">{Object.keys(conteoPorCategoria).length}</p>
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-amber-500 text-gray-900">
+            <p className="text-xs text-gray-700 font-semibold">CATEGORÍAS</p>
+            <p className="text-3xl font-extrabold text-gray-900 leading-none" style={{ color: '#111827', opacity: 1 }}>
+              {Object.keys(conteoPorCategoria).length}
+            </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500">
-            <p className="text-xs text-gray-600 font-semibold">CON CALORÍAS</p>
-            <p className="text-2xl font-bold">
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500 text-gray-900">
+            <p className="text-xs text-gray-700 font-semibold">CON CALORÍAS</p>
+            <p className="text-3xl font-extrabold text-gray-900 leading-none" style={{ color: '#111827', opacity: 1 }}>
               {ingredientes?.filter((i) => i.calorias !== null).length || 0}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
-            <p className="text-xs text-gray-600 font-semibold">CON IG</p>
-            <p className="text-2xl font-bold">
+          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500 text-gray-900">
+            <p className="text-xs text-gray-700 font-semibold">CON IG</p>
+            <p className="text-3xl font-extrabold text-gray-900 leading-none" style={{ color: '#111827', opacity: 1 }}>
               {ingredientes?.filter((i) => i.indice_glucemico !== null).length || 0}
             </p>
           </div>
