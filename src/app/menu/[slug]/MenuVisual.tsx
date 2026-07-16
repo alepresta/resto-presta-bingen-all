@@ -534,7 +534,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                         : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                     }`}
                   >
-                    {cat.icono} {cat.nombre} ({cat.platos.length})
+                    {cat.icono} {cat.nombre} ({cat.platos.length} platos)
                   </button>
                 ))}
               </div>
@@ -550,7 +550,10 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                     {categoria.icono} {categoria.nombre}
                   </h2>
                   <p className="text-sm text-amber-700 mt-2 font-semibold">
-                    {categoria.platos.length} opciones disponibles
+                    {categoria.platos.length} platos disponibles
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    El conteo de esta vista corresponde a platos publicados en el menú.
                   </p>
                 </div>
 

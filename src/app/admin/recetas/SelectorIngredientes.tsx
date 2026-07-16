@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface Ingrediente {
   id: string;
@@ -25,6 +25,92 @@ interface SelectorIngredientesProps {
   onChange: (ingredientes: IngredienteSeleccionado[]) => void;
 }
 
+const CATEGORIAS_ETIQUETAS: Record<string, string> = {
+  verduras: '🥕 Verduras',
+  frutas: '🍎 Frutas',
+  carnes: '🥩 Carnes',
+  pescados: '🐟 Pescados',
+  lacteos: '🧀 Lácteos',
+  granos: '🌾 Granos',
+  legumbres: '🫘 Legumbres',
+  bebidas: '🥤 Bebidas',
+  condimentos: '🧂 Condimentos',
+  especias: '🌶️ Especias',
+  aceites: '🫒 Aceites',
+  hierbas: '🌿 Hierbas',
+  frutos_secos: '🥜 Frutos Secos',
+  huevos: '🥚 Huevos',
+  conservas: '🥫 Conservas',
+  endulzantes: '🍯 Endulzantes',
+  otros: '📦 Otros',
+};
+
+const CATEGORIAS_ORDEN = [
+  'verduras',
+  'frutas',
+  'carnes',
+  'pescados',
+  'lacteos',
+  'granos',
+  'legumbres',
+  'bebidas',
+  'condimentos',
+  'especias',
+  'aceites',
+  'hierbas',
+  'frutos_secos',
+  'huevos',
+  'conservas',
+  'endulzantes',
+  'otros',
+];
+
+const CATEGORIAS_EQUIVALENTES: Record<string, string> = {
+  bebida: 'bebidas',
+  bebidas: 'bebidas',
+  lacteo: 'lacteos',
+  lacteos: 'lacteos',
+  lácteo: 'lacteos',
+  lácteos: 'lacteos',
+  legumbre: 'legumbres',
+  legumbres: 'legumbres',
+  fruto_seco: 'frutos_secos',
+  frutos_secos: 'frutos_secos',
+  fruto_secos: 'frutos_secos',
+  especia: 'especias',
+  especias: 'especias',
+  hierba: 'hierbas',
+  hierbas: 'hierbas',
+  condimento: 'condimentos',
+  condimentos: 'condimentos',
+  endulzante: 'endulzantes',
+  endulzantes: 'endulzantes',
+};
+
+function normalizarCategoriaId(categoria: string | null | undefined): string {
+  if (!categoria) return 'otros';
+
+  const base = categoria
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '_');
+
+  return CATEGORIAS_EQUIVALENTES[base] || base;
+}
+
+function formatearCategoria(id: string): string {
+  if (CATEGORIAS_ETIQUETAS[id]) return CATEGORIAS_ETIQUETAS[id];
+
+  const nombre = id
+    .replace(/_/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  return `📦 ${nombre || 'Otros'}`;
+}
+
 export default function SelectorIngredientes({ value, onChange }: SelectorIngredientesProps) {
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [busqueda, setBusqueda] = useState('');
@@ -37,7 +123,7 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
   // Cargar ingredientes
   useEffect(() => {
     const cargar = async () => {
-      const res = await fetch('/api/admin/ingredientes?categoria=todos');
+      const res = await fetch('/api/admin/ingredientes?categoria=todos&incluir_inactivos=1');
       const data = await res.json();
       setIngredientes(data.ingredientes || []);
     };
@@ -47,7 +133,8 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
   // Filtrar ingredientes
   const ingredientesFiltrados = ingredientes.filter((ing) => {
     const matchBusqueda = ing.nombre.toLowerCase().includes(busqueda.toLowerCase());
-    const matchCategoria = categoriaFiltro === 'todos' || ing.categoria === categoriaFiltro;
+    const categoriaNormalizada = normalizarCategoriaId(ing.categoria);
+    const matchCategoria = categoriaFiltro === 'todos' || categoriaNormalizada === categoriaFiltro;
     return matchBusqueda && matchCategoria;
   });
 
@@ -112,18 +199,35 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
 
   const nutricion = calcularNutricion();
 
-  const categorias = [
-    { id: 'todos', nombre: 'Todas' },
-    { id: 'verduras', nombre: '🥕 Verduras' },
-    { id: 'frutas', nombre: '🍎 Frutas' },
-    { id: 'carnes', nombre: '🥩 Carnes' },
-    { id: 'pescados', nombre: '🐟 Pescados' },
-    { id: 'lacteos', nombre: '🧀 Lácteos' },
-    { id: 'granos', nombre: '🌾 Granos' },
-    { id: 'condimentos', nombre: '🧂 Condimentos' },
-    { id: 'aceites', nombre: '🫒 Aceites' },
-    { id: 'hierbas', nombre: '🌿 Hierbas' },
-  ];
+  const categorias = useMemo(() => {
+    const conteosPorCategoria = ingredientes.reduce<Record<string, number>>((acc, ing) => {
+      const categoria = normalizarCategoriaId(ing.categoria);
+      acc[categoria] = (acc[categoria] || 0) + 1;
+      return acc;
+    }, {});
+
+    const categoriasUnicas = Array.from(new Set(ingredientes.map((ing) => normalizarCategoriaId(ing.categoria))));
+
+    const categoriasOrdenadas = categoriasUnicas.sort((a, b) => {
+      const indexA = CATEGORIAS_ORDEN.indexOf(a);
+      const indexB = CATEGORIAS_ORDEN.indexOf(b);
+
+      if (indexA === -1 && indexB === -1) {
+        return a.localeCompare(b, 'es');
+      }
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+
+    return [
+      { id: 'todos', nombre: `📋 Todas (${ingredientes.length})` },
+      ...categoriasOrdenadas.map((id) => ({
+        id,
+        nombre: `${formatearCategoria(id)} (${conteosPorCategoria[id] || 0})`,
+      })),
+    ];
+  }, [ingredientes]);
 
   return (
     <div className="space-y-4">

@@ -6,12 +6,16 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const categoria = searchParams.get('categoria');
   const q = searchParams.get('q');
+  const incluirInactivos = ['1', 'true', 'si', 'yes'].includes(
+    (searchParams.get('incluir_inactivos') || '').toLowerCase()
+  );
 
   let query = supabase
     .from('ingredientes')
     .select('*')
-    .eq('activo', true)
     .order('nombre');
+
+  if (!incluirInactivos) query = query.eq('activo', true);
 
   if (categoria && categoria !== 'todos') query = query.eq('categoria', categoria);
   if (q) query = query.ilike('nombre', `%${q}%`);
