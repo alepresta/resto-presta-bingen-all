@@ -30,7 +30,7 @@ interface Plato {
   receta?: {
     id: string;
     ingredientes?: Array<{
-      ingrediente: Ingrediente;
+      ingrediente: Ingrediente | null;
     }>;
   } | null;
 }
@@ -111,6 +111,10 @@ const IG_INFO: Record<'bajo' | 'medio' | 'alto', { label: string; color: string 
   medio: { label: 'IG medio', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' },
   alto: { label: 'IG alto', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' },
 };
+
+function obtenerIngredientesValidos(plato: Plato): Ingrediente[] {
+  return (plato.receta?.ingredientes || []).flatMap((ri) => (ri.ingrediente ? [ri.ingrediente] : []));
+}
 
 function ModalEditarPlato({
   plato,
@@ -430,13 +434,15 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
 
   const platosFiltrados = useMemo(() => {
     return platos.filter((plato) => {
+      const ingredientesValidos = obtenerIngredientesValidos(plato);
+
       if (textoBusqueda) {
         const texto = textoBusqueda.toLowerCase();
         const coincideNombre = plato.nombre.toLowerCase().includes(texto);
         const coincideDesc = plato.descripcion?.toLowerCase().includes(texto) || false;
-        const coincideIngrediente = plato.receta?.ingredientes?.some(ri =>
-          ri.ingrediente.nombre.toLowerCase().includes(texto)
-        ) || false;
+        const coincideIngrediente = ingredientesValidos.some((ingrediente) =>
+          ingrediente.nombre.toLowerCase().includes(texto)
+        );
         if (!coincideNombre && !coincideDesc && !coincideIngrediente) return false;
       }
 
@@ -462,25 +468,25 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
 
       if (categoriaFiltro && plato.categoria_id !== categoriaFiltro) return false;
 
-      if (temperamentoFiltro && plato.receta?.ingredientes) {
-        const tieneTemperamento = plato.receta.ingredientes.some(ri =>
-          ri.ingrediente.temperamento === temperamentoFiltro
+      if (temperamentoFiltro && ingredientesValidos.length > 0) {
+        const tieneTemperamento = ingredientesValidos.some((ingrediente) =>
+          ingrediente.temperamento === temperamentoFiltro
         );
         if (!tieneTemperamento) return false;
       } else if (temperamentoFiltro) {
         return false;
       }
 
-      if (soloSinVenenos && plato.receta?.ingredientes) {
-        const tieneVeneno = plato.receta.ingredientes.some(ri =>
-          ri.ingrediente.es_veneno_hildegardiano
+      if (soloSinVenenos && ingredientesValidos.length > 0) {
+        const tieneVeneno = ingredientesValidos.some((ingrediente) =>
+          ingrediente.es_veneno_hildegardiano
         );
         if (tieneVeneno) return false;
       }
 
-      if (soloBaseAlegria && plato.receta?.ingredientes) {
-        const tieneBase = plato.receta.ingredientes.some(ri =>
-          ri.ingrediente.es_base_alegria
+      if (soloBaseAlegria && ingredientesValidos.length > 0) {
+        const tieneBase = ingredientesValidos.some((ingrediente) =>
+          ingrediente.es_base_alegria
         );
         if (!tieneBase) return false;
       } else if (soloBaseAlegria) {
@@ -528,10 +534,12 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
     || vitaminasSel.length > 0 || mineralesSel.length > 0;
 
   const getTemperamentoDominante = (plato: Plato): string | null => {
-    if (!plato.receta?.ingredientes) return null;
+    const ingredientesValidos = obtenerIngredientesValidos(plato);
+    if (ingredientesValidos.length === 0) return null;
+
     const temps: Record<string, number> = {};
-    plato.receta.ingredientes.forEach(ri => {
-      const t = ri.ingrediente.temperamento;
+    ingredientesValidos.forEach((ingrediente) => {
+      const t = ingrediente.temperamento;
       if (t) temps[t] = (temps[t] || 0) + 1;
     });
     const entries = Object.entries(temps);
@@ -828,9 +836,10 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
             {platosFiltrados.map((plato) => {
               const tempDominante = getTemperamentoDominante(plato);
               const tempInfo = TEMPERAMENTOS.find(t => t.valor === tempDominante);
-              const tieneVeneno = plato.receta?.ingredientes?.some(ri => ri.ingrediente.es_veneno_hildegardiano) || false;
-              const tieneBaseAlegria = plato.receta?.ingredientes?.some(ri => ri.ingrediente.es_base_alegria) || false;
-              const numIngredientes = plato.receta?.ingredientes?.length || 0;
+              const ingredientesValidos = obtenerIngredientesValidos(plato);
+              const tieneVeneno = ingredientesValidos.some((ingrediente) => ingrediente.es_veneno_hildegardiano);
+              const tieneBaseAlegria = ingredientesValidos.some((ingrediente) => ingrediente.es_base_alegria);
+              const numIngredientes = ingredientesValidos.length;
               const categoria = CATEGORIAS[plato.categoria_id];
 
               return (
@@ -920,12 +929,12 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                       )}
                     </div>
 
-                    {plato.receta?.ingredientes && plato.receta.ingredientes.length > 0 && (
+                    {ingredientesValidos.length > 0 && (
                       <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-2">
                         <p className="font-semibold mb-1">Ingredientes:</p>
                         <p className="line-clamp-2">
-                          {plato.receta.ingredientes.slice(0, 5).map(ri => ri.ingrediente.nombre).join(', ')}
-                          {plato.receta.ingredientes.length > 5 && ` +${plato.receta.ingredientes.length - 5} más`}
+                          {ingredientesValidos.slice(0, 5).map((ingrediente) => ingrediente.nombre).join(', ')}
+                          {ingredientesValidos.length > 5 && ` +${ingredientesValidos.length - 5} más`}
                         </p>
                       </div>
                     )}
@@ -978,8 +987,9 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                 {platosFiltrados.map((plato) => {
                   const tempDominante = getTemperamentoDominante(plato);
                   const tempInfo = TEMPERAMENTOS.find(t => t.valor === tempDominante);
-                  const tieneVeneno = plato.receta?.ingredientes?.some(ri => ri.ingrediente.es_veneno_hildegardiano) || false;
-                  const tieneBaseAlegria = plato.receta?.ingredientes?.some(ri => ri.ingrediente.es_base_alegria) || false;
+                  const ingredientesValidos = obtenerIngredientesValidos(plato);
+                  const tieneVeneno = ingredientesValidos.some((ingrediente) => ingrediente.es_veneno_hildegardiano);
+                  const tieneBaseAlegria = ingredientesValidos.some((ingrediente) => ingrediente.es_base_alegria);
                   const categoria = CATEGORIAS[plato.categoria_id];
 
                   return (

@@ -2,6 +2,51 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import ListaRecetas from './ListaRecetas';
 import { analizarPlato, normalizarAGramos, type RecetaIngredienteEntrada } from '@/lib/analisis-plato';
 
+export const dynamic = 'force-dynamic';
+
+const RECETA_INGREDIENTES_PAGE_SIZE = 1000;
+
+async function cargarRecetaIngredientes(
+  supabase: ReturnType<typeof createServerSupabaseClient>,
+  recetaIds: string[]
+) {
+  if (recetaIds.length === 0) return [];
+
+  const acumulado: any[] = [];
+
+  for (let desde = 0; ; desde += RECETA_INGREDIENTES_PAGE_SIZE) {
+    const hasta = desde + RECETA_INGREDIENTES_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from('receta_ingredientes')
+      .select(`
+        receta_id, cantidad, unidad,
+        ingrediente:ingredientes(
+          id, nombre,
+          calorias, proteinas_g, carbohidratos_g, grasas_g, grasas_saturadas_g, fibra_g, azucar_g,
+          sodio_mg, calcio_mg, hierro_mg, magnesio_mg, potasio_mg, zinc_mg, fosforo_mg,
+          vitamina_a_mcg, vitamina_c_mg, vitamina_d_mcg, vitamina_e_mg, vitamina_k_mcg,
+          vitamina_b1_mg, vitamina_b2_mg, vitamina_b3_mg, vitamina_b5_mg,
+          vitamina_b6_mg, vitamina_b9_mcg, vitamina_b12_mcg,
+          es_veneno_hildegardiano, es_base_alegria, nivel_subtilitat, requiere_coccion,
+          temperamento, propiedades_hildegardianas, indice_glucemico
+        )
+      `)
+      .in('receta_id', recetaIds)
+      .range(desde, hasta);
+
+    if (error) throw error;
+
+    const pagina = data || [];
+    acumulado.push(...pagina);
+
+    if (pagina.length < RECETA_INGREDIENTES_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return acumulado;
+}
+
 export default async function AdminRecetasPage() {
   const supabase = createServerSupabaseClient();
 
@@ -22,22 +67,7 @@ export default async function AdminRecetasPage() {
 
   // 3. Ingredientes con datos nutricionales de todas las recetas
   const recetaIds = (recetas || []).map((r) => r.id);
-  const { data: recetaIngredientes } = await supabase
-    .from('receta_ingredientes')
-    .select(`
-      receta_id, cantidad, unidad,
-      ingrediente:ingredientes(
-        id, nombre,
-        calorias, proteinas_g, carbohidratos_g, grasas_g, grasas_saturadas_g, fibra_g, azucar_g,
-        sodio_mg, calcio_mg, hierro_mg, magnesio_mg, potasio_mg, zinc_mg, fosforo_mg,
-        vitamina_a_mcg, vitamina_c_mg, vitamina_d_mcg, vitamina_e_mg, vitamina_k_mcg,
-        vitamina_b1_mg, vitamina_b2_mg, vitamina_b3_mg, vitamina_b5_mg,
-        vitamina_b6_mg, vitamina_b9_mcg, vitamina_b12_mcg,
-        es_veneno_hildegardiano, es_base_alegria, nivel_subtilitat, requiere_coccion,
-        temperamento, propiedades_hildegardianas, indice_glucemico
-      )
-    `)
-    .in('receta_id', recetaIds.length ? recetaIds : ['00000000-0000-0000-0000-000000000000']);
+  const recetaIngredientes = await cargarRecetaIngredientes(supabase, recetaIds);
 
   const ingredientesPorReceta = new Map<string, RecetaIngredienteEntrada[]>();
   (recetaIngredientes || []).forEach((ri: any) => {
@@ -51,6 +81,7 @@ export default async function AdminRecetasPage() {
     const plato = Array.isArray(r.plato) ? r.plato[0] : r.plato;
     const ingredientes = ingredientesPorReceta.get(r.id) || [];
     const analisis = analizarPlato(ingredientes, r.porciones || 1);
+    const ingredientesValidos = ingredientes.filter((i) => i.ingrediente);
 
     let igPeso = 0;
     let igPonderado = 0;
@@ -75,12 +106,10 @@ export default async function AdminRecetasPage() {
       tiempo_min: r.tiempo_min ?? null,
       porciones: r.porciones ?? null,
       dificultad: r.dificultad ?? null,
-      numIngredientes: (Array.isArray(r.ingredientes) ? r.ingredientes.length : 0) || ingredientes.length,
+      numIngredientes: ingredientesValidos.length || (Array.isArray(r.ingredientes) ? r.ingredientes.length : 0),
       numPasos: Array.isArray(r.pasos) ? r.pasos.length : 0,
       notas: r.notas_hildegardianas ?? null,
-      ingredientes: ingredientes
-        .filter((i) => i.ingrediente)
-        .map((i) => ({ ingrediente: i.ingrediente as any })),
+      ingredientes: ingredientesValidos.map((i) => ({ ingrediente: i.ingrediente as any })),
       analisis,
       indiceGlucemico,
     };

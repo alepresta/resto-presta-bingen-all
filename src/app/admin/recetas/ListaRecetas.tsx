@@ -98,6 +98,13 @@ function nombreDia(id: number | null): string {
   return DIAS_SEMANA.find((d) => d.id === id)?.nombre ?? 'Todos los días';
 }
 
+function etiquetaDiaFiltro(valor: string): string | null {
+  if (!valor) return null;
+  if (valor === 'todos_dias') return 'Dia: Todos los dias';
+  const dia = DIAS_SEMANA.find((d) => String(d.id) === valor);
+  return dia ? `Dia: ${dia.nombre}` : null;
+}
+
 function formatoPrecio(precio: number | null): string {
   if (precio === null || precio === undefined || precio <= 0) return 'Gratis';
   return `$${precio.toLocaleString('es-AR')}`;
@@ -230,6 +237,42 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
       return true;
     });
   }, [recetas, textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, estadoFiltro, precioFiltro, glutenFiltro, igFiltro, diaFiltro, vitaminasSel, mineralesSel]);
+
+  const filtrosActivos = useMemo(() => {
+    const filtros: string[] = [];
+
+    if (textoBusqueda.trim()) filtros.push(`Busqueda: ${textoBusqueda.trim()}`);
+    if (categoriaFiltro) filtros.push(`Categoria: ${CATEGORIAS[categoriaFiltro]?.nombre || categoriaFiltro}`);
+
+    if (temperamentoFiltro) {
+      const temp = TEMPERAMENTOS.find((t) => t.valor === temperamentoFiltro);
+      filtros.push(`Temperamento: ${temp?.nombre.replace(/^[^\s]+\s/, '') || temperamentoFiltro}`);
+    }
+
+    if (soloSinVenenos) filtros.push('Solo sin venenos');
+    if (soloBaseAlegria) filtros.push('Solo base alegria');
+
+    if (estadoFiltro === 'publicados') filtros.push('Estado: Publicados');
+    if (estadoFiltro === 'despublicados') filtros.push('Estado: Ocultos');
+
+    if (precioFiltro === 'gratis') filtros.push('Precio: Gratis');
+    if (precioFiltro === 'con_precio') filtros.push('Precio: Con precio');
+
+    if (glutenFiltro === 'con') filtros.push('Gluten: Con');
+    if (glutenFiltro === 'sin') filtros.push('Gluten: Sin');
+
+    if (igFiltro === 'bajo') filtros.push('IG: Bajo');
+    if (igFiltro === 'medio') filtros.push('IG: Medio');
+    if (igFiltro === 'alto') filtros.push('IG: Alto');
+
+    const dia = etiquetaDiaFiltro(diaFiltro);
+    if (dia) filtros.push(dia);
+
+    if (vitaminasSel.length > 0) filtros.push(`Vitaminas: ${vitaminasSel.length}`);
+    if (mineralesSel.length > 0) filtros.push(`Minerales: ${mineralesSel.length}`);
+
+    return filtros;
+  }, [textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, estadoFiltro, precioFiltro, glutenFiltro, igFiltro, diaFiltro, vitaminasSel, mineralesSel]);
 
   const limpiarFiltros = () => {
     setTextoBusqueda('');
@@ -472,6 +515,24 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               <p className="text-orange-600 font-semibold">⚠️ No hay recetas con estos filtros</p>
             )}
           </div>
+
+          {hayFiltros && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
+              <span className="text-sm font-semibold text-amber-800">Filtros activos:</span>
+              {filtrosActivos.map((filtro) => (
+                <span key={filtro} className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
+                  {filtro}
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={limpiarFiltros}
+                className="ml-auto rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Lista de Recetas */}
