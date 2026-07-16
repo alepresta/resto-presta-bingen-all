@@ -145,7 +145,10 @@ function fmt(n: number): string {
   return n.toFixed(n < 1 ? 2 : 1);
 }
 
-function ingredientesParaUnaPorcion(receta: Receta): Array<Ingrediente & { textoCantidad: string }> {
+function ingredientesEscalados(
+  receta: Receta,
+  porcionesObjetivo: number
+): Array<Ingrediente & { textoCantidad: string }> {
   const porcionesBase = receta.porciones_base && receta.porciones_base > 0
     ? receta.porciones_base
     : receta.porciones && receta.porciones > 0
@@ -156,7 +159,7 @@ function ingredientesParaUnaPorcion(receta: Receta): Array<Ingrediente & { texto
     const escalado = escalarIngrediente({
       cantidadBase: Number(ing.cantidad) || 0,
       unidad: ing.unidad || '',
-      porcionesObjetivo: 1,
+      porcionesObjetivo,
       porcionesBase,
     });
 
@@ -369,6 +372,7 @@ function TarjetaPlato({ plato, onSelect }: { plato: Plato; onSelect: (p: Plato) 
 
 export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosPlatos }: MenuVisualProps) {
   const [platoSeleccionado, setPlatoSeleccionado] = useState<Plato | null>(null);
+  const [porcionesModal, setPorcionesModal] = useState(1);
   const [diaActivo, setDiaActivo] = useState<number>(diaInfo.id);
   const [categoriaActiva, setCategoriaActiva] = useState<number | null>(null);
   const [vistaActiva, setVistaActiva] = useState<'principales' | 'extras'>('principales');
@@ -399,8 +403,13 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     ? categoriasExtras.filter((cat) => cat.id === categoriaActiva)
     : categoriasExtras;
 
+  const seleccionarPlato = (plato: Plato) => {
+    setPorcionesModal(1);
+    setPlatoSeleccionado(plato);
+  };
+
   const ingredientesModal = platoSeleccionado?.receta
-    ? ingredientesParaUnaPorcion(platoSeleccionado.receta)
+    ? ingredientesEscalados(platoSeleccionado.receta, porcionesModal)
     : [];
 
   const porcionesBaseModal = platoSeleccionado?.receta?.porciones_base && platoSeleccionado.receta.porciones_base > 0
@@ -490,7 +499,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {platosPrincipales.map((plato) => (
-                  <TarjetaPlato key={plato.id} plato={plato} onSelect={setPlatoSeleccionado} />
+                  <TarjetaPlato key={plato.id} plato={plato} onSelect={seleccionarPlato} />
                 ))}
               </div>
             )}
@@ -547,7 +556,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {categoria.platos.map((plato) => (
-                    <TarjetaPlato key={plato.id} plato={plato} onSelect={setPlatoSeleccionado} />
+                    <TarjetaPlato key={plato.id} plato={plato} onSelect={seleccionarPlato} />
                   ))}
                 </div>
               </div>
@@ -582,8 +591,8 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
               <div className="flex gap-4 mt-4 text-sm">
                 <span>⏱️ {platoSeleccionado.receta.tiempo_min} min</span>
                 <span>
-                  👥 1 porción
-                  {porcionesBaseModal !== 1 ? (
+                  👥 {porcionesModal} porción{porcionesModal === 1 ? '' : 'es'}
+                  {porcionesBaseModal !== porcionesModal ? (
                     <span className="text-amber-100"> · receta base {porcionesBaseModal}</span>
                   ) : null}
                 </span>
@@ -610,7 +619,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   endpoint="/api/menu/receta"
                   mostrarExport={false}
                   porcionesIniciales={1}
-                  porcionesFijas
+                  onPorcionesChange={setPorcionesModal}
                 />
               ) : (
                 <>
@@ -626,7 +635,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
               {/* Ingredientes */}
               <div>
                 <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  🥕 Ingredientes
+                  🥕 Ingredientes (para {porcionesModal} persona{porcionesModal === 1 ? '' : 's'})
                 </h3>
                 <ul className="space-y-2">
                   {ingredientesModal.map((ing, i) => (

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { InformeDual } from '@/lib/informe-dual';
 
-const OPCIONES_PORCIONES = [1, 2, 4, 6, 8, 10];
+const OPCIONES_PORCIONES = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 const RECOMENDACION_INFO: Record<
   InformeDual['resumen']['recomendacion'],
@@ -95,8 +95,9 @@ export default function InformeDualView({
   recetaId,
   endpoint = '/api/admin/recetas',
   mostrarExport = true,
-  porcionesIniciales = 4,
+  porcionesIniciales = 1,
   porcionesFijas = false,
+  onPorcionesChange,
 }: {
   recetaId: string;
   /** Base del endpoint; se completa como `${endpoint}/${recetaId}/informe`. */
@@ -107,6 +108,8 @@ export default function InformeDualView({
   porcionesIniciales?: number;
   /** Si es true, bloquea el informe a una cantidad fija de porciones. */
   porcionesFijas?: boolean;
+  /** Notifica cambios de porciones al componente padre. */
+  onPorcionesChange?: (porciones: number) => void;
 }) {
   const [porciones, setPorciones] = useState(Math.max(1, porcionesIniciales));
   const [informe, setInforme] = useState<InformeDual | null>(null);
@@ -142,6 +145,10 @@ export default function InformeDualView({
   useEffect(() => {
     cargar(porciones);
   }, [porciones, cargar]);
+
+  useEffect(() => {
+    onPorcionesChange?.(porciones);
+  }, [porciones, onPorcionesChange]);
 
   const descargarJson = () => {
     window.open(`${endpoint}/${recetaId}/informe?porciones=${porciones}&descargar=1`, '_blank');
