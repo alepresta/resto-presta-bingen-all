@@ -63,18 +63,52 @@ function Metrica({ valor, unidad, etiqueta }: { valor: number; unidad: string; e
   );
 }
 
+function normalizarClaveNutri(valor: string): string {
+  return (valor || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function evaluarMacro(
+  valor: number,
+  min: number,
+  max: number,
+  bajo: string,
+  alto: string
+): { estado: 'bajo' | 'adecuado' | 'alto'; texto: string; clase: string } {
+  if (valor < min) {
+    return { estado: 'bajo', texto: bajo, clase: 'bg-amber-50 text-amber-800 border border-amber-200' };
+  }
+  if (valor > max) {
+    return { estado: 'alto', texto: alto, clase: 'bg-red-50 text-red-800 border border-red-200' };
+  }
+  return {
+    estado: 'adecuado',
+    texto: 'Aporte en rango recomendado para una comida.',
+    clase: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
+  };
+}
+
 export default function InformeDualView({
   recetaId,
   endpoint = '/api/admin/recetas',
   mostrarExport = true,
+  porcionesIniciales = 4,
+  porcionesFijas = false,
 }: {
   recetaId: string;
   /** Base del endpoint; se completa como `${endpoint}/${recetaId}/informe`. */
   endpoint?: string;
   /** Muestra los botones de exportación (JSON/HTML). */
   mostrarExport?: boolean;
+  /** Porciones iniciales a consultar/renderizar. */
+  porcionesIniciales?: number;
+  /** Si es true, bloquea el informe a una cantidad fija de porciones. */
+  porcionesFijas?: boolean;
 }) {
-  const [porciones, setPorciones] = useState(4);
+  const [porciones, setPorciones] = useState(Math.max(1, porcionesIniciales));
   const [informe, setInforme] = useState<InformeDual | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
@@ -100,6 +134,10 @@ export default function InformeDualView({
     },
     [recetaId, endpoint]
   );
+
+  useEffect(() => {
+    setPorciones(Math.max(1, porcionesIniciales));
+  }, [porcionesIniciales, recetaId]);
 
   useEffect(() => {
     cargar(porciones);
@@ -137,31 +175,107 @@ export default function InformeDualView({
       </div>
 
       {/* Selector de porciones */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-gray-700 font-medium">
-          Receta base: {informe?.resumen.porcionesBase ?? 4} porciones · Ver para:
-        </span>
-        {OPCIONES_PORCIONES.map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => setPorciones(p)}
-            className={`px-3 py-1 rounded-md text-sm border font-medium transition ${
-              porciones === p
-                ? 'bg-emerald-600 text-white border-emerald-600'
-                : 'border-gray-400 text-gray-800 hover:bg-gray-100'
-            }`}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
+      {porcionesFijas ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <span className="font-semibold">{porciones} porción{porciones === 1 ? '' : 'es'}</span>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-gray-700 font-medium">
+            Receta base: {informe?.resumen.porcionesBase ?? 4} porciones · Ver para:
+          </span>
+          {OPCIONES_PORCIONES.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPorciones(p)}
+              className={`px-3 py-1 rounded-md text-sm border font-medium transition ${
+                porciones === p
+                  ? 'bg-emerald-600 text-white border-emerald-600'
+                  : 'border-gray-400 text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      )}
 
       {cargando && <p className="text-sm text-gray-700">Calculando informe…</p>}
       {error && <p className="text-sm text-red-700 font-medium">{error}</p>}
 
       {informe && !cargando && (
         <div className="space-y-4">
+          {(() => {
+            const calorias = evaluarMacro(
+              informe.resumen.caloriasPorPorcion,
+              450,
+              900,
+              'Calorías bajas para una comida principal.',
+              'Calorías elevadas para una comida principal.'
+            );
+            const proteinas = evaluarMacro(
+              informe.resumen.proteinasPorPorcion,
+              25,
+              60,
+              'Proteínas bajas para objetivo de saciedad.',
+              'Proteínas altas para una sola porción.'
+            );
+            const carbohidratos = evaluarMacro(
+              informe.resumen.carbohidratosPorPorcion,
+              35,
+              95,
+              'Carbohidratos bajos para energía principal.',
+              'Carbohidratos altos para una sola porción.'
+            );
+
+            const clavesEsperadas = [
+              'Calcio',
+              'Hierro',
+              'Magnesio',
+              'Potasio',
+              'Zinc',
+              'Vit. A',
+              'Vit. C',
+              'Vit. D',
+              'Vit. E',
+              'Vit. K',
+              'Vit. B9',
+              'Vit. B12',
+            ];
+            const destacadosSet = new Set(
+              informe.cientifico.micronutrientesDestacados.map((m) => normalizarClaveNutri(m))
+            );
+            const faltantes = clavesEsperadas.filter(
+              (m) => !destacadosSet.has(normalizarClaveNutri(m))
+            );
+
+            return (
+              <div className="space-y-2">
+                <div className={`rounded-lg px-3 py-2 text-sm ${calorias.clase}`}>
+                  🔥 <strong>Calorías:</strong> {calorias.texto}
+                </div>
+                <div className={`rounded-lg px-3 py-2 text-sm ${proteinas.clase}`}>
+                  💪 <strong>Proteínas:</strong> {proteinas.texto}
+                </div>
+                <div className={`rounded-lg px-3 py-2 text-sm ${carbohidratos.clase}`}>
+                  🌾 <strong>Carbohidratos:</strong> {carbohidratos.texto}
+                </div>
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-900">
+                  🧪 <strong>Micronutrientes cubiertos:</strong>{' '}
+                  {informe.cientifico.micronutrientesDestacados.join(', ') || 'ninguno'}
+                  {faltantes.length > 0 ? (
+                    <>
+                      {' '}
+                      · <strong>Faltantes:</strong> {faltantes.slice(0, 6).join(', ')}
+                      {faltantes.length > 6 ? ` +${faltantes.length - 6}` : ''}
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2">
             <span

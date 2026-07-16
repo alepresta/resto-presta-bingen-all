@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { AnalisisPlato, ResumenLinea } from '@/lib/analisis-plato';
 import InformeDualView from '@/app/admin/recetas/[id]/InformeDualView';
+import { escalarIngrediente } from '@/lib/escalado';
 
 // Convierte un paso de receta (string u objeto {descripcion/texto/paso/...}) en texto legible
 function textoDePaso(p: any): string {
@@ -23,6 +24,7 @@ interface Receta {
   ingredientes: Ingrediente[];
   tiempo_min: number;
   porciones: number;
+  porciones_base?: number | null;
   dificultad: string;
   notas_hildegardianas: string;
   interpretacion_hildegardiana?: string | null;
@@ -141,6 +143,29 @@ function fmt(n: number): string {
   if (n >= 100) return Math.round(n).toString();
   if (n >= 10) return n.toFixed(1);
   return n.toFixed(n < 1 ? 2 : 1);
+}
+
+function ingredientesParaUnaPorcion(receta: Receta): Array<Ingrediente & { textoCantidad: string }> {
+  const porcionesBase = receta.porciones_base && receta.porciones_base > 0
+    ? receta.porciones_base
+    : receta.porciones && receta.porciones > 0
+      ? receta.porciones
+      : 1;
+
+  return receta.ingredientes.map((ing) => {
+    const escalado = escalarIngrediente({
+      cantidadBase: Number(ing.cantidad) || 0,
+      unidad: ing.unidad || '',
+      porcionesObjetivo: 1,
+      porcionesBase,
+    });
+
+    return {
+      ...ing,
+      cantidad: escalado.cantidadMostrada,
+      textoCantidad: escalado.textoMostrado,
+    };
+  });
 }
 
 function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
@@ -374,6 +399,14 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     ? categoriasExtras.filter((cat) => cat.id === categoriaActiva)
     : categoriasExtras;
 
+  const ingredientesModal = platoSeleccionado?.receta
+    ? ingredientesParaUnaPorcion(platoSeleccionado.receta)
+    : [];
+
+  const porcionesBaseModal = platoSeleccionado?.receta?.porciones_base && platoSeleccionado.receta.porciones_base > 0
+    ? platoSeleccionado.receta.porciones_base
+    : platoSeleccionado?.receta?.porciones || 1;
+
   return (
     <>
       {/* Navegación Principal: Tabs */}
@@ -549,10 +582,9 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
               <div className="flex gap-4 mt-4 text-sm">
                 <span>⏱️ {platoSeleccionado.receta.tiempo_min} min</span>
                 <span>
-                  👥 {platoSeleccionado.analisis?.porcionesEstimadas ?? platoSeleccionado.receta.porciones} porciones
-                  {platoSeleccionado.analisis?.porcionesEstimadas &&
-                  platoSeleccionado.receta.porciones !== platoSeleccionado.analisis.porcionesEstimadas ? (
-                    <span className="text-amber-100"> · declaradas {platoSeleccionado.receta.porciones}</span>
+                  👥 1 porción
+                  {porcionesBaseModal !== 1 ? (
+                    <span className="text-amber-100"> · receta base {porcionesBaseModal}</span>
                   ) : null}
                 </span>
                 <span>📊 {platoSeleccionado.receta.dificultad}</span>
@@ -577,6 +609,8 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   recetaId={platoSeleccionado.receta.id}
                   endpoint="/api/menu/receta"
                   mostrarExport={false}
+                  porcionesIniciales={1}
+                  porcionesFijas
                 />
               ) : (
                 <>
@@ -595,11 +629,11 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   🥕 Ingredientes
                 </h3>
                 <ul className="space-y-2">
-                  {platoSeleccionado.receta.ingredientes.map((ing, i) => (
+                  {ingredientesModal.map((ing, i) => (
                     <li key={i} className="flex justify-between items-center bg-amber-50 p-2 rounded">
                       <span className="font-medium text-gray-700">{ing.nombre}</span>
                       <span className="text-amber-700 font-semibold">
-                        {ing.cantidad} {ing.unidad}
+                        {ing.textoCantidad}
                       </span>
                     </li>
                   ))}
