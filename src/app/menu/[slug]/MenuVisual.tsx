@@ -391,11 +391,13 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
   const categoriaPrincipales = categorias.find(cat => cat.id === 2);
   const categoriasExtras = categorias.filter(cat => cat.id !== 2);
 
-  // Filtrar platos principales por día
-  const platosPrincipales = (categoriaPrincipales?.platos || []).filter((plato) => {
-    if (plato.dia_semana_id === null) return true;
-    if (plato.dia_semana_id === diaActivo) return true;
-    return false;
+  // Filtro de platos principales al estilo del admin:
+  // - diaActivo === 0 => "Todos los días" (solo los que no tienen día asignado)
+  // - diaActivo 1..7   => solo los platos exclusivos de ese día
+  const todosLosPrincipales = categoriaPrincipales?.platos || [];
+  const platosPrincipales = todosLosPrincipales.filter((plato) => {
+    if (diaActivo === 0) return plato.dia_semana_id === null;
+    return plato.dia_semana_id !== null && Number(plato.dia_semana_id) === diaActivo;
   });
 
   // Filtrar extras por categoría si está activa
@@ -461,6 +463,16 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
               <h2 className="text-sm font-semibold text-gray-600 mb-3 text-center">
                 📅 Seleccioná el día de la semana
               </h2>
+              <button
+                onClick={() => setDiaActivo(0)}
+                className={`w-full mb-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                  diaActivo === 0
+                    ? 'bg-amber-500 text-white shadow-lg'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                🗓️ Disponibles todos los días
+              </button>
               <div className="grid grid-cols-7 gap-2">
                 {dias.map((dia) => (
                   <button
@@ -485,16 +497,18 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
           <main className="max-w-6xl mx-auto px-4 py-8">
             <div className="mb-6 text-center">
               <h2 className="text-2xl font-bold text-gray-800">
-                🍽️ Platos Principales del {dias.find(d => d.id === diaActivo)?.nombre}
+                {diaActivo === 0
+                  ? '🗓️ Platos disponibles todos los días'
+                  : `🍽️ Platos del ${dias.find(d => d.id === diaActivo)?.nombre}`}
               </h2>
               <p className="text-sm text-amber-700 mt-2 font-semibold">
-                {platosPrincipales.length} platos disponibles para hoy
+                {platosPrincipales.length} {platosPrincipales.length === 1 ? 'plato disponible' : 'platos disponibles'}
               </p>
             </div>
 
             {platosPrincipales.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No hay platos disponibles para este día</p>
+                <p className="text-gray-500 text-lg">No hay platos disponibles para esta selección</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
