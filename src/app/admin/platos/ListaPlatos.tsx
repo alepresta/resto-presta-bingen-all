@@ -394,6 +394,19 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
   const [guardando, setGuardando] = useState(false);
   const [errorGuardar, setErrorGuardar] = useState<string | null>(null);
 
+  // Selección múltiple para publicar / despublicar en lote
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
+  const [procesandoLote, setProcesandoLote] = useState(false);
+
+  const toggleSeleccion = (id: string) => {
+    setSeleccionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const guardarPlato = async (
     id: string,
     cambios: { imagen?: string | null; precio?: number | null; disponible?: boolean; dia_semana_id?: number | null }
@@ -428,6 +441,29 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
       router.refresh();
     } finally {
       setGuardando(false);
+    }
+  };
+
+  // Publicar / despublicar en lote los platos seleccionados
+  const aplicarLote = async (disponible: boolean) => {
+    if (seleccionados.size === 0) return;
+    setProcesandoLote(true);
+    try {
+      const res = await fetch('/api/admin/platos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(seleccionados), disponible }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'No se pudo aplicar el cambio');
+      }
+      setSeleccionados(new Set());
+      router.refresh();
+    } catch (e: any) {
+      setErrorGuardar(e.message || 'Error al aplicar el cambio en lote');
+    } finally {
+      setProcesandoLote(false);
     }
   };
 
@@ -513,6 +549,24 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
   const totalConReceta = platos.filter(p => p.receta?.id).length;
   const totalPublicados = platos.filter(p => p.disponible).length;
   const totalDespublicados = platos.length - totalPublicados;
+
+  // Selección múltiple sobre los platos actualmente visibles (filtrados)
+  const idsFiltrados = platosFiltrados.map((p) => p.id);
+  const seleccionadosVisibles = idsFiltrados.filter((id) => seleccionados.has(id));
+  const todosVisiblesSeleccionados =
+    idsFiltrados.length > 0 && seleccionadosVisibles.length === idsFiltrados.length;
+
+  const toggleSeleccionarTodos = () => {
+    setSeleccionados((prev) => {
+      const next = new Set(prev);
+      if (todosVisiblesSeleccionados) {
+        idsFiltrados.forEach((id) => next.delete(id));
+      } else {
+        idsFiltrados.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
 
   const limpiarFiltros = () => {
     setTextoBusqueda('');
@@ -830,6 +884,65 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
           </div>
         </div>
 
+        {/* Barra de selección múltiple / acciones masivas */}
+        {platosFiltrados.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6 flex flex-wrap items-center gap-3 transition-colors">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={todosVisiblesSeleccionados}
+                ref={(el) => {
+                  if (el) el.indeterminate = seleccionadosVisibles.length > 0 && !todosVisiblesSeleccionados;
+                }}
+                onChange={toggleSeleccionarTodos}
+                className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+              />
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                {todosVisiblesSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                <span className="text-gray-400 font-normal"> ({idsFiltrados.length})</span>
+              </span>
+            </label>
+
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {seleccionados.size > 0
+                ? `${seleccionados.size} seleccionado${seleccionados.size === 1 ? '' : 's'}`
+                : 'Ninguno seleccionado'}
+            </span>
+
+            <div className="flex-1" />
+
+            <button
+              onClick={() => aplicarLote(true)}
+              disabled={seleccionados.size === 0 || procesandoLote}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {procesandoLote ? '⏳ Aplicando…' : '🟢 Publicar seleccionados'}
+            </button>
+            <button
+              onClick={() => aplicarLote(false)}
+              disabled={seleccionados.size === 0 || procesandoLote}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {procesandoLote ? '⏳ Aplicando…' : '⚪ Despublicar seleccionados'}
+            </button>
+            {seleccionados.size > 0 && (
+              <button
+                onClick={() => setSeleccionados(new Set())}
+                disabled={procesandoLote}
+                className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
+              >
+                ✖️ Limpiar
+              </button>
+            )}
+          </div>
+        )}
+
+        {errorGuardar && (
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg text-sm mb-6">
+            ❌ {errorGuardar}
+          </div>
+        )}
+
         {/* Grid de platos */}
         {vista === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -846,6 +959,8 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                 <div
                   key={plato.id}
                   className={`bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all border-l-4 overflow-hidden ${
+                    seleccionados.has(plato.id) ? 'ring-2 ring-amber-500 ' : ''
+                  }${
                     tieneVeneno ? 'border-red-500' : tieneBaseAlegria ? 'border-green-500' : 'border-amber-500'
                   }`}
                 >
@@ -867,14 +982,22 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                   
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg leading-tight">
-                          {plato.nombre}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {categoria?.icono} {categoria?.nombre || 'Sin categoría'}
-                        </p>
-                      </div>
+                      <label className="flex items-start gap-2 flex-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={seleccionados.has(plato.id)}
+                          onChange={() => toggleSeleccion(plato.id)}
+                          className="w-4 h-4 mt-1 text-amber-600 rounded focus:ring-amber-500 shrink-0"
+                        />
+                        <span className="flex-1">
+                          <span className="block font-bold text-gray-800 dark:text-gray-100 text-lg leading-tight">
+                            {plato.nombre}
+                          </span>
+                          <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {categoria?.icono} {categoria?.nombre || 'Sin categoría'}
+                          </span>
+                        </span>
+                      </label>
                     </div>
 
                     {plato.descripcion && (
@@ -974,6 +1097,17 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                 <tr>
+                  <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 w-10">
+                    <input
+                      type="checkbox"
+                      checked={todosVisiblesSeleccionados}
+                      ref={(el) => {
+                        if (el) el.indeterminate = seleccionadosVisibles.length > 0 && !todosVisiblesSeleccionados;
+                      }}
+                      onChange={toggleSeleccionarTodos}
+                      className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Plato</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Categoría</th>
                   <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Día</th>
@@ -993,7 +1127,15 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
                   const categoria = CATEGORIAS[plato.categoria_id];
 
                   return (
-                    <tr key={plato.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={plato.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${seleccionados.has(plato.id) ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}>
+                      <td className="px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={seleccionados.has(plato.id)}
+                          onChange={() => toggleSeleccion(plato.id)}
+                          className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {plato.imagen && (
