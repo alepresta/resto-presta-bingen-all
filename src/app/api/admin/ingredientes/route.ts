@@ -6,24 +6,47 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const categoria = searchParams.get('categoria');
   const q = searchParams.get('q');
+  const vista = searchParams.get('vista');
   const incluirInactivos = ['1', 'true', 'si', 'yes'].includes(
     (searchParams.get('incluir_inactivos') || '').toLowerCase()
   );
 
-  let query = supabase
-    .from('ingredientes')
-    .select('*')
-    .order('nombre');
+  const columnas =
+    vista === 'selector'
+      ? 'id,nombre,categoria,unidad_base,calorias,proteinas_g,carbohidratos_g,grasas_g,activo'
+      : '*';
 
-  if (!incluirInactivos) query = query.eq('activo', true);
+  const construirQuery = () => {
+    let query = supabase
+      .from('ingredientes')
+      .select(columnas)
+      .order('nombre');
 
-  if (categoria && categoria !== 'todos') query = query.eq('categoria', categoria);
-  if (q) query = query.ilike('nombre', `%${q}%`);
+    if (!incluirInactivos) query = query.eq('activo', true);
+    if (categoria && categoria !== 'todos') query = query.eq('categoria', categoria);
+    if (q) query = query.ilike('nombre', `%${q}%`);
 
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return query;
+  };
 
-  return NextResponse.json({ ingredientes: data || [] });
+  const PAGE_SIZE = 1000;
+  const ingredientes: any[] = [];
+
+  for (let desde = 0; ; desde += PAGE_SIZE) {
+    const hasta = desde + PAGE_SIZE - 1;
+    const { data, error } = await construirQuery().range(desde, hasta);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const pagina = data || [];
+    ingredientes.push(...pagina);
+
+    if (pagina.length < PAGE_SIZE) break;
+  }
+
+  return NextResponse.json({ ingredientes });
 }
 
 export async function POST(request: NextRequest) {

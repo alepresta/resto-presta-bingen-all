@@ -53,7 +53,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
     .select('id, nombre, categoria_id, dia_semana_id')
     .eq('disponible', true)
     .order('nombre');
-  const platos = (platosData || [])
+  let platos = (platosData || [])
     .map((p) => ({
       id: p.id,
       nombre: p.nombre,
@@ -61,6 +61,31 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
       receta_existente_id: recetaIdPorPlato.get(p.id) ?? null,
       ocupado: recetaIdPorPlato.has(p.id) && p.id !== platoActualId,
     }));
+
+  // En creación, mostrar solo platos sin receta para evitar bloqueos por unicidad.
+  if (esNueva) {
+    platos = platos.filter((p) => !p.receta_existente_id);
+  }
+
+  // En edición, el plato actual puede estar no disponible y no venir en `platosData`.
+  // Lo agregamos para que siga visible en el selector.
+  if (!esNueva && platoActualId && !platos.some((p) => p.id === platoActualId)) {
+    const { data: platoActual } = await supabase
+      .from('platos')
+      .select('id, nombre, dia_semana_id')
+      .eq('id', platoActualId)
+      .maybeSingle();
+
+    if (platoActual) {
+      platos.unshift({
+        id: platoActual.id,
+        nombre: platoActual.nombre,
+        dia_semana_id: platoActual.dia_semana_id ?? null,
+        receta_existente_id: recetaIdPorPlato.get(platoActual.id) ?? null,
+        ocupado: false,
+      });
+    }
+  }
 
   // Datos iniciales por defecto (receta nueva)
   let initial: DatosInicialesReceta = {
@@ -80,6 +105,14 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
     const { data: r } = await supabase.from('recetas').select('*').eq('id', params.id).single();
 
     if (r) {
+      // El plato asociado puede no estar "disponible" y no aparecer en `platosData`.
+      // Lo consultamos directo para precargar correctamente nombre y día en edición.
+      const { data: platoActual } = await supabase
+        .from('platos')
+        .select('nombre, dia_semana_id')
+        .eq('id', r.plato_id)
+        .maybeSingle();
+
       // Ingredientes de la tabla relacional
       const { data: riData } = await supabase
         .from('receta_ingredientes')
@@ -116,11 +149,12 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
 
       initial = {
         platoId: r.plato_id || '',
-        platoNombre: (platosData || []).find((x) => x.id === r.plato_id)?.nombre || '',
+        platoNombre: platoActual?.nombre || (platosData || []).find((x) => x.id === r.plato_id)?.nombre || '',
         tiempoMin: r.tiempo_min || 30,
         porciones: r.porciones || 4,
         dificultad: r.dificultad || 'media',
         diaSemanaId: (() => {
+          if (platoActual?.dia_semana_id != null) return String(platoActual.dia_semana_id);
           const p = (platosData || []).find((x) => x.id === r.plato_id);
           return p?.dia_semana_id != null ? String(p.dia_semana_id) : '';
         })(),

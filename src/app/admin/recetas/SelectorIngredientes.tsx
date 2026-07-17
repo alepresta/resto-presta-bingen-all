@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+const CACHE_KEY_INGREDIENTES_SELECTOR = 'admin_recetas_ingredientes_selector_v1';
+let ingredientesCacheMemoria: Ingrediente[] | null = null;
+
 interface Ingrediente {
   id: string;
   nombre: string;
@@ -100,6 +103,14 @@ function normalizarCategoriaId(categoria: string | null | undefined): string {
   return CATEGORIAS_EQUIVALENTES[base] || base;
 }
 
+function normalizarTextoBusqueda(valor: string): string {
+  return (valor || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 function formatearCategoria(id: string): string {
   if (CATEGORIAS_ETIQUETAS[id]) return CATEGORIAS_ETIQUETAS[id];
 
@@ -113,6 +124,7 @@ function formatearCategoria(id: string): string {
 
 export default function SelectorIngredientes({ value, onChange }: SelectorIngredientesProps) {
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [cargandoIngredientes, setCargandoIngredientes] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('todos');
   const [mostrarResultados, setMostrarResultados] = useState(false);
@@ -123,16 +135,58 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
   // Cargar ingredientes
   useEffect(() => {
     const cargar = async () => {
-      const res = await fetch('/api/admin/ingredientes?categoria=todos&incluir_inactivos=1');
-      const data = await res.json();
-      setIngredientes(data.ingredientes || []);
+      let usadoCache = false;
+
+      try {
+        if (ingredientesCacheMemoria) {
+          setIngredientes(ingredientesCacheMemoria);
+          usadoCache = true;
+        }
+
+        if (!usadoCache && typeof window !== 'undefined') {
+          const guardado = window.sessionStorage.getItem(CACHE_KEY_INGREDIENTES_SELECTOR);
+          if (guardado) {
+            const parsed = JSON.parse(guardado);
+            if (Array.isArray(parsed)) {
+              ingredientesCacheMemoria = parsed;
+              setIngredientes(parsed);
+              usadoCache = true;
+            }
+          }
+        }
+
+        if (usadoCache) {
+          // Si ya mostramos cache, no bloqueamos la UI mientras revalidamos en segundo plano.
+          setCargandoIngredientes(false);
+        }
+
+        const res = await fetch('/api/admin/ingredientes?categoria=todos&incluir_inactivos=1&vista=selector');
+        const data = await res.json();
+        const lista = data.ingredientes || [];
+        setIngredientes(lista);
+        ingredientesCacheMemoria = lista;
+
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(CACHE_KEY_INGREDIENTES_SELECTOR, JSON.stringify(lista));
+        }
+      } catch {
+        if (!usadoCache) {
+          setIngredientes([]);
+        }
+      } finally {
+        if (!usadoCache) {
+          setCargandoIngredientes(false);
+        }
+      }
     };
     cargar();
   }, []);
 
   // Filtrar ingredientes
   const ingredientesFiltrados = ingredientes.filter((ing) => {
-    const matchBusqueda = ing.nombre.toLowerCase().includes(busqueda.toLowerCase());
+    const termino = normalizarTextoBusqueda(busqueda);
+    const nombre = normalizarTextoBusqueda(ing.nombre || '');
+    const matchBusqueda = !termino || nombre.includes(termino);
     const categoriaNormalizada = normalizarCategoriaId(ing.categoria);
     const matchCategoria = categoriaFiltro === 'todos' || categoriaNormalizada === categoriaFiltro;
     return matchBusqueda && matchCategoria;
@@ -234,6 +288,9 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
       {/* Buscador de ingredientes */}
       <div className="bg-gray-50 rounded-lg p-4">
         <h3 className="font-bold text-gray-800 mb-3">🔍 Agregar Ingrediente</h3>
+        {cargandoIngredientes && (
+          <p className="text-sm text-gray-600 mb-3">Cargando catálogo de ingredientes…</p>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
           <input

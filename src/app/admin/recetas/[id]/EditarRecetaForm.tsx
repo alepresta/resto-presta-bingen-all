@@ -115,7 +115,9 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
     setMensaje('');
 
     try {
-      if (!platoId) throw new Error('Debés seleccionar un plato');
+      if (!platoId && !platoNombre.trim()) {
+        throw new Error('Debés seleccionar un plato existente o indicar el nombre de uno nuevo');
+      }
       if (!platoNombre.trim()) throw new Error('Debés indicar el nombre del plato');
       if (pasos.some((p) => !p.trim())) throw new Error('Todos los pasos deben estar completos');
       if (ingredientes.length === 0) throw new Error('Debés agregar al menos un ingrediente');
@@ -206,6 +208,11 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Plato *</label>
+                {esNueva && platos.length === 0 && (
+                  <p className="mb-2 text-sm font-medium text-amber-700">
+                    No hay platos libres sin receta. Podés escribir abajo el nombre para crear un plato nuevo.
+                  </p>
+                )}
                 {!esNueva && (
                   <p className="mb-2 text-base font-bold text-amber-700">
                     🍽️ {platos.find((p) => p.id === platoId)?.nombre || '(plato no encontrado)'}
@@ -225,7 +232,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 </select>
                 {esNueva && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Si el plato ya tiene receta, al seleccionarlo se abrirá esa receta para edición.
+                    Si querés crear un plato nuevo, dejá este selector vacío y completá "Nombre del plato".
                   </p>
                 )}
               </div>
