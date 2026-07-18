@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     interpretacion_hildegardiana,
     dia_semana_id,
     plato_nombre,
+    plato_descripcion,
   } = body;
 
   const platoNombreNormalizado = normalizarNombrePlato(plato_nombre);
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
     recetaId = receta.id;
 
     await reemplazarIngredientesReceta(supabase, receta.id, ingredientes);
-    await actualizarDatosPlato(supabase, platoIdFinal, platoNombreNormalizado, dia_semana_id);
+    await actualizarDatosPlato(supabase, platoIdFinal, platoNombreNormalizado, dia_semana_id, plato_descripcion);
 
     return NextResponse.json({ receta });
   } catch (error: any) {

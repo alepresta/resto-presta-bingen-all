@@ -22,6 +22,7 @@ interface PlatoOpcion {
 interface DatosIniciales {
   platoId: string;
   platoNombre: string;
+  platoDescripcion: string;
   tiempoMin: number;
   porciones: number;
   dificultad: string;
@@ -48,6 +49,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
   const [platoId, setPlatoId] = useState(initial.platoId);
   const [platoNombre, setPlatoNombre] = useState(initial.platoNombre);
+  const [platoDescripcion, setPlatoDescripcion] = useState(initial.platoDescripcion);
   const [tiempoMin, setTiempoMin] = useState(initial.tiempoMin);
   const [porciones, setPorciones] = useState(initial.porciones);
   const [dificultad, setDificultad] = useState(initial.dificultad);
@@ -133,6 +135,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
         body: JSON.stringify({
           plato_id: platoId,
           plato_nombre: platoNombre.trim(),
+          plato_descripcion: platoDescripcion.trim(),
           dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId),
           tiempo_min: tiempoMin,
           porciones,
@@ -247,6 +250,19 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Este nombre actualiza el plato asociado y se reflejará también fuera de la receta.
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Descripción del plato</label>
+                <textarea
+                  value={platoDescripcion}
+                  onChange={(e) => setPlatoDescripcion(e.target.value)}
+                  placeholder="Ej: Agua con rodajas de limón, jengibre y menta"
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Es el texto breve que se muestra debajo del nombre del plato en el menú.
                 </p>
               </div>
               <div>

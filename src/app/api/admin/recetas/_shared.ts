@@ -105,22 +105,41 @@ export async function actualizarDiaPlato(
   if (error) throw error;
 }
 
+export function normalizarDescripcionPlato(valor: unknown): string | null | undefined {
+  if (valor === undefined) return undefined;
+  if (valor === null) return null;
+  if (typeof valor !== 'string') {
+    throw new Error('plato_descripcion debe ser texto');
+  }
+
+  const descripcion = valor.trim();
+  return descripcion ? descripcion : null;
+}
+
 export async function actualizarDatosPlato(
   supabase: SupabaseClientLike,
   platoId: string,
   nombre: unknown,
-  diaSemanaId: unknown
+  diaSemanaId: unknown,
+  descripcion?: unknown
 ) {
   const diaNormalizado = normalizarDiaSemana(diaSemanaId);
   const nombreNormalizado = normalizarNombrePlato(nombre);
+  const descripcionNormalizada = normalizarDescripcionPlato(descripcion);
+
+  const actualizacion: Record<string, unknown> = {
+    nombre: nombreNormalizado,
+    dia_semana_id: diaNormalizado,
+    disponible_todos_dias: diaNormalizado === null,
+  };
+
+  if (descripcionNormalizada !== undefined) {
+    actualizacion.descripcion = descripcionNormalizada;
+  }
 
   const { error } = await supabase
     .from('platos')
-    .update({
-      nombre: nombreNormalizado,
-      dia_semana_id: diaNormalizado,
-      disponible_todos_dias: diaNormalizado === null,
-    })
+    .update(actualizacion)
     .eq('id', platoId);
 
   if (error) throw error;

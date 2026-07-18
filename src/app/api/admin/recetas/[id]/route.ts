@@ -50,6 +50,7 @@ export async function PUT(
     interpretacion_hildegardiana,
     dia_semana_id,
     plato_nombre,
+    plato_descripcion,
   } = body;
 
   if (!plato_id) {
@@ -78,7 +79,7 @@ export async function PUT(
     }
 
     await reemplazarIngredientesReceta(supabase, params.id, ingredientes);
-    await actualizarDatosPlato(supabase, plato_id, plato_nombre, dia_semana_id);
+    await actualizarDatosPlato(supabase, plato_id, plato_nombre, dia_semana_id, plato_descripcion);
 
     return NextResponse.json({ receta });
   } catch (error: any) {

@@ -14,6 +14,7 @@ interface IngredienteSeleccionado {
 interface DatosInicialesReceta {
   platoId: string;
   platoNombre: string;
+  platoDescripcion: string;
   tiempoMin: number;
   porciones: number;
   dificultad: string;
@@ -91,6 +92,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
   let initial: DatosInicialesReceta = {
     platoId: '',
     platoNombre: '',
+    platoDescripcion: '',
     tiempoMin: 30,
     porciones: 4,
     dificultad: 'media',
@@ -106,10 +108,10 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
 
     if (r) {
       // El plato asociado puede no estar "disponible" y no aparecer en `platosData`.
-      // Lo consultamos directo para precargar correctamente nombre y día en edición.
+      // Lo consultamos directo para precargar correctamente nombre, descripción y día en edición.
       const { data: platoActual } = await supabase
         .from('platos')
-        .select('nombre, dia_semana_id')
+        .select('nombre, descripcion, dia_semana_id')
         .eq('id', r.plato_id)
         .maybeSingle();
 
@@ -150,6 +152,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
       initial = {
         platoId: r.plato_id || '',
         platoNombre: platoActual?.nombre || (platosData || []).find((x) => x.id === r.plato_id)?.nombre || '',
+        platoDescripcion: platoActual?.descripcion || '',
         tiempoMin: r.tiempo_min || 30,
         porciones: r.porciones || 4,
         dificultad: r.dificultad || 'media',
