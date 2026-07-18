@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AnalisisPlato, ResumenLinea } from '@/lib/analisis-plato';
 import InformeDualView from '@/app/admin/recetas/[id]/InformeDualView';
 import { escalarIngrediente } from '@/lib/escalado';
@@ -373,6 +373,11 @@ function TarjetaPlato({ plato, onSelect }: { plato: Plato; onSelect: (p: Plato) 
 }
 
 export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosPlatos }: MenuVisualProps) {
+  // Separar categorías: ID 2 = Platos Principales, el resto = Extras
+  const categoriaPrincipales = categorias.find(cat => cat.id === 2);
+  const categoriasExtras = categorias.filter(cat => cat.id !== 2);
+  const todosLosPrincipales = categoriaPrincipales?.platos || [];
+
   const [platoSeleccionado, setPlatoSeleccionado] = useState<Plato | null>(null);
   const [porcionesModal, setPorcionesModal] = useState(1);
   const [diaActivo, setDiaActivo] = useState<number>(diaInfo.id);
@@ -389,14 +394,24 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     { id: 7, nombre: 'Dom', icono: '🍝', tematica: 'Pastas' },
   ];
 
-  // Separar categorías: ID 2 = Platos Principales, el resto = Extras
-  const categoriaPrincipales = categorias.find(cat => cat.id === 2);
-  const categoriasExtras = categorias.filter(cat => cat.id !== 2);
+  useEffect(() => {
+    const clave = `menu-dia-activo:${restaurante.id}`;
+    const valor = window.sessionStorage.getItem(clave);
+    if (valor === null) return;
+    const diaGuardado = Number(valor);
+    if (Number.isInteger(diaGuardado) && diaGuardado >= 0 && diaGuardado <= 7) {
+      setDiaActivo(diaGuardado);
+    }
+  }, [restaurante.id]);
+
+  useEffect(() => {
+    const clave = `menu-dia-activo:${restaurante.id}`;
+    window.sessionStorage.setItem(clave, String(diaActivo));
+  }, [diaActivo, restaurante.id]);
 
   // Filtro de platos principales al estilo del admin:
   // - diaActivo === 0 => "Todos los días" (solo los que no tienen día asignado)
   // - diaActivo 1..7   => solo los platos exclusivos de ese día
-  const todosLosPrincipales = categoriaPrincipales?.platos || [];
   const platosPrincipales = todosLosPrincipales.filter((plato) => {
     if (diaActivo === 0) return esTodosLosDias(plato.dias_semana);
     return plato.dias_semana.includes(diaActivo);
