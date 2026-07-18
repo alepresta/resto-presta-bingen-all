@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import EditarRecetaForm from './EditarRecetaForm';
 import InformeDualView from './InformeDualView';
+import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ interface DatosInicialesReceta {
   porciones: number;
   estado: 'borrador' | 'en_proceso' | 'aprobada';
   dificultad: string;
-  diaSemanaId: string;
+  diasSemana: number[];
   pasos: string[];
   ingredientes: IngredienteSeleccionado[];
   notasHildegardianas: string;
@@ -52,14 +53,28 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
   // Platos disponibles para el selector
   const { data: platosData } = await supabase
     .from('platos')
-    .select('id, nombre, categoria_id, dia_semana_id')
+    .select('id, nombre, categoria_id, dia_semana_id, disponible_todos_dias')
     .eq('disponible', true)
     .order('nombre');
+
+  const platosIds = (platosData || []).map((p) => p.id);
+  const { data: platosDiasData } = await supabase
+    .from('plato_dias')
+    .select('plato_id, dia_semana_id')
+    .in('plato_id', platosIds.length ? platosIds : ['00000000-0000-0000-0000-000000000000']);
+
+  const diasPorPlato = new Map<string, number[]>();
+  (platosDiasData || []).forEach((row: any) => {
+    const lista = diasPorPlato.get(row.plato_id) || [];
+    lista.push(row.dia_semana_id);
+    diasPorPlato.set(row.plato_id, lista);
+  });
+
   let platos = (platosData || [])
     .map((p) => ({
       id: p.id,
       nombre: p.nombre,
-      dia_semana_id: p.dia_semana_id ?? null,
+      dias_semana: diasPorPlato.get(p.id) || diasSemanaDesdeLegado(p.dia_semana_id, p.disponible_todos_dias),
       receta_existente_id: recetaIdPorPlato.get(p.id) ?? null,
       ocupado: recetaIdPorPlato.has(p.id) && p.id !== platoActualId,
     }));
@@ -74,15 +89,20 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
   if (!esNueva && platoActualId && !platos.some((p) => p.id === platoActualId)) {
     const { data: platoActual } = await supabase
       .from('platos')
-      .select('id, nombre, dia_semana_id')
+      .select('id, nombre, dia_semana_id, disponible_todos_dias')
       .eq('id', platoActualId)
       .maybeSingle();
+
+    const { data: diasPlatoActual } = await supabase
+      .from('plato_dias')
+      .select('dia_semana_id')
+      .eq('plato_id', platoActualId);
 
     if (platoActual) {
       platos.unshift({
         id: platoActual.id,
         nombre: platoActual.nombre,
-        dia_semana_id: platoActual.dia_semana_id ?? null,
+        dias_semana: (diasPlatoActual || []).map((d: any) => d.dia_semana_id) || diasSemanaDesdeLegado(platoActual.dia_semana_id, platoActual.disponible_todos_dias),
         receta_existente_id: recetaIdPorPlato.get(platoActual.id) ?? null,
         ocupado: false,
       });
@@ -98,7 +118,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
     porciones: 4,
     estado: 'borrador',
     dificultad: 'media',
-    diaSemanaId: '',
+    diasSemana: [],
     pasos: [''] as string[],
     ingredientes: [] as IngredienteSeleccionado[],
     notasHildegardianas: '',
@@ -113,9 +133,14 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
       // Lo consultamos directo para precargar correctamente nombre, descripción y día en edición.
       const { data: platoActual } = await supabase
         .from('platos')
-        .select('nombre, descripcion, dia_semana_id')
+        .select('nombre, descripcion, dia_semana_id, disponible_todos_dias')
         .eq('id', r.plato_id)
         .maybeSingle();
+
+      const { data: diasPlatoActual } = await supabase
+        .from('plato_dias')
+        .select('dia_semana_id')
+        .eq('plato_id', r.plato_id);
 
       // Ingredientes de la tabla relacional
       const { data: riData } = await supabase
@@ -159,11 +184,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
         porciones: r.porciones || 4,
         estado: r.estado || 'borrador',
         dificultad: r.dificultad || 'media',
-        diaSemanaId: (() => {
-          if (platoActual?.dia_semana_id != null) return String(platoActual.dia_semana_id);
-          const p = (platosData || []).find((x) => x.id === r.plato_id);
-          return p?.dia_semana_id != null ? String(p.dia_semana_id) : '';
-        })(),
+        diasSemana: (diasPlatoActual || []).map((d: any) => d.dia_semana_id).sort((a: number, b: number) => a - b) || diasSemanaDesdeLegado(platoActual?.dia_semana_id, platoActual?.disponible_todos_dias),
         pasos: normalizarPasos(r.pasos),
         ingredientes,
         notasHildegardianas: r.notas_hildegardianas || '',

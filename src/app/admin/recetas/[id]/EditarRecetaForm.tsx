@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SelectorIngredientes from '../SelectorIngredientes';
+import { DIAS_SEMANA } from '@/lib/pedidos';
 
 interface IngredienteSeleccionado {
   ingrediente_id: string;
@@ -14,7 +15,7 @@ interface IngredienteSeleccionado {
 interface PlatoOpcion {
   id: string;
   nombre: string;
-  dia_semana_id?: number | null;
+  dias_semana: number[];
   receta_existente_id?: string | null;
   ocupado?: boolean;
 }
@@ -27,7 +28,7 @@ interface DatosIniciales {
   porciones: number;
   estado: 'borrador' | 'en_proceso' | 'aprobada';
   dificultad: string;
-  diaSemanaId: string;
+  diasSemana: number[];
   pasos: string[];
   ingredientes: IngredienteSeleccionado[];
   notasHildegardianas: string;
@@ -55,7 +56,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
   const [porciones, setPorciones] = useState(initial.porciones);
   const [estado, setEstado] = useState<DatosIniciales['estado']>(initial.estado);
   const [dificultad, setDificultad] = useState(initial.dificultad);
-  const [diaSemanaId, setDiaSemanaId] = useState(initial.diaSemanaId);
+  const [diasSemana, setDiasSemana] = useState<number[]>(initial.diasSemana);
   const [pasos, setPasos] = useState<string[]>(initial.pasos.length > 0 ? initial.pasos : ['']);
   const [ingredientes, setIngredientes] = useState<IngredienteSeleccionado[]>(initial.ingredientes);
   const [notasHildegardianas, setNotasHildegardianas] = useState(initial.notasHildegardianas);
@@ -74,7 +75,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
   };
   const eliminarPaso = (index: number) => setPasos(pasos.filter((_, i) => i !== index));
 
-  // Al elegir un plato, precargar su día actual
+  // Al elegir un plato, precargar sus días actuales
   const seleccionarPlato = (id: string) => {
     const p = platos.find((x) => x.id === id);
     if (p?.receta_existente_id && p.receta_existente_id !== recetaId) {
@@ -84,18 +85,24 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
     setPlatoId(id);
     setPlatoNombre(p?.nombre || '');
-    setDiaSemanaId(p?.dia_semana_id != null ? String(p.dia_semana_id) : '');
+    setDiasSemana(p?.dias_semana || []);
   };
 
-  const DIAS_SEMANA = [
-    { id: 1, nombre: 'Lunes', icono: '🥩' },
-    { id: 2, nombre: 'Martes', icono: '🥗' },
-    { id: 3, nombre: 'Miércoles', icono: '🍝' },
-    { id: 4, nombre: 'Jueves', icono: '🍗' },
-    { id: 5, nombre: 'Viernes', icono: '🐟' },
-    { id: 6, nombre: 'Sábado', icono: '🍕' },
-    { id: 7, nombre: 'Domingo', icono: '🍝' },
-  ];
+  const toggleDiaSemana = (diaId: number) => {
+    setDiasSemana((prev) =>
+      prev.includes(diaId)
+        ? prev.filter((dia) => dia !== diaId)
+        : [...prev, diaId].sort((a, b) => a - b)
+    );
+  };
+
+  const seleccionarTodosLosDias = () => {
+    setDiasSemana(DIAS_SEMANA.map((dia) => dia.id));
+  };
+
+  const limpiarDias = () => {
+    setDiasSemana([]);
+  };
 
   const leerErrorHttp = async (res: Response, mensajeFallback: string) => {
     const contentType = res.headers.get('content-type') || '';
@@ -154,6 +161,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
         throw new Error('Debés seleccionar un plato existente o indicar el nombre de uno nuevo');
       }
       if (!platoNombre.trim()) throw new Error('Debés indicar el nombre del plato');
+      if (diasSemana.length === 0) throw new Error('Debés seleccionar al menos un día de disponibilidad');
       if (pasos.some((p) => !p.trim())) throw new Error('Todos los pasos deben estar completos');
       if (ingredientes.length === 0) throw new Error('Debés agregar al menos un ingrediente');
 
@@ -165,7 +173,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
         plato_id: platoId,
         plato_nombre: platoNombre.trim(),
         plato_descripcion: platoDescripcion.trim(),
-        dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId),
+        dias_semana: diasSemana,
         tiempo_min: tiempoMin,
         porciones,
         estado,
@@ -350,18 +358,33 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">📅 Día de disponibilidad</label>
-                <select
-                  value={diaSemanaId}
-                  onChange={(e) => setDiaSemanaId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
-                >
-                  <option value="">🗓️ Todos los días</option>
-                  {DIAS_SEMANA.map((d) => (
-                    <option key={d.id} value={d.id}>{d.icono} {d.nombre}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Define en qué día del menú aparece el plato de esta receta.</p>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">📅 Días de disponibilidad</label>
+                  <div className="flex gap-3 text-xs font-semibold">
+                    <button type="button" onClick={seleccionarTodosLosDias} className="text-amber-700 hover:underline">Seleccionar todos</button>
+                    <button type="button" onClick={limpiarDias} className="text-gray-500 hover:underline">Ninguno</button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {DIAS_SEMANA.map((d) => {
+                    const activo = diasSemana.includes(d.id);
+                    return (
+                      <label
+                        key={d.id}
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer transition ${activo ? 'border-amber-500 bg-amber-50 text-amber-900' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={activo}
+                          onChange={() => toggleDiaSemana(d.id)}
+                          className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                        />
+                        <span className="text-sm">{d.icono} {d.nombre}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Podés marcar uno o varios días. Si marcás los 7, se interpreta como disponible todos los días.</p>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import ListaRecetas from './ListaRecetas';
 import { analizarPlato, normalizarAGramos, type RecetaIngredienteEntrada } from '@/lib/analisis-plato';
+import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,9 +56,22 @@ export default async function AdminRecetasPage() {
     .from('recetas')
     .select(`
       id, tiempo_min, porciones, estado, dificultad, ingredientes, pasos, notas_hildegardianas, plato_id,
-      plato:plato_id ( id, nombre, categoria_id, disponible, precio, dia_semana_id, alergenos )
+      plato:plato_id ( id, nombre, categoria_id, disponible, precio, dia_semana_id, disponible_todos_dias, alergenos )
     `)
     .order('id', { ascending: false });
+
+  const platoIds = (recetas || []).map((r) => r.plato_id).filter(Boolean);
+  const { data: platosDiasData } = await supabase
+    .from('plato_dias')
+    .select('plato_id, dia_semana_id')
+    .in('plato_id', platoIds.length ? platoIds : ['00000000-0000-0000-0000-000000000000']);
+
+  const diasPorPlato = new Map<string, number[]>();
+  (platosDiasData || []).forEach((row: any) => {
+    const lista = diasPorPlato.get(row.plato_id) || [];
+    lista.push(row.dia_semana_id);
+    diasPorPlato.set(row.plato_id, lista);
+  });
 
   // 2. Total de platos (para cobertura)
   const { data: todosLosPlatos } = await supabase
@@ -101,7 +115,7 @@ export default async function AdminRecetasPage() {
       categoria_id: plato?.categoria_id ?? 0,
       disponible: !!plato?.disponible,
       precio: plato?.precio ?? null,
-      dia_semana_id: plato?.dia_semana_id ?? null,
+      dias_semana: diasPorPlato.get(r.plato_id) || diasSemanaDesdeLegado(plato?.dia_semana_id, plato?.disponible_todos_dias),
       alergenos: plato?.alergenos ?? [],
       tiempo_min: r.tiempo_min ?? null,
       porciones: r.porciones ?? null,

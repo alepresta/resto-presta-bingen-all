@@ -4,6 +4,7 @@ type SupabaseClientLike = {
 
 import { NextResponse } from 'next/server';
 import { getUsuarioConRol } from '@/lib/supabase/server';
+import { legadoDesdeDias, normalizarDiasSemana } from '@/lib/plato-dias';
 
 interface IngredienteEntrada {
   ingrediente_id: string;
@@ -20,14 +21,20 @@ function esObjeto(valor: unknown): valor is Record<string, unknown> {
 }
 
 export function normalizarDiaSemana(valor: unknown): number | null {
-  if (valor === null || valor === '' || valor === undefined) return null;
-
-  const dia = Number(valor);
-  if (!Number.isInteger(dia) || dia < 1 || dia > 7) {
-    throw new Error('dia_semana_id debe ser 1-7 o null');
+  const dias = normalizarDiasSemana(valor);
+  if (dias.length === 0) return null;
+  if (dias.length > 1) {
+    throw new Error('dia_semana_id debe ser un único día o null');
   }
+  return dias[0];
+}
 
-  return dia;
+export function normalizarDiasSemanaPlato(valor: unknown): number[] {
+  const dias = normalizarDiasSemana(valor);
+  if (dias.length === 0) {
+    throw new Error('Debés seleccionar al menos un día de disponibilidad');
+  }
+  return dias;
 }
 
 export function normalizarNombrePlato(valor: unknown): string {
@@ -120,22 +127,28 @@ export async function reemplazarIngredientesReceta(
   if (insertError) throw insertError;
 }
 
-export async function actualizarDiaPlato(
+export async function actualizarDiasPlato(
   supabase: SupabaseClientLike,
   platoId: string,
-  diaSemanaId: unknown
+  diasSemana: unknown
 ) {
-  const diaNormalizado = normalizarDiaSemana(diaSemanaId);
+  const diasNormalizados = normalizarDiasSemanaPlato(diasSemana);
+  const legado = legadoDesdeDias(diasNormalizados);
 
   const { error } = await supabase
     .from('platos')
-    .update({
-      dia_semana_id: diaNormalizado,
-      disponible_todos_dias: diaNormalizado === null,
-    })
+    .update(legado)
     .eq('id', platoId);
 
   if (error) throw error;
+
+  const { error: deleteError } = await supabase.from('plato_dias').delete().eq('plato_id', platoId);
+  if (deleteError) throw deleteError;
+
+  const { error: insertError } = await supabase.from('plato_dias').insert(
+    diasNormalizados.map((dia) => ({ plato_id: platoId, dia_semana_id: dia }))
+  );
+  if (insertError) throw insertError;
 }
 
 export function normalizarDescripcionPlato(valor: unknown): string | null | undefined {
@@ -153,17 +166,17 @@ export async function actualizarDatosPlato(
   supabase: SupabaseClientLike,
   platoId: string,
   nombre: unknown,
-  diaSemanaId: unknown,
+  diasSemana: unknown,
   descripcion?: unknown
 ) {
-  const diaNormalizado = normalizarDiaSemana(diaSemanaId);
+  const diasNormalizados = normalizarDiasSemanaPlato(diasSemana);
   const nombreNormalizado = normalizarNombrePlato(nombre);
   const descripcionNormalizada = normalizarDescripcionPlato(descripcion);
+  const legado = legadoDesdeDias(diasNormalizados);
 
   const actualizacion: Record<string, unknown> = {
     nombre: nombreNormalizado,
-    dia_semana_id: diaNormalizado,
-    disponible_todos_dias: diaNormalizado === null,
+    ...legado,
   };
 
   if (descripcionNormalizada !== undefined) {
@@ -176,6 +189,14 @@ export async function actualizarDatosPlato(
     .eq('id', platoId);
 
   if (error) throw error;
+
+  const { error: deleteError } = await supabase.from('plato_dias').delete().eq('plato_id', platoId);
+  if (deleteError) throw deleteError;
+
+  const { error: insertError } = await supabase.from('plato_dias').insert(
+    diasNormalizados.map((dia) => ({ plato_id: platoId, dia_semana_id: dia }))
+  );
+  if (insertError) throw insertError;
 }
 
 export async function autorizarRecetas(method: string) {

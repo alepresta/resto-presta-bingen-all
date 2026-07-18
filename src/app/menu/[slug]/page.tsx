@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { notFound } from 'next/navigation';
 import MenuVisual from './MenuVisual';
 import { analizarPlato, type RecetaIngredienteEntrada } from '@/lib/analisis-plato';
+import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
 interface PageProps {
   params: {
@@ -64,8 +65,20 @@ export default async function MenuPage({ params }: PageProps) {
     .order('categoria_id')
     .order('orden');
 
-  // 6. Obtener las recetas de los platos de este restaurante
   const platoIds = (platos || []).map((p) => p.id);
+  const { data: platosDiasData } = await supabase
+    .from('plato_dias')
+    .select('plato_id, dia_semana_id')
+    .in('plato_id', platoIds.length ? platoIds : ['00000000-0000-0000-0000-000000000000']);
+
+  const diasPorPlato = new Map<string, number[]>();
+  (platosDiasData || []).forEach((row: any) => {
+    const lista = diasPorPlato.get(row.plato_id) || [];
+    lista.push(row.dia_semana_id);
+    diasPorPlato.set(row.plato_id, lista);
+  });
+
+  // 6. Obtener las recetas de los platos de este restaurante
   const { data: recetas } = await supabase
     .from('recetas')
     .select('*')
@@ -160,6 +173,7 @@ export default async function MenuPage({ params }: PageProps) {
 
     return {
       ...plato,
+      dias_semana: diasPorPlato.get(plato.id) || diasSemanaDesdeLegado(plato.dia_semana_id, plato.disponible_todos_dias),
       alergenos,
       tags,
       receta: receta

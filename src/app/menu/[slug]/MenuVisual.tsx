@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { AnalisisPlato, ResumenLinea } from '@/lib/analisis-plato';
 import InformeDualView from '@/app/admin/recetas/[id]/InformeDualView';
 import { escalarIngrediente } from '@/lib/escalado';
+import { esTodosLosDias } from '@/lib/plato-dias';
 
 // Convierte un paso de receta (string u objeto {descripcion/texto/paso/...}) en texto legible
 function textoDePaso(p: any): string {
@@ -39,6 +40,7 @@ interface Plato {
   alergenos: string[];
   tags: string[];
   es_estrella: boolean;
+  dias_semana: number[];
   dia_semana_id: number | null;
   disponible_todos_dias: boolean;
   categoria_id: number;
@@ -396,8 +398,8 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
   // - diaActivo 1..7   => solo los platos exclusivos de ese día
   const todosLosPrincipales = categoriaPrincipales?.platos || [];
   const platosPrincipales = todosLosPrincipales.filter((plato) => {
-    if (diaActivo === 0) return plato.dia_semana_id === null;
-    return plato.dia_semana_id !== null && Number(plato.dia_semana_id) === diaActivo;
+    if (diaActivo === 0) return esTodosLosDias(plato.dias_semana);
+    return plato.dias_semana.includes(diaActivo);
   });
 
   // Filtrar extras por categoría si está activa

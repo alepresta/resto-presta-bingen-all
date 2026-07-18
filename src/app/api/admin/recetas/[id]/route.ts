@@ -4,6 +4,7 @@ import {
   actualizarDatosPlato,
   actualizarEstadoReceta,
   autorizarRecetas,
+  normalizarDiasSemanaPlato,
   normalizarEstadoReceta,
   reemplazarIngredientesReceta,
 } from '../_shared';
@@ -45,6 +46,7 @@ export async function PUT(
   const supabase = createServerSupabaseClient();
   const body = await request.json();
   const estadoNormalizado = normalizarEstadoReceta(body.estado);
+  const diasSemanaNormalizados = normalizarDiasSemanaPlato(body.dias_semana ?? body.dia_semana_id);
 
   const {
     plato_id,
@@ -55,7 +57,6 @@ export async function PUT(
     ingredientes,
     notas_hildegardianas,
     interpretacion_hildegardiana,
-    dia_semana_id,
     plato_nombre,
     plato_descripcion,
   } = body;
@@ -100,7 +101,7 @@ export async function PUT(
     }
 
     await reemplazarIngredientesReceta(supabase, params.id, ingredientes);
-    await actualizarDatosPlato(supabase, plato_id, plato_nombre, dia_semana_id, plato_descripcion);
+  await actualizarDatosPlato(supabase, plato_id, plato_nombre, diasSemanaNormalizados, plato_descripcion);
 
     return NextResponse.json({ receta });
   } catch (error: any) {

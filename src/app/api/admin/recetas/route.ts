@@ -5,10 +5,11 @@ import {
   actualizarDatosPlato,
   autorizarRecetas,
   normalizarEstadoReceta,
-  normalizarDiaSemana,
+  normalizarDiasSemanaPlato,
   normalizarNombrePlato,
   reemplazarIngredientesReceta,
 } from './_shared';
+import { legadoDesdeDias } from '@/lib/plato-dias';
 
 // GET: Listar todas las recetas
 export async function GET() {
@@ -40,6 +41,8 @@ export async function POST(request: NextRequest) {
   const supabase = createServerSupabaseClient();
   const body = await request.json();
   const estadoNormalizado = normalizarEstadoReceta(body.estado);
+  const diasSemanaNormalizados = normalizarDiasSemanaPlato(body.dias_semana ?? body.dia_semana_id);
+  const diasSemanaLegado = legadoDesdeDias(diasSemanaNormalizados);
 
   const {
     plato_id,
@@ -50,7 +53,6 @@ export async function POST(request: NextRequest) {
     ingredientes,
     notas_hildegardianas,
     interpretacion_hildegardiana,
-    dia_semana_id,
     plato_nombre,
     plato_descripcion,
   } = body;
@@ -60,8 +62,6 @@ export async function POST(request: NextRequest) {
   let platoCreadoId: string | null = null;
 
   if (!platoIdFinal) {
-    const diaNormalizado = normalizarDiaSemana(dia_semana_id);
-
     const { data: restauranteConSlug } = await supabase
       .from('restaurantes')
       .select('id')
@@ -93,8 +93,7 @@ export async function POST(request: NextRequest) {
         restaurante_id: restauranteId,
         precio: 0,
         disponible: true,
-        dia_semana_id: diaNormalizado,
-        disponible_todos_dias: diaNormalizado === null,
+        ...diasSemanaLegado,
       })
       .select('id')
       .single();
@@ -139,7 +138,7 @@ export async function POST(request: NextRequest) {
     }
 
     await reemplazarIngredientesReceta(supabase, receta.id, ingredientes);
-    await actualizarDatosPlato(supabase, platoIdFinal, platoNombreNormalizado, dia_semana_id, plato_descripcion);
+  await actualizarDatosPlato(supabase, platoIdFinal, platoNombreNormalizado, diasSemanaNormalizados, plato_descripcion);
 
     return NextResponse.json({ receta });
   } catch (error: any) {

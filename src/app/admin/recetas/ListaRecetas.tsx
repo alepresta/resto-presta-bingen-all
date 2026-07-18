@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import DeleteButton from './DeleteButton';
 import type { AnalisisPlato } from '@/lib/analisis-plato';
+import { esTodosLosDias, textoDiasSemana } from '@/lib/plato-dias';
 
 const STORAGE_KEY = 'admin-recetas-filtros';
 
@@ -21,7 +22,7 @@ interface RecetaItem {
   categoria_id: number;
   disponible: boolean;
   precio: number | null;
-  dia_semana_id: number | null;
+  dias_semana: number[];
   estado: 'borrador' | 'en_proceso' | 'aprobada';
   alergenos?: string[] | null;
   tiempo_min: number | null;
@@ -95,11 +96,6 @@ const MINERALES: Array<{ clave: string; label: string }> = [
   { clave: 'zinc', label: 'Zinc' },
   { clave: 'fosforo', label: 'Fósforo' },
 ];
-
-function nombreDia(id: number | null): string {
-  if (id === null) return 'Todos los días';
-  return DIAS_SEMANA.find((d) => d.id === id)?.nombre ?? 'Todos los días';
-}
 
 function etiquetaDiaFiltro(valor: string): string | null {
   if (!valor) return null;
@@ -296,8 +292,8 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
 
       if (igFiltro !== 'todos' && categoriaIG(r.indiceGlucemico) !== igFiltro) return false;
 
-      if (diaFiltro === 'todos_dias' && r.dia_semana_id !== null) return false;
-      if (diaFiltro !== '' && diaFiltro !== 'todos_dias' && r.dia_semana_id !== Number(diaFiltro)) return false;
+      if (diaFiltro === 'todos_dias' && !esTodosLosDias(r.dias_semana)) return false;
+      if (diaFiltro !== '' && diaFiltro !== 'todos_dias' && !r.dias_semana.includes(Number(diaFiltro))) return false;
 
       if (categoriaFiltro && r.categoria_id !== categoriaFiltro) return false;
 
@@ -678,7 +674,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
                       </div>
 
                       <div className="flex flex-wrap gap-1 mt-2">
-                        <span className="px-2 py-1 rounded text-xs font-semibold bg-indigo-100 text-indigo-700">📅 {nombreDia(r.dia_semana_id)}</span>
+                        <span className="px-2 py-1 rounded text-xs font-semibold bg-indigo-100 text-indigo-700">📅 {textoDiasSemana(r.dias_semana)}</span>
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${estadoInfo.color}`}>
                           {estadoInfo.label}
                         </span>
