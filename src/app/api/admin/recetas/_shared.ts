@@ -13,6 +13,8 @@ interface IngredienteEntrada {
   orden: number;
 }
 
+export type EstadoReceta = 'borrador' | 'en_proceso' | 'aprobada';
+
 function esObjeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null;
 }
@@ -60,6 +62,37 @@ export function normalizarIngredientes(valor: unknown): IngredienteEntrada[] {
 
     return [{ ingrediente_id: ingredienteId, cantidad, unidad, notas, orden: index }];
   });
+}
+
+export function normalizarEstadoReceta(valor: unknown): EstadoReceta {
+  if (valor === 'borrador' || valor === 'en_proceso' || valor === 'aprobada') {
+    return valor;
+  }
+
+  return 'borrador';
+}
+
+export async function actualizarEstadoReceta(
+  supabase: SupabaseClientLike,
+  recetaId: string,
+  estado: EstadoReceta
+) {
+  const ahora = new Date().toISOString();
+  const actualizacion: Record<string, unknown> = {
+    estado,
+    fecha_cambio_estado: ahora,
+  };
+
+  if (estado === 'borrador') actualizacion.fecha_borrador = ahora;
+  if (estado === 'en_proceso') actualizacion.fecha_en_proceso = ahora;
+  if (estado === 'aprobada') actualizacion.fecha_aprobada = ahora;
+
+  const { error } = await supabase
+    .from('recetas')
+    .update(actualizacion)
+    .eq('id', recetaId);
+
+  if (error) throw error;
 }
 
 export async function reemplazarIngredientesReceta(

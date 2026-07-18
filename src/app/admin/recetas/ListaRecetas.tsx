@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import DeleteButton from './DeleteButton';
 import type { AnalisisPlato } from '@/lib/analisis-plato';
+
+const STORAGE_KEY = 'admin-recetas-filtros';
 
 interface Ingrediente {
   id: string;
@@ -176,6 +178,91 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
   const [vitaminasSel, setVitaminasSel] = useState<string[]>([]);
   const [mineralesSel, setMineralesSel] = useState<string[]>([]);
   const [panelNutrientes, setPanelNutrientes] = useState(false);
+  const [filtrosRestaurados, setFiltrosRestaurados] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const raw = window.sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      const saved = JSON.parse(raw) as {
+        textoBusqueda?: string;
+        categoriaFiltro?: number | null;
+        temperamentoFiltro?: string;
+        soloSinVenenos?: boolean;
+        soloBaseAlegria?: boolean;
+        visibilidadFiltro?: 'todos' | 'publicados' | 'despublicados';
+        estadoRecetaFiltro?: 'todos' | RecetaItem['estado'];
+        precioFiltro?: 'todos' | 'gratis' | 'con_precio';
+        glutenFiltro?: 'todos' | 'con' | 'sin';
+        igFiltro?: 'todos' | 'bajo' | 'medio' | 'alto';
+        diaFiltro?: string;
+        vitaminasSel?: string[];
+        mineralesSel?: string[];
+      };
+
+      setTextoBusqueda(saved.textoBusqueda || '');
+      setCategoriaFiltro(saved.categoriaFiltro ?? null);
+      setTemperamentoFiltro(saved.temperamentoFiltro || '');
+      setSoloSinVenenos(!!saved.soloSinVenenos);
+      setSoloBaseAlegria(!!saved.soloBaseAlegria);
+      setVisibilidadFiltro(saved.visibilidadFiltro || 'todos');
+      setEstadoRecetaFiltro(saved.estadoRecetaFiltro || 'todos');
+      setPrecioFiltro(saved.precioFiltro || 'todos');
+      setGlutenFiltro(saved.glutenFiltro || 'todos');
+      setIgFiltro(saved.igFiltro || 'todos');
+      setDiaFiltro(saved.diaFiltro || '');
+      setVitaminasSel(Array.isArray(saved.vitaminasSel) ? saved.vitaminasSel : []);
+      setMineralesSel(Array.isArray(saved.mineralesSel) ? saved.mineralesSel : []);
+      if ((saved.vitaminasSel?.length || 0) > 0 || (saved.mineralesSel?.length || 0) > 0) {
+        setPanelNutrientes(true);
+      }
+    } catch {
+      window.sessionStorage.removeItem(STORAGE_KEY);
+    } finally {
+      setFiltrosRestaurados(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!filtrosRestaurados || typeof window === 'undefined') return;
+
+    window.sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        textoBusqueda,
+        categoriaFiltro,
+        temperamentoFiltro,
+        soloSinVenenos,
+        soloBaseAlegria,
+        visibilidadFiltro,
+        estadoRecetaFiltro,
+        precioFiltro,
+        glutenFiltro,
+        igFiltro,
+        diaFiltro,
+        vitaminasSel,
+        mineralesSel,
+      })
+    );
+  }, [
+    filtrosRestaurados,
+    textoBusqueda,
+    categoriaFiltro,
+    temperamentoFiltro,
+    soloSinVenenos,
+    soloBaseAlegria,
+    visibilidadFiltro,
+    estadoRecetaFiltro,
+    precioFiltro,
+    glutenFiltro,
+    igFiltro,
+    diaFiltro,
+    vitaminasSel,
+    mineralesSel,
+  ]);
 
   const toggleEnLista = (valor: string, lista: string[], setter: (v: string[]) => void) => {
     setter(lista.includes(valor) ? lista.filter((v) => v !== valor) : [...lista, valor]);

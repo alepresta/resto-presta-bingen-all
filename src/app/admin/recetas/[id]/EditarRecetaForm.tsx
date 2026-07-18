@@ -99,17 +99,42 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
   const leerErrorHttp = async (res: Response, mensajeFallback: string) => {
     const contentType = res.headers.get('content-type') || '';
+    let detalle = '';
 
     if (contentType.includes('application/json')) {
       const data = await res.json().catch(() => null);
-      if (data?.error) return data.error as string;
+      detalle = data?.error || data?.message || JSON.stringify(data || {});
+      if (detalle) {
+        return {
+          mensaje: data?.error || data?.message || `${mensajeFallback} (HTTP ${res.status})`,
+          detalle,
+          contentType,
+        };
+      }
     } else {
       const text = await res.text().catch(() => '');
-      if (text.includes('/auth/login')) return 'La sesión expiró. Volvé a iniciar sesión.';
-      if (text.trim()) return `${mensajeFallback} (HTTP ${res.status})`;
+      detalle = text.trim();
+      if (text.includes('/auth/login')) {
+        return {
+          mensaje: 'La sesión expiró. Volvé a iniciar sesión.',
+          detalle,
+          contentType,
+        };
+      }
+      if (detalle) {
+        return {
+          mensaje: `${mensajeFallback} (HTTP ${res.status})`,
+          detalle,
+          contentType,
+        };
+      }
     }
 
-    return mensajeFallback;
+    return {
+      mensaje: `${mensajeFallback} (HTTP ${res.status})`,
+      detalle,
+      contentType,
+    };
   };
 
   const mostrarErrorVisible = (mensaje: string) => {
@@ -136,43 +161,48 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
       const urlReceta = esNueva ? '/api/admin/recetas' : `/api/admin/recetas/${recetaId}`;
       const methodReceta = esNueva ? 'POST' : 'PUT';
 
+      const payload = {
+        plato_id: platoId,
+        plato_nombre: platoNombre.trim(),
+        plato_descripcion: platoDescripcion.trim(),
+        dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId),
+        tiempo_min: tiempoMin,
+        porciones,
+        estado,
+        dificultad,
+        pasos: pasos.filter((p) => p.trim()),
+        // Mantener el JSONB `recetas.ingredientes` sincronizado con el guardado relacional
+        ingredientes: ingredientes.map((i) => ({
+          ingrediente_id: i.ingrediente_id,
+          nombre: i.nombre,
+          cantidad: i.cantidad,
+          unidad: i.unidad,
+        })),
+        notas_hildegardianas: notasHildegardianas,
+        interpretacion_hildegardiana: interpretacionHildegardiana,
+      };
+
       const resReceta = await fetch(urlReceta, {
         method: methodReceta,
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plato_id: platoId,
-          plato_nombre: platoNombre.trim(),
-          plato_descripcion: platoDescripcion.trim(),
-          dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId),
-          tiempo_min: tiempoMin,
-          porciones,
-          estado,
-          dificultad,
-          pasos: pasos.filter((p) => p.trim()),
-          // Mantener el JSONB `recetas.ingredientes` sincronizado con el guardado relacional
-          ingredientes: ingredientes.map((i) => ({
-            ingrediente_id: i.ingrediente_id,
-            nombre: i.nombre,
-            cantidad: i.cantidad,
-            unidad: i.unidad,
-          })),
-          notas_hildegardianas: notasHildegardianas,
-          interpretacion_hildegardiana: interpretacionHildegardiana,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const dataReceta = resReceta.ok ? await resReceta.json() : null;
       if (!resReceta.ok) {
-        const mensaje = await leerErrorHttp(resReceta, 'Error al guardar receta');
+        const errorHttp = await leerErrorHttp(resReceta, 'Error al guardar receta');
         console.error('Error guardando receta', {
           status: resReceta.status,
           statusText: resReceta.statusText,
           url: urlReceta,
           method: methodReceta,
-          mensaje,
+          contentType: errorHttp.contentType,
+          mensaje: errorHttp.mensaje,
+          detalle: errorHttp.detalle,
+          payload,
         });
-        throw new Error(mensaje);
+        throw new Error(errorHttp.mensaje);
       }
 
       setMensaje('✅ Receta guardada exitosamente');

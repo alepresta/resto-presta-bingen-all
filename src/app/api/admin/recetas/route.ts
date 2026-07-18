@@ -1,8 +1,10 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  actualizarEstadoReceta,
   actualizarDatosPlato,
   autorizarRecetas,
+  normalizarEstadoReceta,
   normalizarDiaSemana,
   normalizarNombrePlato,
   reemplazarIngredientesReceta,
@@ -37,12 +39,12 @@ export async function POST(request: NextRequest) {
 
   const supabase = createServerSupabaseClient();
   const body = await request.json();
+  const estadoNormalizado = normalizarEstadoReceta(body.estado);
 
   const {
     plato_id,
     tiempo_min,
     porciones,
-    estado,
     dificultad,
     pasos,
     ingredientes,
@@ -117,7 +119,6 @@ export async function POST(request: NextRequest) {
         plato_id: platoIdFinal,
         tiempo_min,
         porciones,
-        porciones_base: porciones && porciones > 0 ? porciones : 1,
         dificultad,
         pasos,
         ingredientes,
@@ -133,15 +134,8 @@ export async function POST(request: NextRequest) {
 
     recetaId = receta.id;
 
-    if (estado && estado !== 'borrador') {
-      const { error: errorEstado } = await supabase.rpc('cambiar_estado_receta', {
-        p_receta_id: receta.id,
-        p_nuevo_estado: estado,
-      });
-
-      if (errorEstado) {
-        throw errorEstado;
-      }
+    if (estadoNormalizado !== 'borrador') {
+      await actualizarEstadoReceta(supabase, receta.id, estadoNormalizado);
     }
 
     await reemplazarIngredientesReceta(supabase, receta.id, ingredientes);

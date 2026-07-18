@@ -1,6 +1,12 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
-import { actualizarDatosPlato, autorizarRecetas, reemplazarIngredientesReceta } from '../_shared';
+import {
+  actualizarDatosPlato,
+  actualizarEstadoReceta,
+  autorizarRecetas,
+  normalizarEstadoReceta,
+  reemplazarIngredientesReceta,
+} from '../_shared';
 
 // GET: Obtener receta por ID
 export async function GET(
@@ -38,12 +44,12 @@ export async function PUT(
 
   const supabase = createServerSupabaseClient();
   const body = await request.json();
+  const estadoNormalizado = normalizarEstadoReceta(body.estado);
 
   const {
     plato_id,
     tiempo_min,
     porciones,
-    estado,
     dificultad,
     pasos,
     ingredientes,
@@ -75,7 +81,6 @@ export async function PUT(
         plato_id,
         tiempo_min,
         porciones,
-        porciones_base: porciones && porciones > 0 ? porciones : 1,
         dificultad,
         pasos,
         ingredientes,
@@ -90,15 +95,8 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    if (estado && estado !== recetaActual.estado) {
-      const { error: errorEstado } = await supabase.rpc('cambiar_estado_receta', {
-        p_receta_id: params.id,
-        p_nuevo_estado: estado,
-      });
-
-      if (errorEstado) {
-        return NextResponse.json({ error: errorEstado.message }, { status: 400 });
-      }
+    if (estadoNormalizado !== recetaActual.estado) {
+      await actualizarEstadoReceta(supabase, params.id, estadoNormalizado);
     }
 
     await reemplazarIngredientesReceta(supabase, params.id, ingredientes);
