@@ -25,6 +25,7 @@ interface DatosIniciales {
   platoDescripcion: string;
   tiempoMin: number;
   porciones: number;
+  estado: 'borrador' | 'en_proceso' | 'aprobada';
   dificultad: string;
   diaSemanaId: string;
   pasos: string[];
@@ -52,12 +53,19 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
   const [platoDescripcion, setPlatoDescripcion] = useState(initial.platoDescripcion);
   const [tiempoMin, setTiempoMin] = useState(initial.tiempoMin);
   const [porciones, setPorciones] = useState(initial.porciones);
+  const [estado, setEstado] = useState<DatosIniciales['estado']>(initial.estado);
   const [dificultad, setDificultad] = useState(initial.dificultad);
   const [diaSemanaId, setDiaSemanaId] = useState(initial.diaSemanaId);
   const [pasos, setPasos] = useState<string[]>(initial.pasos.length > 0 ? initial.pasos : ['']);
   const [ingredientes, setIngredientes] = useState<IngredienteSeleccionado[]>(initial.ingredientes);
   const [notasHildegardianas, setNotasHildegardianas] = useState(initial.notasHildegardianas);
   const [interpretacionHildegardiana, setInterpretacionHildegardiana] = useState(initial.interpretacionHildegardiana);
+
+  const ESTADOS_RECETA: Array<{ value: DatosIniciales['estado']; label: string }> = [
+    { value: 'borrador', label: 'Borrador' },
+    { value: 'en_proceso', label: 'En proceso' },
+    { value: 'aprobada', label: 'Aprobada' },
+  ];
 
   const agregarPaso = () => setPasos([...pasos, '']);  const actualizarPaso = (index: number, valor: string) => {
     const nuevos = [...pasos];
@@ -139,6 +147,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
           dia_semana_id: diaSemanaId === '' ? null : Number(diaSemanaId),
           tiempo_min: tiempoMin,
           porciones,
+          estado,
           dificultad,
           pasos: pasos.filter((p) => p.trim()),
           // Mantener el JSONB `recetas.ingredientes` sincronizado con el guardado relacional
@@ -282,6 +291,21 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                   onChange={(e) => setPorciones(parseInt(e.target.value) || 1)}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">🏷️ Estado</label>
+                <select
+                  value={estado}
+                  onChange={(e) => setEstado(e.target.value as DatosIniciales['estado'])}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
+                >
+                  {ESTADOS_RECETA.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Si la base valida transiciones, pasar de borrador a aprobada puede requerir primero en proceso.
+                </p>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">📊 Dificultad</label>

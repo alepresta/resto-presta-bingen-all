@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
     plato_id,
     tiempo_min,
     porciones,
+    estado,
     dificultad,
     pasos,
     ingredientes,
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
         notas_hildegardianas,
         interpretacion_hildegardiana,
       })
-      .select()
+      .select('id, estado')
       .single();
 
     if (error || !receta) {
@@ -131,6 +132,17 @@ export async function POST(request: NextRequest) {
     }
 
     recetaId = receta.id;
+
+    if (estado && estado !== 'borrador') {
+      const { error: errorEstado } = await supabase.rpc('cambiar_estado_receta', {
+        p_receta_id: receta.id,
+        p_nuevo_estado: estado,
+      });
+
+      if (errorEstado) {
+        throw errorEstado;
+      }
+    }
 
     await reemplazarIngredientesReceta(supabase, receta.id, ingredientes);
     await actualizarDatosPlato(supabase, platoIdFinal, platoNombreNormalizado, dia_semana_id, plato_descripcion);

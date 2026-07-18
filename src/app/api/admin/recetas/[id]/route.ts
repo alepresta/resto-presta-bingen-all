@@ -43,6 +43,7 @@ export async function PUT(
     plato_id,
     tiempo_min,
     porciones,
+    estado,
     dificultad,
     pasos,
     ingredientes,
@@ -58,6 +59,16 @@ export async function PUT(
   }
 
   try {
+    const { data: recetaActual, error: errorRecetaActual } = await supabase
+      .from('recetas')
+      .select('estado')
+      .eq('id', params.id)
+      .single();
+
+    if (errorRecetaActual || !recetaActual) {
+      return NextResponse.json({ error: errorRecetaActual?.message || 'Receta no encontrada' }, { status: 404 });
+    }
+
     const { data: receta, error } = await supabase
       .from('recetas')
       .update({
@@ -72,11 +83,22 @@ export async function PUT(
         interpretacion_hildegardiana,
       })
       .eq('id', params.id)
-      .select()
+      .select('id, estado')
       .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (estado && estado !== recetaActual.estado) {
+      const { error: errorEstado } = await supabase.rpc('cambiar_estado_receta', {
+        p_receta_id: params.id,
+        p_nuevo_estado: estado,
+      });
+
+      if (errorEstado) {
+        return NextResponse.json({ error: errorEstado.message }, { status: 400 });
+      }
     }
 
     await reemplazarIngredientesReceta(supabase, params.id, ingredientes);

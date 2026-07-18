@@ -17,6 +17,7 @@ interface DatosInicialesReceta {
   platoDescripcion: string;
   tiempoMin: number;
   porciones: number;
+  estado: 'borrador' | 'en_proceso' | 'aprobada';
   dificultad: string;
   diaSemanaId: string;
   pasos: string[];
@@ -95,6 +96,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
     platoDescripcion: '',
     tiempoMin: 30,
     porciones: 4,
+    estado: 'borrador',
     dificultad: 'media',
     diaSemanaId: '',
     pasos: [''] as string[],
@@ -155,6 +157,7 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
         platoDescripcion: platoActual?.descripcion || '',
         tiempoMin: r.tiempo_min || 30,
         porciones: r.porciones || 4,
+        estado: r.estado || 'borrador',
         dificultad: r.dificultad || 'media',
         diaSemanaId: (() => {
           if (platoActual?.dia_semana_id != null) return String(platoActual.dia_semana_id);
