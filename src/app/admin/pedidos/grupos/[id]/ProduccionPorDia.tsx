@@ -231,15 +231,15 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
         <div className="flex flex-col">
           {/* Resumen consolidado de compras (días seleccionados) — al final */}
           <div className="order-2 mt-6 border-2 border-emerald-200 rounded-xl overflow-hidden">
-            <div className="bg-emerald-50 px-4 py-3 flex flex-wrap justify-between items-center gap-2">
-              <h3 className="font-bold text-emerald-800">
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+              <h3 className="font-bold text-emerald-800 dark:text-emerald-200">
                 🛒 Lista de compras — {diasSel.length} día{diasSel.length !== 1 ? 's' : ''} seleccionado{diasSel.length !== 1 ? 's' : ''}
               </h3>
               <div className="flex items-center gap-3 text-sm">
-                <span className="bg-amber-100 text-amber-800 font-semibold px-3 py-1 rounded-full">
+                <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 font-semibold px-3 py-1 rounded-full">
                   🍽️ {totalPlatos} plato{totalPlatos !== 1 ? 's' : ''}
                 </span>
-                <span className="bg-orange-100 text-orange-800 font-bold px-3 py-1 rounded-full">
+                <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 font-bold px-3 py-1 rounded-full">
                   💰 Total: ${totalPrecio.toLocaleString('es-AR')}
                 </span>
               </div>
@@ -283,7 +283,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                                   return (
                                     <li
                                       key={ing.key}
-                                      className={`flex justify-between items-center gap-2 text-sm rounded px-3 py-2 ${comprado ? 'bg-gray-100 dark:bg-gray-700' : 'bg-green-50'}`}
+                                      className={`flex justify-between items-center gap-2 text-sm rounded px-3 py-2 ${comprado ? 'bg-gray-100 dark:bg-gray-700' : 'bg-green-50 dark:bg-green-950/30'}`}
                                     >
                                       <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
                                         <input
@@ -294,7 +294,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                                         />
                                         <span className={`capitalize truncate ${comprado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-800 dark:text-gray-100'}`}>{ing.nombre}</span>
                                       </label>
-                                      <span className={`font-bold whitespace-nowrap ${comprado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-green-700'}`}>{montoTexto(ing)}</span>
+                                      <span className={`font-bold whitespace-nowrap ${comprado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-green-700 dark:text-green-300'}`}>{montoTexto(ing)}</span>
                                     </li>
                                   );
                                 })}
@@ -322,9 +322,9 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                   key={dia.fecha}
                   open={abiertos.has(dia.fecha)}
                   onToggle={(e) => setAbierto(dia.fecha, (e.target as HTMLDetailsElement).open)}
-                  className={`group border rounded-xl overflow-hidden ${activo ? 'border-indigo-300' : 'border-gray-200 dark:border-gray-700 opacity-70'}`}
+                  className={`group border rounded-xl overflow-hidden ${activo ? 'border-indigo-300 dark:border-indigo-700' : 'border-gray-200 dark:border-gray-700 opacity-70'}`}
                 >
-                  <summary className="bg-indigo-50 px-3 py-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-indigo-100">
+                  <summary className="bg-indigo-50 dark:bg-indigo-950/30 px-3 py-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-indigo-100 dark:hover:bg-indigo-900/50">
                     <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5 text-sm min-w-0">
                       <input
                         type="checkbox"
@@ -338,10 +338,10 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                       <span className="capitalize truncate">📅 {fmtFecha(dia.fecha)}</span>
                     </h3>
                     <div className="flex items-center gap-1.5 text-xs shrink-0">
-                      <span className="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">
+                      <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 font-semibold px-2 py-0.5 rounded-full">
                         🍽️ {dia.totalPlatosDia}
                       </span>
-                      <span className="bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded-full">
+                      <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 font-bold px-2 py-0.5 rounded-full">
                         💰 ${dia.totalDia.toLocaleString('es-AR')}
                       </span>
                     </div>
@@ -358,13 +358,13 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                               <button
                                 type="button"
                                 onClick={() => tieneReceta && abrirReceta(p)}
-                                className={`w-full flex justify-between items-center gap-2 rounded-lg px-3 py-2 text-left ${tieneReceta ? 'bg-gray-50 dark:bg-gray-900 hover:bg-indigo-50 cursor-pointer' : 'bg-gray-50 dark:bg-gray-900 cursor-default'}`}
+                                className={`w-full flex justify-between items-center gap-2 rounded-lg px-3 py-2 text-left ${tieneReceta ? 'bg-gray-50 dark:bg-gray-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 cursor-pointer' : 'bg-gray-50 dark:bg-gray-900 cursor-default'}`}
                               >
                                 <span className="text-gray-800 dark:text-gray-100">
-                                  <span className="font-bold text-indigo-700">{p.platos}×</span> {p.nombre}
-                                  {tieneReceta && <span className="ml-2 text-xs text-indigo-500 whitespace-nowrap">📖 ver receta</span>}
+                                  <span className="font-bold text-indigo-700 dark:text-indigo-300">{p.platos}×</span> {p.nombre}
+                                  {tieneReceta && <span className="ml-2 text-xs text-indigo-500 dark:text-indigo-300 whitespace-nowrap">📖 ver receta</span>}
                                 </span>
-                                <span className="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                                <span className="text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                   {p.precio > 0 ? `$${p.precio.toLocaleString('es-AR')} c/u = ` : 'Gratis · '}
                                   <strong>${p.subtotal.toLocaleString('es-AR')}</strong>
                                 </span>
@@ -384,9 +384,9 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                       ) : (
                         <ul className="space-y-1">
                           {dia.ingredientes.map((ing, i) => (
-                            <li key={i} className="flex justify-between text-sm bg-green-50 rounded px-3 py-1.5">
+                            <li key={i} className="flex justify-between text-sm bg-green-50 dark:bg-green-950/30 rounded px-3 py-1.5">
                               <span className="text-gray-800 dark:text-gray-100">{ing.nombre}</span>
-                              <span className="font-semibold text-green-700">{fmtCant(ing.cantidad)} {ing.unidad}</span>
+                              <span className="font-semibold text-green-700 dark:text-green-300">{fmtCant(ing.cantidad)} {ing.unidad}</span>
                             </li>
                           ))}
                         </ul>
@@ -413,11 +413,11 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                 <button onClick={() => setRecetaModal(null)} className="text-white hover:text-indigo-200 text-2xl leading-none">✕</button>
               </div>
               <div className="p-5 space-y-4">
-                <div className="flex items-center justify-between bg-indigo-50 rounded-lg px-4 py-3">
+                <div className="flex items-center justify-between bg-indigo-50 dark:bg-indigo-950/30 rounded-lg px-4 py-3">
                   <span className="font-semibold text-gray-800 dark:text-gray-100">👥 Para</span>
                   <div className="flex items-center gap-3">
                     <button onClick={() => setPorcionesModal((p) => Math.max(1, p - 1))} className="w-9 h-9 rounded-full bg-white dark:bg-gray-800 border font-bold text-indigo-700 text-lg">−</button>
-                    <span className="text-2xl font-bold text-indigo-700 w-10 text-center">{porcionesModal}</span>
+                    <span className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 w-10 text-center">{porcionesModal}</span>
                     <button onClick={() => setPorcionesModal((p) => p + 1)} className="w-9 h-9 rounded-full bg-white dark:bg-gray-800 border font-bold text-indigo-700 text-lg">+</button>
                     <span className="text-sm text-gray-600 dark:text-gray-300">porción{porcionesModal !== 1 ? 'es' : ''}</span>
                   </div>
@@ -430,9 +430,9 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                   ) : (
                     <ul className="space-y-1">
                       {recetaModal.ingredientes.map((ing, i) => (
-                        <li key={i} className="flex justify-between text-sm bg-green-50 rounded px-3 py-1.5">
+                        <li key={i} className="flex justify-between text-sm bg-green-50 dark:bg-green-950/30 rounded px-3 py-1.5">
                           <span className="text-gray-800 dark:text-gray-100">{ing.nombre}</span>
-                          <span className="font-semibold text-green-700">{fmtCant(ing.cantidad * factor)} {ing.unidad}</span>
+                          <span className="font-semibold text-green-700 dark:text-green-300">{fmtCant(ing.cantidad * factor)} {ing.unidad}</span>
                         </li>
                       ))}
                     </ul>
