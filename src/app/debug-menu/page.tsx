@@ -74,7 +74,7 @@ export default async function DebugMenuPage() {
       {/* Categorías */}
       <div className="bg-green-50 p-4 rounded mb-4">
         <h2 className="font-bold text-lg mb-2">3. Categorías</h2>
-        <pre className="bg-white p-2 rounded overflow-auto text-sm">
+        <pre className="bg-white dark:bg-gray-800 p-2 rounded overflow-auto text-sm">
           {JSON.stringify(categorias, null, 2)}
         </pre>
         {errorCat && <p className="text-red-600">Error: {errorCat.message}</p>}
@@ -84,7 +84,7 @@ export default async function DebugMenuPage() {
       <div className="bg-yellow-50 p-4 rounded mb-4">
         <h2 className="font-bold text-lg mb-2">4. Todos los platos (sin filtros, límite 5)</h2>
         <p>Cantidad: {todosLosPlatos?.length || 0}</p>
-        <pre className="bg-white p-2 rounded overflow-auto text-sm">
+        <pre className="bg-white dark:bg-gray-800 p-2 rounded overflow-auto text-sm">
           {JSON.stringify(todosLosPlatos, null, 2)}
         </pre>
         {errorPlatos && <p className="text-red-600">Error: {errorPlatos.message}</p>}
@@ -94,7 +94,7 @@ export default async function DebugMenuPage() {
       <div className="bg-orange-50 p-4 rounded mb-4">
         <h2 className="font-bold text-lg mb-2">5. Platos filtrados (restaurante_id + disponible=true)</h2>
         <p>Cantidad: {platosFiltrados?.length || 0}</p>
-        <pre className="bg-white p-2 rounded overflow-auto text-sm">
+        <pre className="bg-white dark:bg-gray-800 p-2 rounded overflow-auto text-sm">
           {JSON.stringify(platosFiltrados, null, 2)}
         </pre>
         {errorFiltros && <p className="text-red-600">Error: {errorFiltros.message}</p>}
@@ -104,7 +104,7 @@ export default async function DebugMenuPage() {
       <div className="bg-red-50 p-4 rounded mb-4">
         <h2 className="font-bold text-lg mb-2">6. Platos del viernes (día 5)</h2>
         <p>Cantidad: {platosViernes?.length || 0}</p>
-        <pre className="bg-white p-2 rounded overflow-auto text-sm">
+        <pre className="bg-white dark:bg-gray-800 p-2 rounded overflow-auto text-sm">
           {JSON.stringify(platosViernes, null, 2)}
         </pre>
         {errorViernes && <p className="text-red-600">Error: {errorViernes.message}</p>}
@@ -114,7 +114,7 @@ export default async function DebugMenuPage() {
       <div className="bg-pink-50 p-4 rounded mb-4">
         <h2 className="font-bold text-lg mb-2">7. Platos disponibles todos los días</h2>
         <p>Cantidad: {platosTodosDias?.length || 0}</p>
-        <pre className="bg-white p-2 rounded overflow-auto text-sm">
+        <pre className="bg-white dark:bg-gray-800 p-2 rounded overflow-auto text-sm">
           {JSON.stringify(platosTodosDias, null, 2)}
         </pre>
         {errorTodosDias && <p className="text-red-600">Error: {errorTodosDias.message}</p>}

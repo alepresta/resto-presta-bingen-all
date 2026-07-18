@@ -19,7 +19,7 @@ type Grupo = {
   columnas: Col[];
 };
 
-const nulo = <span className="text-gray-500 font-medium">-</span>;
+const nulo = <span className="text-gray-500 dark:text-gray-400 font-medium">-</span>;
 
 const formatNum = (v: any) =>
   v !== null && v !== undefined && v !== '' ? v : nulo;
@@ -35,7 +35,7 @@ const textoLargo = (v: any) =>
 
 const origenBadge = (ing: any) =>
   ing.origen ? (
-    <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+    <span className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full">
       {ing.origen === 'vegetal'
         ? '🌱'
         : ing.origen === 'animal'
@@ -104,9 +104,9 @@ const GRUPOS: Grupo[] = [
   {
     id: 'general',
     label: '📋 General',
-    color: 'text-gray-700',
+    color: 'text-gray-700 dark:text-gray-200',
     columnas: [
-      { key: 'nombre_cientifico', label: '🔬 Científico', align: 'left', render: (ing) => (ing.nombre_cientifico ? <span className="italic text-gray-500">{ing.nombre_cientifico}</span> : nulo) },
+      { key: 'nombre_cientifico', label: '🔬 Científico', align: 'left', render: (ing) => (ing.nombre_cientifico ? <span className="italic text-gray-500 dark:text-gray-400">{ing.nombre_cientifico}</span> : nulo) },
       { key: 'origen', label: '🧬 Origen', render: origenBadge },
       { key: 'unidad_base', label: '📏 Unidad' },
       { key: 'parte_util', label: '🌱 Parte' },
@@ -331,14 +331,14 @@ export default function TablaIngredientes({
   return (
     <>
       {/* Selector de grupos de columnas */}
-      <div className="bg-white rounded-xl shadow-md mb-4 p-2 flex flex-wrap gap-2 items-center">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md mb-4 p-2 flex flex-wrap gap-2 items-center">
         <button
           type="button"
           onClick={() => setGrupoActivo('todas')}
           className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
             grupoActivo === 'todas'
               ? 'bg-green-600 text-white'
-                : 'text-gray-800 hover:bg-gray-100'
+                : 'text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
           }`}
         >
           🗂️ Todas
@@ -351,21 +351,21 @@ export default function TablaIngredientes({
             className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
               grupoActivo === g.id
                 ? 'bg-green-600 text-white'
-                : 'text-gray-800 hover:bg-gray-100'
+                : 'text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             {g.label}
           </button>
         ))}
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" title="Qué campos incluir en la descarga">
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1" title="Qué campos incluir en la descarga">
             {AMBITOS.map((a) => (
               <button
                 key={a.id}
                 type="button"
                 onClick={() => setAmbito(a.id)}
                 className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  ambito === a.id ? 'bg-white shadow text-gray-900' : 'text-gray-700 hover:text-gray-900'
+                  ambito === a.id ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200 hover:text-gray-900'
                 }`}
               >
                 {a.label}
@@ -392,43 +392,43 @@ export default function TablaIngredientes({
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
         <div className="overflow-auto max-h-[70vh]">
-          <table className="min-w-full w-max text-sm whitespace-nowrap text-gray-800">
-            <thead className="bg-gray-50 border-b">
+          <table className="min-w-full w-max text-sm whitespace-nowrap text-gray-800 dark:text-gray-100">
+            <thead className="bg-gray-50 dark:bg-gray-900 border-b">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700 sticky left-0 top-0 bg-gray-50 z-30 min-w-[220px]">
+                <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 sticky left-0 top-0 bg-gray-50 dark:bg-gray-900 z-30 min-w-[220px]">
                   Nombre
                 </th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700 sticky top-0 bg-gray-50 z-20 min-w-[180px]">Categoría</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 sticky top-0 bg-gray-50 dark:bg-gray-900 z-20 min-w-[180px]">Categoría</th>
                 {gruposVisibles.map((g) =>
                   g.columnas.map((col, idx) => (
                     <th
                       key={col.key}
-                      className={`px-3 py-3 font-semibold sticky top-0 bg-gray-50 z-20 min-w-[96px] ${g.color} ${
+                      className={`px-3 py-3 font-semibold sticky top-0 bg-gray-50 dark:bg-gray-900 z-20 min-w-[96px] ${g.color} ${
                         col.align === 'left' ? 'text-left' : 'text-center'
-                      } ${idx === 0 ? 'border-l-2 border-gray-200' : ''}`}
+                      } ${idx === 0 ? 'border-l-2 border-gray-200 dark:border-gray-700' : ''}`}
                       title={g.label}
                     >
                       {col.label}
                     </th>
                   ))
                 )}
-                <th className="text-center px-4 py-3 font-semibold text-gray-700 border-l-2 border-gray-200 sticky right-0 top-0 bg-gray-50 z-30 min-w-[110px]">
+                <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 border-l-2 border-gray-200 dark:border-gray-700 sticky right-0 top-0 bg-gray-50 dark:bg-gray-900 z-30 min-w-[110px]">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-gray-700">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-700 dark:text-gray-200">
               {ingredientes?.map((ing: any) => {
                 const catInfo = categorias.find((c) => c.id === ing.categoria);
                 return (
-                  <tr key={ing.id} className="bg-white hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-2.5 font-semibold text-gray-800 sticky left-0 bg-white z-10">
+                  <tr key={ing.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <td className="px-4 py-2.5 font-semibold text-gray-800 dark:text-gray-100 sticky left-0 bg-white dark:bg-gray-800 z-10">
                       {ing.nombre}
                     </td>
-                    <td className="px-4 py-2.5 text-gray-800">
-                      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-semibold">
+                    <td className="px-4 py-2.5 text-gray-800 dark:text-gray-100">
+                      <span className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full text-xs font-semibold">
                         {catInfo?.icono} {catInfo?.nombre || ing.categoria}
                       </span>
                     </td>
@@ -436,15 +436,15 @@ export default function TablaIngredientes({
                       g.columnas.map((col, idx) => (
                         <td
                           key={col.key}
-                          className={`px-3 py-2.5 text-xs leading-5 text-gray-700 ${
+                          className={`px-3 py-2.5 text-xs leading-5 text-gray-700 dark:text-gray-200 ${
                             col.align === 'left' ? 'text-left' : 'text-center'
-                          } ${idx === 0 ? 'border-l-2 border-gray-100' : ''}`}
+                          } ${idx === 0 ? 'border-l-2 border-gray-100 dark:border-gray-700' : ''}`}
                         >
                           {renderCelda(ing, col)}
                         </td>
                       ))
                     )}
-                    <td className="px-4 py-2.5 text-center sticky right-0 bg-white z-10">
+                    <td className="px-4 py-2.5 text-center sticky right-0 bg-white dark:bg-gray-800 z-10">
                       <Link
                         href={`/admin/ingredientes/${ing.id}`}
                         className="text-green-700 hover:text-green-900 font-semibold text-sm"
@@ -460,7 +460,7 @@ export default function TablaIngredientes({
         </div>
 
         {(!ingredientes || ingredientes.length === 0) && (
-          <div className="p-12 text-center text-gray-500">
+          <div className="p-12 text-center text-gray-500 dark:text-gray-400">
             <p className="text-lg">No se encontraron ingredientes</p>
           </div>
         )}

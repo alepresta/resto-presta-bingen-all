@@ -11,7 +11,7 @@ const RECOMENDACION_INFO: Record<
 > = {
   muy_recomendado: { texto: 'Muy recomendado', clase: 'bg-green-100 text-green-800', icono: '🌿' },
   recomendado: { texto: 'Recomendado', clase: 'bg-emerald-100 text-emerald-800', icono: '✅' },
-  neutral: { texto: 'Neutral', clase: 'bg-gray-100 text-gray-700', icono: '➖' },
+  neutral: { texto: 'Neutral', clase: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200', icono: '➖' },
   mejorar: { texto: 'A mejorar', clase: 'bg-amber-100 text-amber-800', icono: '⚠️' },
   rechazado: { texto: 'No recomendado', clase: 'bg-red-100 text-red-800', icono: '🚫' },
 };
@@ -35,30 +35,30 @@ function Acordeon({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden">
+    <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 text-left"
       >
         <span className="font-semibold">
           {icono} {titulo}
         </span>
-        <span className="text-gray-600">{open ? '▲' : '▼'}</span>
+        <span className="text-gray-600 dark:text-gray-300">{open ? '▲' : '▼'}</span>
       </button>
-      {open && <div className="px-4 py-3 bg-white text-gray-800">{children}</div>}
+      {open && <div className="px-4 py-3 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">{children}</div>}
     </div>
   );
 }
 
 function Metrica({ valor, unidad, etiqueta }: { valor: number; unidad: string; etiqueta: string }) {
   return (
-    <div className="rounded-lg border border-gray-300 bg-white p-3 text-center">
-      <div className="text-xl font-bold text-gray-900">
+    <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-3 text-center">
+      <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
         {valor}
-        <span className="text-sm font-normal text-gray-600"> {unidad}</span>
+        <span className="text-sm font-normal text-gray-600 dark:text-gray-300"> {unidad}</span>
       </div>
-      <div className="text-xs text-gray-600 mt-1">{etiqueta}</div>
+      <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">{etiqueta}</div>
     </div>
   );
 }
@@ -158,22 +158,22 @@ export default function InformeDualView({
   };
 
   return (
-    <section className="mt-8 space-y-4 text-gray-800">
+    <section className="mt-8 space-y-4 text-gray-800 dark:text-gray-100">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-gray-900">🔬 Informe dual (nutrición + Hildegarda)</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">🔬 Informe dual (nutrición + Hildegarda)</h2>
         {mostrarExport && (
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={descargarJson}
-              className="text-xs px-3 py-1.5 rounded-md border border-gray-400 text-gray-800 hover:bg-gray-100"
+              className="text-xs px-3 py-1.5 rounded-md border border-gray-400 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               ⬇️ JSON
             </button>
             <button
               type="button"
               onClick={abrirImprimible}
-              className="text-xs px-3 py-1.5 rounded-md border border-gray-400 text-gray-800 hover:bg-gray-100"
+              className="text-xs px-3 py-1.5 rounded-md border border-gray-400 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               🖨️ PDF / HTML
             </button>
@@ -188,7 +188,7 @@ export default function InformeDualView({
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-gray-700 font-medium">
+          <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">
             Receta base: {informe?.resumen.porcionesBase ?? 4} porciones · Ver para:
           </span>
           {OPCIONES_PORCIONES.map((p) => (
@@ -199,7 +199,7 @@ export default function InformeDualView({
               className={`px-3 py-1 rounded-md text-sm border font-medium transition ${
                 porciones === p
                   ? 'bg-emerald-600 text-white border-emerald-600'
-                  : 'border-gray-400 text-gray-800 hover:bg-gray-100'
+                  : 'border-gray-400 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               {p}
@@ -208,7 +208,7 @@ export default function InformeDualView({
         </div>
       )}
 
-      {cargando && <p className="text-sm text-gray-700">Calculando informe…</p>}
+      {cargando && <p className="text-sm text-gray-700 dark:text-gray-200">Calculando informe…</p>}
       {error && <p className="text-sm text-red-700 font-medium">{error}</p>}
 
       {informe && !cargando && (
@@ -336,8 +336,8 @@ export default function InformeDualView({
           <Acordeon titulo="Detalle científico" icono="🔬">
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
-                <h4 className="font-semibold text-gray-900 mb-1">Totales receta completa</h4>
-                <ul className="text-gray-700 space-y-0.5">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Totales receta completa</h4>
+                <ul className="text-gray-700 dark:text-gray-200 space-y-0.5">
                   <li>Calorías: {informe.cientifico.totalesReceta.calorias} kcal</li>
                   <li>Proteínas: {informe.cientifico.totalesReceta.proteinas_g} g</li>
                   <li>Carbohidratos: {informe.cientifico.totalesReceta.carbohidratos_g} g</li>
@@ -346,8 +346,8 @@ export default function InformeDualView({
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 mb-1">Pesos y rendimiento</h4>
-                <ul className="text-gray-700 space-y-0.5">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Pesos y rendimiento</h4>
+                <ul className="text-gray-700 dark:text-gray-200 space-y-0.5">
                   <li>Peso crudo total: {informe.cientifico.pesoCrudoTotal_g} g</li>
                   <li>Peso cocido estimado: {informe.cientifico.pesoCocidoEstimado_g} g</li>
                   <li>Rendimiento promedio: {informe.cientifico.factorRendimientoPromedio}</li>
@@ -362,14 +362,14 @@ export default function InformeDualView({
 
           {/* Hildegardiano */}
           <Acordeon titulo="Detalle hildegardiano" icono="🌿">
-            <p className="text-sm text-gray-800 mb-3">
+            <p className="text-sm text-gray-800 dark:text-gray-100 mb-3">
               Temperamento dominante: <strong>{informe.hildegardiano.temperamentoDominante}</strong> · Livor:{' '}
               {informe.hildegardiano.impactoLivor} · Bilis negra: {informe.hildegardiano.impactoBilisNegra}
             </p>
             {informe.hildegardiano.factores.length > 0 && (
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="text-left text-gray-600">
+                  <tr className="text-left text-gray-600 dark:text-gray-300">
                     <th className="py-1 pr-2">Factor</th>
                     <th className="py-1 pr-2">Puntos</th>
                     <th className="py-1">Motivo</th>
@@ -377,7 +377,7 @@ export default function InformeDualView({
                 </thead>
                 <tbody>
                   {informe.hildegardiano.factores.map((f, idx) => (
-                    <tr key={idx} className="border-t border-gray-200 text-gray-800">
+                    <tr key={idx} className="border-t border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100">
                       <td className="py-1 pr-2">{f.etiqueta}</td>
                       <td
                         className={`py-1 pr-2 font-semibold ${
@@ -387,7 +387,7 @@ export default function InformeDualView({
                         {f.tipo === 'bonificacion' ? '+' : ''}
                         {f.puntos}
                       </td>
-                      <td className="py-1 text-gray-700">{f.motivo}</td>
+                      <td className="py-1 text-gray-700 dark:text-gray-200">{f.motivo}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -395,8 +395,8 @@ export default function InformeDualView({
             )}
             {informe.hildegardiano.ingredientesDestacados.length > 0 && (
               <div className="mt-3">
-                <h4 className="font-semibold text-gray-900 text-sm mb-1">Ingredientes destacados</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Ingredientes destacados</h4>
+                <ul className="text-sm text-gray-700 dark:text-gray-200 space-y-1">
                   {informe.hildegardiano.ingredientesDestacados.map((d, idx) => (
                     <li key={idx}>
                       <strong>{d.nombre}</strong> ({d.rol.replace(/_/g, ' ')}) — {d.mensaje}
@@ -412,7 +412,7 @@ export default function InformeDualView({
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="text-left text-gray-600">
+                  <tr className="text-left text-gray-600 dark:text-gray-300">
                     <th className="py-1 pr-2">Ingrediente</th>
                     <th className="py-1 pr-2">Cantidad</th>
                     <th className="py-1 pr-2">Temperamento</th>
@@ -422,7 +422,7 @@ export default function InformeDualView({
                 </thead>
                 <tbody>
                   {informe.detalleIngredientes.map((d, idx) => (
-                    <tr key={idx} className="border-t border-gray-200 text-gray-800">
+                    <tr key={idx} className="border-t border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100">
                       <td className="py-1 pr-2 font-medium">
                         {d.esVeneno && '⚠️ '}
                         {d.esBaseAlegria && '🌿 '}
@@ -431,7 +431,7 @@ export default function InformeDualView({
                       <td className="py-1 pr-2 whitespace-nowrap">{d.cantidadEscalada}</td>
                       <td className="py-1 pr-2">{d.temperamento}</td>
                       <td className="py-1 pr-2">{d.enTemporada ? '✅' : '—'}</td>
-                      <td className="py-1 text-gray-700">
+                      <td className="py-1 text-gray-700 dark:text-gray-200">
                         {d.requiereCoccion && !d.estaCocido ? 'Requiere cocción · ' : ''}
                         {d.alternativaSana ? `Alt: ${d.alternativaSana}` : d.frecuenciaRecomendada}
                       </td>
@@ -455,8 +455,8 @@ export default function InformeDualView({
               ).map(([titulo, items]) =>
                 items.length > 0 ? (
                   <div key={titulo}>
-                    <h4 className="font-semibold text-gray-900 mb-1">{titulo}</h4>
-                    <ul className="list-disc list-inside text-gray-700 space-y-0.5">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{titulo}</h4>
+                    <ul className="list-disc list-inside text-gray-700 dark:text-gray-200 space-y-0.5">
                       {items.map((r, idx) => (
                         <li key={idx}>{r}</li>
                       ))}
@@ -475,8 +475,8 @@ export default function InformeDualView({
                 </ul>
               </div>
             )}
-            <div className="mt-3 text-sm text-gray-700">
-              <h4 className="font-semibold text-gray-900">Maridaje hildegardiano</h4>
+            <div className="mt-3 text-sm text-gray-700 dark:text-gray-200">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Maridaje hildegardiano</h4>
               <p>
                 🍷 {informe.maridajeHildegardiano.bebidaRecomendada} · 🌶️{' '}
                 {informe.maridajeHildegardiano.especiasSugeridas.join(', ')} · 🍪{' '}
@@ -487,20 +487,20 @@ export default function InformeDualView({
 
           {/* Estacionalidad */}
           <Acordeon titulo="Estacionalidad" icono="🍂">
-            <p className="text-sm text-gray-800">
+            <p className="text-sm text-gray-800 dark:text-gray-100">
               Estación actual: <strong>{informe.estacionalidad.estacionActual}</strong> ·{' '}
               {informe.estacionalidad.porcentajeTemporada}% de ingredientes en temporada
             </p>
             <div className="grid md:grid-cols-2 gap-4 text-sm mt-2">
               <div>
                 <h4 className="font-semibold mb-1 text-green-700">En temporada</h4>
-                <p className="text-gray-700">
+                <p className="text-gray-700 dark:text-gray-200">
                   {informe.estacionalidad.ingredientesEnTemporada.join(', ') || '—'}
                 </p>
               </div>
               <div>
                 <h4 className="font-semibold mb-1 text-amber-700">Fuera de temporada</h4>
-                <p className="text-gray-700">
+                <p className="text-gray-700 dark:text-gray-200">
                   {informe.estacionalidad.ingredientesFueraTemporada.join(', ') || '—'}
                 </p>
               </div>

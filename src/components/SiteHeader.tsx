@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import ToggleTema from '@/components/ToggleTema';
 
 interface Usuario {
   nombre: string;
@@ -116,6 +117,9 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
 
         {/* Controles */}
         <div className="flex items-center gap-2">
+          {/* Modo día / noche */}
+          <ToggleTema />
+
           {/* Mis pedidos (grupos a los que pertenezco) */}
           {misGrupos.length === 1 ? (
             <Link
@@ -134,13 +138,13 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
                 <span className="text-xs">{menuGruposAbierto ? '▲' : '▼'}</span>
               </button>
               {menuGruposAbierto && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50 max-h-96 overflow-y-auto">
+                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-96 overflow-y-auto">
                   {misGrupos.map((g) => (
                     <Link
                       key={g.id}
                       href={`/pedidos/grupo/${g.id}`}
                       onClick={() => setMenuGruposAbierto(false)}
-                      className="block px-4 py-2 hover:bg-amber-50 text-gray-800"
+                      className="block px-4 py-2 hover:bg-amber-50 text-gray-800 dark:text-gray-100"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-bold text-amber-700 tracking-widest">{g.palabra_secreta}</span>
@@ -154,7 +158,7 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
                           {g.estado}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         📅 {fmtFechaCorta(g.fecha_inicio)} – {fmtFechaCorta(g.fecha_fin)}
                         {g.confirmado ? ' · ✅ confirmaste' : ''}
                       </div>

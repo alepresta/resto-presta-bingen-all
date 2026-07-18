@@ -195,7 +195,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
     : compras;
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         <label className="flex items-center gap-2 cursor-pointer" title={todosSeleccionados ? 'Deseleccionar todos los días' : 'Seleccionar todos los días'}>
           <input
@@ -205,7 +205,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
             onChange={toggleTodosDias}
             className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
           />
-          <h2 className="text-xl font-bold text-gray-800">🍽️ Producción por día</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">🍽️ Producción por día</h2>
         </label>
         {dias.length > 0 && (
           <div className="flex flex-wrap gap-2">
@@ -217,7 +217,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
             </button>
             <button
               onClick={colapsarTodo}
-              className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
             >
               🔼 Colapsar todo
             </button>
@@ -226,7 +226,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
       </div>
 
       {dias.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">No hay platos seleccionados aún</p>
+        <p className="text-gray-500 dark:text-gray-400 text-center py-8">No hay platos seleccionados aún</p>
       ) : (
         <div className="flex flex-col">
           {/* Resumen consolidado de compras (días seleccionados) — al final */}
@@ -246,9 +246,9 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
             </div>
             <div className="p-4">
               {diasSel.length === 0 ? (
-                <p className="text-sm text-gray-500">Seleccioná al menos un día para ver la lista de compras.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Seleccioná al menos un día para ver la lista de compras.</p>
               ) : compras.length === 0 ? (
-                <p className="text-sm text-gray-500">Los platos de los días seleccionados no tienen ingredientes cargados.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Los platos de los días seleccionados no tienen ingredientes cargados.</p>
               ) : (
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -257,9 +257,9 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                       value={filtro}
                       onChange={(e) => setFiltro(e.target.value)}
                       placeholder="Buscar ingrediente…"
-                      className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+                      className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
                     />
-                    <span className="text-xs text-gray-500">{comprasFiltradas.length} ingredientes</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{comprasFiltradas.length} ingredientes</span>
                   </div>
                   {(() => {
                     const idsConocidos = new Set(CATEGORIAS.filter((c) => c.id !== 'otros').map((c) => c.id));
@@ -272,10 +272,10 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                           if (items.length === 0) return null;
                           return (
                             <div key={cat.id}>
-                              <h4 className="font-bold text-gray-800 mb-2 flex items-center gap-2 border-b border-gray-200 pb-1">
+                              <h4 className="font-bold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-1">
                                 <span className="text-lg">{cat.icono}</span>
                                 <span>{cat.nombre} a comprar</span>
-                                <span className="text-xs font-normal text-gray-400">({items.length})</span>
+                                <span className="text-xs font-normal text-gray-400 dark:text-gray-500">({items.length})</span>
                               </h4>
                               <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                                 {items.map((ing) => {
@@ -283,7 +283,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                                   return (
                                     <li
                                       key={ing.key}
-                                      className={`flex justify-between items-center gap-2 text-sm rounded px-3 py-2 ${comprado ? 'bg-gray-100' : 'bg-green-50'}`}
+                                      className={`flex justify-between items-center gap-2 text-sm rounded px-3 py-2 ${comprado ? 'bg-gray-100 dark:bg-gray-700' : 'bg-green-50'}`}
                                     >
                                       <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
                                         <input
@@ -292,9 +292,9 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                                           onChange={() => toggleComprado(ing.key)}
                                           className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
                                         />
-                                        <span className={`capitalize truncate ${comprado ? 'text-gray-400 line-through' : 'text-gray-800'}`}>{ing.nombre}</span>
+                                        <span className={`capitalize truncate ${comprado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-800 dark:text-gray-100'}`}>{ing.nombre}</span>
                                       </label>
-                                      <span className={`font-bold whitespace-nowrap ${comprado ? 'text-gray-400 line-through' : 'text-green-700'}`}>{montoTexto(ing)}</span>
+                                      <span className={`font-bold whitespace-nowrap ${comprado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-green-700'}`}>{montoTexto(ing)}</span>
                                     </li>
                                   );
                                 })}
@@ -305,7 +305,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                       </div>
                     );
                   })()}
-                  <p className="text-[11px] text-gray-400 mt-2">
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
                     Las cantidades se suman convirtiendo a g / ml / unidades. “a gusto” = ingredientes con medida no exacta (pizca, sal, condimentos, etc.).
                   </p>
                 </>
@@ -322,10 +322,10 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                   key={dia.fecha}
                   open={abiertos.has(dia.fecha)}
                   onToggle={(e) => setAbierto(dia.fecha, (e.target as HTMLDetailsElement).open)}
-                  className={`group border rounded-xl overflow-hidden ${activo ? 'border-indigo-300' : 'border-gray-200 opacity-70'}`}
+                  className={`group border rounded-xl overflow-hidden ${activo ? 'border-indigo-300' : 'border-gray-200 dark:border-gray-700 opacity-70'}`}
                 >
                   <summary className="bg-indigo-50 px-3 py-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-indigo-100">
-                    <h3 className="font-bold text-gray-800 flex items-center gap-1.5 text-sm min-w-0">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5 text-sm min-w-0">
                       <input
                         type="checkbox"
                         checked={activo}
@@ -349,7 +349,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                     <div>
-                      <h4 className="font-semibold text-gray-700 mb-2">👨‍🍳 Platos a preparar</h4>
+                      <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">👨‍🍳 Platos a preparar</h4>
                       <ul className="space-y-2">
                         {dia.platosAgg.map((p, i) => {
                           const tieneReceta = p.ingredientes.length > 0 || p.pasos.length > 0;
@@ -358,13 +358,13 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                               <button
                                 type="button"
                                 onClick={() => tieneReceta && abrirReceta(p)}
-                                className={`w-full flex justify-between items-center gap-2 rounded-lg px-3 py-2 text-left ${tieneReceta ? 'bg-gray-50 hover:bg-indigo-50 cursor-pointer' : 'bg-gray-50 cursor-default'}`}
+                                className={`w-full flex justify-between items-center gap-2 rounded-lg px-3 py-2 text-left ${tieneReceta ? 'bg-gray-50 dark:bg-gray-900 hover:bg-indigo-50 cursor-pointer' : 'bg-gray-50 dark:bg-gray-900 cursor-default'}`}
                               >
-                                <span className="text-gray-800">
+                                <span className="text-gray-800 dark:text-gray-100">
                                   <span className="font-bold text-indigo-700">{p.platos}×</span> {p.nombre}
                                   {tieneReceta && <span className="ml-2 text-xs text-indigo-500 whitespace-nowrap">📖 ver receta</span>}
                                 </span>
-                                <span className="text-sm text-gray-600 whitespace-nowrap">
+                                <span className="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
                                   {p.precio > 0 ? `$${p.precio.toLocaleString('es-AR')} c/u = ` : 'Gratis · '}
                                   <strong>${p.subtotal.toLocaleString('es-AR')}</strong>
                                 </span>
@@ -376,16 +376,16 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                     </div>
 
                     <div>
-                      <h4 className="font-semibold text-gray-700 mb-2">🛒 Ingredientes necesarios</h4>
+                      <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">🛒 Ingredientes necesarios</h4>
                       {dia.ingredientes.length === 0 ? (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {dia.conReceta ? 'Sin ingredientes cargados en las recetas.' : 'Los platos de este día no tienen receta cargada.'}
                         </p>
                       ) : (
                         <ul className="space-y-1">
                           {dia.ingredientes.map((ing, i) => (
                             <li key={i} className="flex justify-between text-sm bg-green-50 rounded px-3 py-1.5">
-                              <span className="text-gray-800">{ing.nombre}</span>
+                              <span className="text-gray-800 dark:text-gray-100">{ing.nombre}</span>
                               <span className="font-semibold text-green-700">{fmtCant(ing.cantidad)} {ing.unidad}</span>
                             </li>
                           ))}
@@ -404,7 +404,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
         const factor = porcionesModal / (recetaModal.porcionesBase || 1);
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setRecetaModal(null)}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="sticky top-0 bg-gradient-to-r from-indigo-700 to-blue-600 text-white px-5 py-4 flex justify-between items-start gap-3 z-10">
                 <div>
                   <h3 className="text-lg font-bold">{recetaModal.nombre}</h3>
@@ -414,24 +414,24 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
               </div>
               <div className="p-5 space-y-4">
                 <div className="flex items-center justify-between bg-indigo-50 rounded-lg px-4 py-3">
-                  <span className="font-semibold text-gray-800">👥 Para</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-100">👥 Para</span>
                   <div className="flex items-center gap-3">
-                    <button onClick={() => setPorcionesModal((p) => Math.max(1, p - 1))} className="w-9 h-9 rounded-full bg-white border font-bold text-indigo-700 text-lg">−</button>
+                    <button onClick={() => setPorcionesModal((p) => Math.max(1, p - 1))} className="w-9 h-9 rounded-full bg-white dark:bg-gray-800 border font-bold text-indigo-700 text-lg">−</button>
                     <span className="text-2xl font-bold text-indigo-700 w-10 text-center">{porcionesModal}</span>
-                    <button onClick={() => setPorcionesModal((p) => p + 1)} className="w-9 h-9 rounded-full bg-white border font-bold text-indigo-700 text-lg">+</button>
-                    <span className="text-sm text-gray-600">porción{porcionesModal !== 1 ? 'es' : ''}</span>
+                    <button onClick={() => setPorcionesModal((p) => p + 1)} className="w-9 h-9 rounded-full bg-white dark:bg-gray-800 border font-bold text-indigo-700 text-lg">+</button>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">porción{porcionesModal !== 1 ? 'es' : ''}</span>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-gray-700 mb-2">🥕 Ingredientes (para {porcionesModal})</h4>
+                  <h4 className="font-bold text-gray-700 dark:text-gray-200 mb-2">🥕 Ingredientes (para {porcionesModal})</h4>
                   {recetaModal.ingredientes.length === 0 ? (
-                    <p className="text-sm text-gray-500">Esta receta no tiene ingredientes cargados.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Esta receta no tiene ingredientes cargados.</p>
                   ) : (
                     <ul className="space-y-1">
                       {recetaModal.ingredientes.map((ing, i) => (
                         <li key={i} className="flex justify-between text-sm bg-green-50 rounded px-3 py-1.5">
-                          <span className="text-gray-800">{ing.nombre}</span>
+                          <span className="text-gray-800 dark:text-gray-100">{ing.nombre}</span>
                           <span className="font-semibold text-green-700">{fmtCant(ing.cantidad * factor)} {ing.unidad}</span>
                         </li>
                       ))}
@@ -441,19 +441,19 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
 
                 {recetaModal.pasos.length > 0 && (
                   <div>
-                    <h4 className="font-bold text-gray-700 mb-2">👨‍🍳 Preparación</h4>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-200 mb-2">👨‍🍳 Preparación</h4>
                     <ol className="space-y-2">
                       {recetaModal.pasos.map((paso, i) => (
                         <li key={i} className="flex gap-2 text-sm">
                           <span className="shrink-0 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs">{i + 1}</span>
-                          <span className="text-gray-700 pt-0.5">{paso}</span>
+                          <span className="text-gray-700 dark:text-gray-200 pt-0.5">{paso}</span>
                         </li>
                       ))}
                     </ol>
                   </div>
                 )}
               </div>
-              <div className="sticky bottom-0 bg-white border-t px-5 py-3">
+              <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t px-5 py-3">
                 <button onClick={() => setRecetaModal(null)} className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700">← Volver al pedido</button>
               </div>
             </div>

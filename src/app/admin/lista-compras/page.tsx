@@ -26,14 +26,14 @@ const CATEGORIAS_INFO: Record<string, { icono: string; nombre: string; color: st
   lacteos: { icono: '🧀', nombre: 'Lácteos', color: 'border-yellow-500 bg-yellow-50' },
   granos: { icono: '🌾', nombre: 'Granos/Cereales', color: 'border-amber-600 bg-amber-50' },
   legumbres: { icono: '🫘', nombre: 'Legumbres', color: 'border-orange-600 bg-orange-50' },
-  condimentos: { icono: '🧂', nombre: 'Condimentos', color: 'border-gray-500 bg-gray-50' },
+  condimentos: { icono: '🧂', nombre: 'Condimentos', color: 'border-gray-500 bg-gray-50 dark:bg-gray-900' },
   aceites: { icono: '🫒', nombre: 'Aceites', color: 'border-green-700 bg-green-50' },
   bebidas: { icono: '🥤', nombre: 'Bebidas', color: 'border-cyan-500 bg-cyan-50' },
   hierbas: { icono: '🌿', nombre: 'Hierbas', color: 'border-emerald-600 bg-emerald-50' },
   especias: { icono: '🌶️', nombre: 'Especias', color: 'border-red-500 bg-red-50' },
   endulzantes: { icono: '🍯', nombre: 'Endulzantes', color: 'border-amber-500 bg-amber-50' },
   frutos_secos: { icono: '🥜', nombre: 'Frutos Secos', color: 'border-orange-700 bg-orange-50' },
-  otros: { icono: '📦', nombre: 'Otros', color: 'border-gray-400 bg-gray-50' },
+  otros: { icono: '📦', nombre: 'Otros', color: 'border-gray-400 bg-gray-50 dark:bg-gray-900' },
 };
 
 export default function ListaComprasPage() {
@@ -124,7 +124,7 @@ export default function ListaComprasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-gradient-to-r from-blue-700 to-indigo-600 text-white shadow-lg print:hidden">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -143,9 +143,9 @@ export default function ListaComprasPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Selector de grupos */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6 print:hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6 print:hidden">
           <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-            <h2 className="text-lg font-bold text-gray-800">👥 Elegí uno o más grupos</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">👥 Elegí uno o más grupos</h2>
             <div className="flex gap-2">
               <button
                 onClick={seleccionarTodos}
@@ -157,7 +157,7 @@ export default function ListaComprasPage() {
               <button
                 onClick={limpiarSeleccion}
                 disabled={seleccionados.size === 0}
-                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
               >
                 ✖️ Ninguno
               </button>
@@ -165,7 +165,7 @@ export default function ListaComprasPage() {
           </div>
 
           {grupos.length === 0 ? (
-            <p className="text-sm text-gray-500">No hay grupos creados todavía.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">No hay grupos creados todavía.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-4 max-h-72 overflow-y-auto">
               {grupos.map((g: any) => {
@@ -175,7 +175,7 @@ export default function ListaComprasPage() {
                   <label
                     key={g.id}
                     className={`flex items-center gap-3 px-3 py-2 border rounded-lg cursor-pointer ${
-                      activo ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                      activo ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <input
@@ -185,8 +185,8 @@ export default function ListaComprasPage() {
                       className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                     />
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-800 font-mono">{g.palabra_secreta}</p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="font-semibold text-gray-800 dark:text-gray-100 font-mono">{g.palabra_secreta}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {g.estado} · {new Date(g.fecha_inicio).toLocaleDateString('es-AR')} a {new Date(g.fecha_fin).toLocaleDateString('es-AR')}
                         {nMiembros ? ` · ${nMiembros} miembro${nMiembros !== 1 ? 's' : ''}` : ''}
                       </p>
@@ -242,26 +242,26 @@ export default function ListaComprasPage() {
         {resumen && resumen.nutricionTotal && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-              <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500">
-                <p className="text-xs text-gray-600 font-semibold">PEDIDOS</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-blue-500">
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">PEDIDOS</p>
                 <p className="text-2xl font-bold">{resumen.pedidos}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
-                <p className="text-xs text-gray-600 font-semibold">PLATOS ÚNICOS</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-green-500">
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">PLATOS ÚNICOS</p>
                 <p className="text-2xl font-bold">{resumen.totalPlatos}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-amber-500">
-                <p className="text-xs text-gray-600 font-semibold">PORCIONES</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-amber-500">
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">PORCIONES</p>
                 <p className="text-2xl font-bold">{resumen.totalPorciones}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
-                <p className="text-xs text-gray-600 font-semibold">INGREDIENTES</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-purple-500">
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">INGREDIENTES</p>
                 <p className="text-2xl font-bold">{resumen.totalIngredientes}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-red-500">
-                <p className="text-xs text-gray-600 font-semibold">🔥 CALORÍAS TOTALES</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-red-500">
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">🔥 CALORÍAS TOTALES</p>
                 <p className="text-2xl font-bold">{resumen.nutricionTotal.calorias.toFixed(0)}</p>
-                <p className="text-xs text-gray-500">kcal</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">kcal</p>
               </div>
             </div>
 
@@ -269,33 +269,33 @@ export default function ListaComprasPage() {
             <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 mb-6">
               <h2 className="text-lg font-bold text-amber-800 mb-4">📊 Nutrición Total del Período</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-xs text-gray-600">🔥 Calorías</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-center">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">🔥 Calorías</p>
                   <p className="text-2xl font-bold text-amber-600">
                     {resumen.nutricionTotal.calorias.toFixed(0)}
                   </p>
-                  <p className="text-xs text-gray-500">kcal</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">kcal</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-xs text-gray-600">💪 Proteínas</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-center">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">💪 Proteínas</p>
                   <p className="text-2xl font-bold text-blue-600">
                     {resumen.nutricionTotal.proteinas.toFixed(1)}
                   </p>
-                  <p className="text-xs text-gray-500">g</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">g</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-xs text-gray-600">🍞 Carbohidratos</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-center">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">🍞 Carbohidratos</p>
                   <p className="text-2xl font-bold text-orange-600">
                     {resumen.nutricionTotal.carbohidratos.toFixed(1)}
                   </p>
-                  <p className="text-xs text-gray-500">g</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">g</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-xs text-gray-600">🥑 Grasas</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-center">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">🥑 Grasas</p>
                   <p className="text-2xl font-bold text-yellow-600">
                     {resumen.nutricionTotal.grasas.toFixed(1)}
                   </p>
-                  <p className="text-xs text-gray-500">g</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">g</p>
                 </div>
               </div>
             </div>
@@ -312,42 +312,42 @@ export default function ListaComprasPage() {
                 return (
                   <div
                     key={categoria}
-                    className={`bg-white rounded-xl shadow-md overflow-hidden border-l-4 ${info.color.split(' ')[0]}`}
+                    className={`bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border-l-4 ${info.color.split(' ')[0]}`}
                   >
                     <div className={`p-4 ${info.color.split(' ')[1]} border-b`}>
-                      <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                      <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                         <span className="text-2xl">{info.icono}</span>
                         {info.nombre}
-                        <span className="text-sm bg-white px-2 py-1 rounded-full ml-auto">
+                        <span className="text-sm bg-white dark:bg-gray-800 px-2 py-1 rounded-full ml-auto">
                           {ingredientes.length} ingredientes
                         </span>
                       </h2>
                     </div>
 
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
                       {ingredientes
                         .sort((a, b) => a.nombre.localeCompare(b.nombre))
                         .map((ing) => (
-                          <div key={ing.id} className="p-4 hover:bg-gray-50">
+                          <div key={ing.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
                             <div className="flex justify-between items-start gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="font-bold text-gray-800">{ing.nombre}</h3>
+                                  <h3 className="font-bold text-gray-800 dark:text-gray-100">{ing.nombre}</h3>
                                   <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
                                     {ing.presentacion}
                                   </span>
                                 </div>
-                                <div className="text-xs text-gray-600 mt-1">
+                                <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                                   <span className="font-semibold">Usado en:</span>{' '}
                                   {ing.platosQueLoUsan.slice(0, 3).join(', ')}
                                   {ing.platosQueLoUsan.length > 3 && (
-                                    <span className="text-gray-400">
+                                    <span className="text-gray-400 dark:text-gray-500">
                                       {' '}
                                       y {ing.platosQueLoUsan.length - 3} más
                                     </span>
                                   )}
                                 </div>
-                                <div className="flex gap-3 mt-2 text-xs text-gray-500">
+                                <div className="flex gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
                                   <span>🔥 {ing.nutricion.calorias.toFixed(0)} kcal</span>
                                   <span>💪 {ing.nutricion.proteinas.toFixed(1)}g prot</span>
                                   <span>🍞 {ing.nutricion.carbohidratos.toFixed(1)}g carb</span>
@@ -364,11 +364,11 @@ export default function ListaComprasPage() {
           </div>
         ) : (
           !cargando && (
-            <div className="bg-white rounded-xl shadow-md p-12 text-center">
-              <p className="text-gray-500 text-lg">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
                 {mensaje || 'Elegí uno o más grupos y generá la lista'}
               </p>
-              <p className="text-sm text-gray-400 mt-2">
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
                 La lista suma todos los platos de los grupos seleccionados
               </p>
             </div>

@@ -16,20 +16,20 @@ export default function InicioPage() {
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
+          <h1 className="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             🍽️ Resto Presta Bingen All
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-gray-600 dark:text-gray-300">
             Sistema de pedidos grupales para restaurantes
           </p>
         </div>
 
         {/* Instrucciones */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             📋 ¿Cómo funciona?
           </h2>
-          <div className="space-y-4 text-gray-700">
+          <div className="space-y-4 text-gray-700 dark:text-gray-200">
             <div className="flex items-start">
               <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3 flex-shrink-0">1</span>
               <p><strong>Crea un grupo de pedido:</strong> Inicia un nuevo pedido grupal y comparte el enlace con tus amigos.</p>
@@ -71,57 +71,57 @@ export default function InicioPage() {
         </div>
 
         {/* Otras opciones */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Otras opciones:</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Otras opciones:</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
               href="/pedidos"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <span className="text-2xl mr-3">📦</span>
               <div>
-                <div className="font-semibold text-gray-900">Ver todos los pedidos</div>
-                <div className="text-sm text-gray-600">Lista completa de pedidos activos</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">Ver todos los pedidos</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Lista completa de pedidos activos</div>
               </div>
             </Link>
 
             <Link
               href="/menu/resto-presta-bingen-all"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <span className="text-2xl mr-3">🍕</span>
               <div>
-                <div className="font-semibold text-gray-900">Ver menú</div>
-                <div className="text-sm text-gray-600">Explora el menú del restaurante</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">Ver menú</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Explora el menú del restaurante</div>
               </div>
             </Link>
 
             <Link
               href="/pedidos/nuevo"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <span className="text-2xl mr-3">✨</span>
               <div>
-                <div className="font-semibold text-gray-900">Crear pedido (alternativo)</div>
-                <div className="text-sm text-gray-600">Otra forma de iniciar un pedido</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">Crear pedido (alternativo)</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Otra forma de iniciar un pedido</div>
               </div>
             </Link>
 
             <Link
               href="/test-db"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <span className="text-2xl mr-3">🔧</span>
               <div>
-                <div className="font-semibold text-gray-900">Probar conexión</div>
-                <div className="text-sm text-gray-600">Verifica la conexión a la base de datos</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">Probar conexión</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Verifica la conexión a la base de datos</div>
               </div>
             </Link>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-gray-500 text-sm">
+        <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm">
           <p>¿Tienes problemas? Contacta al administrador del sistema</p>
         </div>
       </div>

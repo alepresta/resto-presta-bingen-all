@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ToggleTema from '@/components/ToggleTema';
 import type { AnalisisPlato } from '@/lib/analisis-plato';
 
 interface Ingrediente {
@@ -613,7 +612,6 @@ export default function ListaPlatos({ platos }: ListaPlatosProps) {
             </p>
           </div>
           <div className="flex gap-2 items-center">
-            <ToggleTema />
             <Link
               href="/admin"
               className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-semibold"

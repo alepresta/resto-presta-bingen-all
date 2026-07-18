@@ -13,7 +13,7 @@ export default async function AdminPlatosPage() {
 
   if (errorPlatos) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           ❌ Error: {errorPlatos.message}
         </div>

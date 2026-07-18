@@ -105,7 +105,7 @@ export default function BuscadorPlatos({ platos, onSeleccion }: BuscadorPlatosPr
   const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos;
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 mb-4">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-4">
       {/* Barra de búsqueda */}
       <div className="flex gap-2 mb-3">
         <div className="flex-1 relative">
@@ -114,14 +114,14 @@ export default function BuscadorPlatos({ platos, onSeleccion }: BuscadorPlatosPr
             value={textoBusqueda}
             onChange={(e) => setTextoBusqueda(e.target.value)}
             placeholder="🔍 Buscar por nombre, ingrediente..."
-            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500"
           />
-          <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+          <span className="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">🔍</span>
         </div>
         {hayFiltros && (
           <button
             onClick={limpiarFiltros}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm font-semibold"
+            className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm font-semibold"
           >
             ✖️ Limpiar
           </button>
@@ -131,11 +131,11 @@ export default function BuscadorPlatos({ platos, onSeleccion }: BuscadorPlatosPr
       {/* Filtros */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Categoría</label>
+          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Categoría</label>
           <select
             value={categoriaFiltro || ''}
             onChange={(e) => setCategoriaFiltro(e.target.value ? Number(e.target.value) : null)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
           >
             <option value="">Todas</option>
             {CATEGORIAS.map((cat) => (
@@ -147,11 +147,11 @@ export default function BuscadorPlatos({ platos, onSeleccion }: BuscadorPlatosPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">🌿 Temperamento</label>
+          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🌿 Temperamento</label>
           <select
             value={temperamentoFiltro}
             onChange={(e) => setTemperamentoFiltro(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
           >
             <option value="">Todos</option>
             {TEMPERAMENTOS.map((temp) => (
@@ -163,22 +163,22 @@ export default function BuscadorPlatos({ platos, onSeleccion }: BuscadorPlatosPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">🚫 Filtro Hildegardiano</label>
-          <label className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🚫 Filtro Hildegardiano</label>
+          <label className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
             <input
               type="checkbox"
               checked={soloSinVenenos}
               onChange={(e) => setSoloSinVenenos(e.target.checked)}
               className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
             />
-            <span className="text-sm text-gray-700">Solo sin venenos</span>
+            <span className="text-sm text-gray-700 dark:text-gray-200">Solo sin venenos</span>
           </label>
         </div>
       </div>
 
       {/* Resumen */}
       <div className="mt-3 pt-3 border-t flex justify-between items-center text-sm">
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-300">
           Mostrando <strong>{platosFiltrados.length}</strong> de <strong>{platos.length}</strong> platos
         </p>
         {platosFiltrados.length === 0 && (

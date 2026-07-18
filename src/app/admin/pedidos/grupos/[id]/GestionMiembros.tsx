@@ -100,12 +100,12 @@ export default function GestionMiembros({
 
       {/* Agregar miembro */}
       <div className="mb-4">
-        <h3 className="font-semibold text-gray-700 mb-2">Agregar miembro</h3>
+        <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Agregar miembro</h3>
         <div className="flex gap-2">
           <select
             value={clienteSeleccionado}
             onChange={(e) => setClienteSeleccionado(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">Seleccioná un cliente...</option>
             {clientesNoMiembros.map((c) => (
@@ -126,13 +126,13 @@ export default function GestionMiembros({
 
       {/* Lista de miembros con botón eliminar */}
       <div>
-        <h3 className="font-semibold text-gray-700 mb-2">Eliminar miembros</h3>
+        <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Eliminar miembros</h3>
         <div className="space-y-2">
           {miembrosActuales.map((miembro) => (
-            <div key={miembro.id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+            <div key={miembro.id} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
               <div>
-                <p className="font-semibold text-gray-800">{miembro.cliente.nombre}</p>
-                <p className="text-xs text-gray-600">{miembro.cliente.email}</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-100">{miembro.cliente.nombre}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300">{miembro.cliente.email}</p>
               </div>
               <button
                 onClick={() => eliminarMiembro(miembro.id)}

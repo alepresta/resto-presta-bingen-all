@@ -294,7 +294,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
     || vitaminasSel.length > 0 || mineralesSel.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-amber-700 to-orange-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -316,17 +316,17 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-            <h3 className="text-gray-600 text-sm font-semibold">RECETAS CREADAS</h3>
-            <p className="text-3xl font-bold text-gray-800 mt-2">{totalRecetas}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-4 border-green-500">
+            <h3 className="text-gray-600 dark:text-gray-300 text-sm font-semibold">RECETAS CREADAS</h3>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{totalRecetas}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-500">
-            <h3 className="text-gray-600 text-sm font-semibold">PLATOS SIN RECETA</h3>
-            <p className="text-3xl font-bold text-gray-800 mt-2">{platosSinReceta}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-4 border-amber-500">
+            <h3 className="text-gray-600 dark:text-gray-300 text-sm font-semibold">PLATOS SIN RECETA</h3>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{platosSinReceta}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
-            <h3 className="text-gray-600 text-sm font-semibold">COBERTURA</h3>
-            <p className="text-3xl font-bold text-gray-800 mt-2">{cobertura}%</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+            <h3 className="text-gray-600 dark:text-gray-300 text-sm font-semibold">COBERTURA</h3>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{cobertura}%</p>
           </div>
         </div>
 
@@ -340,8 +340,8 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
         </div>
 
         {/* Buscador y filtros */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">🔍 Buscar y Filtrar</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">🔍 Buscar y Filtrar</h2>
 
           <div className="flex gap-2 mb-4">
             <div className="flex-1 relative">
@@ -350,14 +350,14 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
                 value={textoBusqueda}
                 onChange={(e) => setTextoBusqueda(e.target.value)}
                 placeholder="Buscar por plato o ingrediente..."
-                className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
-              <span className="absolute left-3 top-3.5 text-gray-400">🔍</span>
+              <span className="absolute left-3 top-3.5 text-gray-400 dark:text-gray-500">🔍</span>
             </div>
             {hayFiltros && (
               <button
                 onClick={limpiarFiltros}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm font-semibold"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm font-semibold"
               >
                 ✖️ Limpiar
               </button>
@@ -367,11 +367,11 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
           {/* Fila 1 */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">📂 Categoría</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📂 Categoría</label>
               <select
                 value={categoriaFiltro || ''}
                 onChange={(e) => setCategoriaFiltro(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500"
               >
                 <option value="">Todas</option>
                 {Object.entries(CATEGORIAS).map(([id, cat]) => (
@@ -380,11 +380,11 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">🌿 Temperamento</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🌿 Temperamento</label>
               <select
                 value={temperamentoFiltro}
                 onChange={(e) => setTemperamentoFiltro(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500"
               >
                 <option value="">Todos</option>
                 {TEMPERAMENTOS.map((temp) => (
@@ -393,17 +393,17 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">🚫 Filtro Hildegardiano</label>
-              <label className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 bg-white">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🚫 Filtro Hildegardiano</label>
+              <label className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800">
                 <input type="checkbox" checked={soloSinVenenos} onChange={(e) => setSoloSinVenenos(e.target.checked)} className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
-                <span className="text-sm text-gray-700">Solo sin venenos</span>
+                <span className="text-sm text-gray-700 dark:text-gray-200">Solo sin venenos</span>
               </label>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">✨ Base Alegría</label>
-              <label className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 bg-white">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">✨ Base Alegría</label>
+              <label className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800">
                 <input type="checkbox" checked={soloBaseAlegria} onChange={(e) => setSoloBaseAlegria(e.target.checked)} className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
-                <span className="text-sm text-gray-700">Solo base alegría</span>
+                <span className="text-sm text-gray-700 dark:text-gray-200">Solo base alegría</span>
               </label>
             </div>
           </div>
@@ -411,8 +411,8 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
           {/* Fila 2 */}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">📅 Día</label>
-              <select value={diaFiltro} onChange={(e) => setDiaFiltro(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📅 Día</label>
+              <select value={diaFiltro} onChange={(e) => setDiaFiltro(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="">Todos</option>
                 <option value="todos_dias">🗓️ Todos los días</option>
                 {DIAS_SEMANA.map((d) => (
@@ -421,32 +421,32 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">👁️ Estado</label>
-              <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">👁️ Estado</label>
+              <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="publicados">🟢 Publicados</option>
                 <option value="despublicados">⚪ Despublicados</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">💲 Precio</label>
-              <select value={precioFiltro} onChange={(e) => setPrecioFiltro(e.target.value as typeof precioFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">💲 Precio</label>
+              <select value={precioFiltro} onChange={(e) => setPrecioFiltro(e.target.value as typeof precioFiltro)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="con_precio">💰 Con precio</option>
                 <option value="gratis">🎁 Gratis</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">🌾 Gluten</label>
-              <select value={glutenFiltro} onChange={(e) => setGlutenFiltro(e.target.value as typeof glutenFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🌾 Gluten</label>
+              <select value={glutenFiltro} onChange={(e) => setGlutenFiltro(e.target.value as typeof glutenFiltro)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="con">Con gluten</option>
                 <option value="sin">Sin gluten</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">📈 Índice glucémico</label>
-              <select value={igFiltro} onChange={(e) => setIgFiltro(e.target.value as typeof igFiltro)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📈 Índice glucémico</label>
+              <select value={igFiltro} onChange={(e) => setIgFiltro(e.target.value as typeof igFiltro)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="bajo">🟢 Bajo (≤ 55)</option>
                 <option value="medio">🟡 Medio (56–69)</option>
@@ -454,11 +454,11 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">🧪 Nutrientes</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🧪 Nutrientes</label>
               <button
                 type="button"
                 onClick={() => setPanelNutrientes((v) => !v)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-700 hover:bg-gray-50 flex items-center justify-between"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between"
               >
                 <span>{vitaminasSel.length + mineralesSel.length > 0 ? `${vitaminasSel.length + mineralesSel.length} seleccionados` : 'Vitaminas y minerales'}</span>
                 <span>{panelNutrientes ? '▲' : '▼'}</span>
@@ -467,18 +467,18 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
           </div>
 
           {panelNutrientes && (
-            <div className="mt-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <p className="text-xs text-gray-500 mb-3">
+            <div className="mt-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                 Mostrar recetas que sean <strong>buena fuente</strong> (aportan ≥ {UMBRAL_FUENTE}% del valor diario por porción) de:
               </p>
               <div className="mb-3">
-                <p className="text-xs font-semibold text-gray-600 mb-1">💊 Vitaminas</p>
+                <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">💊 Vitaminas</p>
                 <div className="flex flex-wrap gap-1.5">
                   {VITAMINAS.map((v) => {
                     const activo = vitaminasSel.includes(v.clave);
                     return (
                       <button key={v.clave} type="button" onClick={() => toggleEnLista(v.clave, vitaminasSel, setVitaminasSel)}
-                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${activo ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-gray-300 text-gray-700 hover:border-amber-400'}`}>
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${activo ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-amber-400'}`}>
                         {v.label}
                       </button>
                     );
@@ -486,13 +486,13 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-600 mb-1">⛏️ Minerales</p>
+                <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">⛏️ Minerales</p>
                 <div className="flex flex-wrap gap-1.5">
                   {MINERALES.map((m) => {
                     const activo = mineralesSel.includes(m.clave);
                     return (
                       <button key={m.clave} type="button" onClick={() => toggleEnLista(m.clave, mineralesSel, setMineralesSel)}
-                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${activo ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-gray-300 text-gray-700 hover:border-emerald-400'}`}>
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${activo ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-emerald-400'}`}>
                         {m.label}
                       </button>
                     );
@@ -507,8 +507,8 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
             </div>
           )}
 
-          <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center text-sm">
-            <p className="text-gray-600">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-sm">
+            <p className="text-gray-600 dark:text-gray-300">
               Mostrando <strong className="text-amber-700">{recetasFiltradas.length}</strong> de <strong>{recetas.length}</strong> recetas
             </p>
             {recetasFiltradas.length === 0 && (
@@ -520,7 +520,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
             <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
               <span className="text-sm font-semibold text-amber-800">Filtros activos:</span>
               {filtrosActivos.map((filtro) => (
-                <span key={filtro} className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
+                <span key={filtro} className="rounded-full bg-white dark:bg-gray-800 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
                   {filtro}
                 </span>
               ))}
@@ -536,12 +536,12 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
         </div>
 
         {/* Lista de Recetas */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800">Recetas ({recetasFiltradas.length})</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Recetas ({recetasFiltradas.length})</h2>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {recetasFiltradas.map((r) => {
               const tempDom = temperamentoDominante(r);
               const tempInfo = TEMPERAMENTOS.find((t) => t.valor === tempDom);
@@ -551,11 +551,11 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               const categoria = CATEGORIAS[r.categoria_id];
 
               return (
-                <div key={r.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div key={r.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-800">{r.nombrePlato}</h3>
-                      <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-600">
+                      <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{r.nombrePlato}</h3>
+                      <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-600 dark:text-gray-300">
                         <span>{categoria?.icono} {categoria?.nombre || 'Sin categoría'}</span>
                         <span>⏱️ {r.tiempo_min} min</span>
                         <span>👥 {r.porciones} porciones</span>
@@ -567,7 +567,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
 
                       <div className="flex flex-wrap gap-1 mt-2">
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-indigo-100 text-indigo-700">📅 {nombreDia(r.dia_semana_id)}</span>
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${r.disponible ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${r.disponible ? 'bg-green-100 text-green-700' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                           {r.disponible ? '🟢 Publicado' : '⚪ Oculto'}
                         </span>
                         {igCat && (
@@ -598,7 +598,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
           </div>
 
           {recetasFiltradas.length === 0 && (
-            <div className="p-12 text-center text-gray-500">
+            <div className="p-12 text-center text-gray-500 dark:text-gray-400">
               <p className="text-lg mb-4">😕 No hay recetas con estos filtros</p>
               {hayFiltros ? (
                 <button onClick={limpiarFiltros} className="inline-block bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600">

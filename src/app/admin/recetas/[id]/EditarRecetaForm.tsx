@@ -177,7 +177,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-amber-700 to-orange-600 text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -203,11 +203,11 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
 
         <div className="space-y-6">
           {/* Datos básicos */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">📋 Datos Básicos</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">📋 Datos Básicos</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Plato *</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Plato *</label>
                 {esNueva && platos.length === 0 && (
                   <p className="mb-2 text-sm font-medium text-amber-700">
                     No hay platos libres sin receta. Podés escribir abajo el nombre para crear un plato nuevo.
@@ -221,7 +221,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 <select
                   value={platoId}
                   onChange={(e) => seleccionarPlato(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="">Seleccioná un plato...</option>
                   {platos.map((plato) => (
@@ -231,48 +231,48 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                   ))}
                 </select>
                 {esNueva && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Si querés crear un plato nuevo, dejá este selector vacío y completá "Nombre del plato".
                   </p>
                 )}
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre del plato *</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Nombre del plato *</label>
                 <input
                   type="text"
                   value={platoNombre}
                   onChange={(e) => setPlatoNombre(e.target.value)}
                   placeholder="Ej: Sopa de calabaza con hinojo"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Este nombre actualiza el plato asociado y se reflejará también fuera de la receta.
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">⏱️ Tiempo (minutos)</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">⏱️ Tiempo (minutos)</label>
                 <input
                   type="number"
                   value={tiempoMin}
                   onChange={(e) => setTiempoMin(parseInt(e.target.value) || 0)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">👥 Porciones</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">👥 Porciones</label>
                 <input
                   type="number"
                   value={porciones}
                   onChange={(e) => setPorciones(parseInt(e.target.value) || 1)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">📊 Dificultad</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">📊 Dificultad</label>
                 <select
                   value={dificultad}
                   onChange={(e) => setDificultad(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="fácil">Fácil</option>
                   <option value="media">Media</option>
@@ -280,32 +280,32 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">📅 Día de disponibilidad</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">📅 Día de disponibilidad</label>
                 <select
                   value={diaSemanaId}
                   onChange={(e) => setDiaSemanaId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="">🗓️ Todos los días</option>
                   {DIAS_SEMANA.map((d) => (
                     <option key={d.id} value={d.id}>{d.icono} {d.nombre}</option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">Define en qué día del menú aparece el plato de esta receta.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Define en qué día del menú aparece el plato de esta receta.</p>
               </div>
             </div>
           </div>
 
           {/* Ingredientes con selector */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">🥕 Ingredientes</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">🥕 Ingredientes</h2>
             <SelectorIngredientes value={ingredientes} onChange={setIngredientes} />
           </div>
 
           {/* Pasos */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-gray-800">👨‍🍳 Pasos de Preparación</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">👨‍🍳 Pasos de Preparación</h2>
               <button
                 onClick={agregarPaso}
                 className="text-sm bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
@@ -324,7 +324,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
                     onChange={(e) => actualizarPaso(i, e.target.value)}
                     placeholder={`Paso ${i + 1}...`}
                     rows={2}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                   />
                   <button
                     onClick={() => eliminarPaso(i)}
@@ -338,21 +338,21 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
           </div>
 
           {/* Notas Hildegardianas */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">✨ Notas Hildegardianas</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">✨ Notas Hildegardianas</h2>
             <textarea
               value={notasHildegardianas}
               onChange={(e) => setNotasHildegardianas(e.target.value)}
               placeholder="Sabiduría de Santa Hildegarda sobre este plato..."
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
             />
           </div>
 
           {/* Interpretación Hildegardiana (informe editorial) */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-2">🌿 Interpretación Hildegardiana</h2>
-            <p className="text-sm text-gray-500 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">🌿 Interpretación Hildegardiana</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Informe editorial que se muestra al cliente (acción principal, órgano beneficiado, efecto en el ánimo,
               uso estacional, conclusión…).
             </p>
@@ -361,7 +361,7 @@ export default function EditarRecetaForm({ recetaId, platos, initial }: EditarRe
               onChange={(e) => setInterpretacionHildegardiana(e.target.value)}
               placeholder="Ej: Acción principal: Cardiotónica y reconstructora. Efecto en el ánimo: Antimelancólico..."
               rows={8}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 

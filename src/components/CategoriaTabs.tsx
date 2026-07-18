@@ -19,7 +19,7 @@ export default function CategoriaTabs({
   onCategoriaChange,
 }: CategoriaTabsProps) {
   return (
-    <div className="bg-white shadow-md sticky top-0 z-10 border-b">
+    <div className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-10 border-b">
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide">
           {categorias.map((categoria) => (
@@ -29,7 +29,7 @@ export default function CategoriaTabs({
               className={`flex-shrink-0 px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-all ${
                 categoriaActiva === categoria.id
                   ? 'bg-amber-500 text-white shadow-lg scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {categoria.icono} {categoria.nombre}

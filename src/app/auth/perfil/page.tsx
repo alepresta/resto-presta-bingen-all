@@ -108,15 +108,15 @@ export default function PerfilPage() {
 
   if (cargando) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">Cargando perfil…</div>
+      <div className="min-h-screen flex items-center justify-center text-gray-500 dark:text-gray-400">Cargando perfil…</div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">👤 Mi perfil</h1>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">👤 Mi perfil</h1>
           <Link href="/menu/resto-presta-bingen-all" className="text-amber-700 font-semibold hover:underline text-sm">
             ← Volver
           </Link>
@@ -135,58 +135,58 @@ export default function PerfilPage() {
         )}
 
         {/* Datos del perfil */}
-        <form onSubmit={guardarPerfil} className="bg-white rounded-xl shadow-md p-6 space-y-4">
-          <h2 className="font-bold text-gray-800">Datos personales</h2>
+        <form onSubmit={guardarPerfil} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-4">
+          <h2 className="font-bold text-gray-800 dark:text-gray-100">Datos personales</h2>
           {rol && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Rol: <span className="font-semibold">{rol}</span>
             </p>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Username</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Username</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 placeholder="ej: mgonzalez"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Nombre</label>
               <input
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Apellido</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Apellido</label>
               <input
                 type="text"
                 value={apellido}
                 onChange={(e) => setApellido(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Teléfono</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Teléfono</label>
               <input
                 type="tel"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
             </div>
           </div>
@@ -200,26 +200,26 @@ export default function PerfilPage() {
         </form>
 
         {/* Cambiar contraseña */}
-        <form onSubmit={cambiarPassword} className="bg-white rounded-xl shadow-md p-6 space-y-4">
-          <h2 className="font-bold text-gray-800">Cambiar contraseña</h2>
+        <form onSubmit={cambiarPassword} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-4">
+          <h2 className="font-bold text-gray-800 dark:text-gray-100">Cambiar contraseña</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Nueva contraseña</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Nueva contraseña</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 placeholder="Mínimo 6 caracteres"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Repetir contraseña</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Repetir contraseña</label>
               <input
                 type="password"
                 value={password2}
                 onChange={(e) => setPassword2(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 placeholder="••••••••"
               />
             </div>

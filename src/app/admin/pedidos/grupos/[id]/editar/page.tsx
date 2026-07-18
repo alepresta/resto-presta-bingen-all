@@ -75,7 +75,7 @@ export default function EditarPedidoPage({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-indigo-700 to-blue-600 text-white shadow-lg">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -104,35 +104,35 @@ export default function EditarPedidoPage({
         )}
 
         {cargandoDatos ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center text-gray-500">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center text-gray-500 dark:text-gray-400">
             ⏳ Cargando pedido...
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-6">
             {/* Fechas */}
             <div>
-              <h2 className="text-lg font-bold text-gray-800 mb-4">🗓️ Fechas</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">🗓️ Fechas</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                     Fecha de inicio *
                   </label>
                   <input
                     type="date"
                     value={fechaInicio}
                     onChange={(e) => setFechaInicio(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                     Fecha de fin *
                   </label>
                   <input
                     type="date"
                     value={fechaFin}
                     onChange={(e) => setFechaFin(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
@@ -140,16 +140,16 @@ export default function EditarPedidoPage({
 
             {/* Palabra secreta */}
             <div>
-              <h2 className="text-lg font-bold text-gray-800 mb-4">🔐 Palabra Secreta</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">🔐 Palabra Secreta</h2>
               <input
                 type="text"
                 value={palabraSecreta}
                 onChange={(e) => setPalabraSecreta(e.target.value.toUpperCase())}
                 maxLength={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-2xl text-center tracking-widest"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-2xl text-center tracking-widest"
                 placeholder="ABC123"
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 Los clientes usan esta palabra para unirse al pedido
               </p>
             </div>

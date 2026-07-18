@@ -169,7 +169,13 @@ export default async function EditarRecetaPage({ params }: { params: { id: strin
   return (
     <>
       <EditarRecetaForm recetaId={params.id} platos={platos} initial={initial} />
-      {!esNueva && <InformeDualView recetaId={params.id} />}
+      {!esNueva && (
+        <div className="bg-gray-50 dark:bg-gray-900">
+          <div className="max-w-6xl mx-auto px-4 pb-8">
+            <InformeDualView recetaId={params.id} />
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -57,7 +57,7 @@ export default async function AdminIngredientesPage({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-gradient-to-r from-green-700 to-emerald-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -74,7 +74,7 @@ export default async function AdminIngredientesPage({
             </Link>
             <Link
               href="/admin/ingredientes/nuevo"
-              className="bg-white text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-semibold"
+              className="bg-white dark:bg-gray-800 text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-semibold"
             >
               ➕ Nuevo
             </Link>
@@ -85,46 +85,46 @@ export default async function AdminIngredientesPage({
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500 text-gray-900">
-            <p className="text-xs text-gray-700 font-semibold">TOTAL</p>
-            <p className="text-3xl font-extrabold text-gray-900 leading-none" style={{ color: '#111827', opacity: 1 }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-green-500 text-gray-900 dark:text-gray-100">
+            <p className="text-xs text-gray-700 dark:text-gray-200 font-semibold">TOTAL</p>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none" style={{ color: '#111827', opacity: 1 }}>
               {ingredientes?.length || 0}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-amber-500 text-gray-900">
-            <p className="text-xs text-gray-700 font-semibold">CATEGORÍAS</p>
-            <p className="text-3xl font-extrabold text-gray-900 leading-none" style={{ color: '#111827', opacity: 1 }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-amber-500 text-gray-900 dark:text-gray-100">
+            <p className="text-xs text-gray-700 dark:text-gray-200 font-semibold">CATEGORÍAS</p>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none" style={{ color: '#111827', opacity: 1 }}>
               {Object.keys(conteoPorCategoria).length}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500 text-gray-900">
-            <p className="text-xs text-gray-700 font-semibold">CON CALORÍAS</p>
-            <p className="text-3xl font-extrabold text-gray-900 leading-none" style={{ color: '#111827', opacity: 1 }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-blue-500 text-gray-900 dark:text-gray-100">
+            <p className="text-xs text-gray-700 dark:text-gray-200 font-semibold">CON CALORÍAS</p>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none" style={{ color: '#111827', opacity: 1 }}>
               {ingredientes?.filter((i) => i.calorias !== null).length || 0}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500 text-gray-900">
-            <p className="text-xs text-gray-700 font-semibold">CON IG</p>
-            <p className="text-3xl font-extrabold text-gray-900 leading-none" style={{ color: '#111827', opacity: 1 }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-purple-500 text-gray-900 dark:text-gray-100">
+            <p className="text-xs text-gray-700 dark:text-gray-200 font-semibold">CON IG</p>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none" style={{ color: '#111827', opacity: 1 }}>
               {ingredientes?.filter((i) => i.indice_glucemico !== null).length || 0}
             </p>
           </div>
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
           <form className="flex flex-col md:flex-row gap-3">
             <input
               type="text"
               name="q"
               defaultValue={busqueda}
               placeholder="🔍 Buscar ingrediente..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
             />
             <select
               name="categoria"
               defaultValue={categoria || 'todos'}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
             >
               <option value="todos">Todas las categorías</option>
               {categorias.map((cat) => (
@@ -142,7 +142,7 @@ export default async function AdminIngredientesPage({
             {(busqueda || categoria) && (
               <Link
                 href="/admin/ingredientes"
-                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 font-semibold text-center"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300 font-semibold text-center"
               >
                 Limpiar
               </Link>
@@ -154,10 +154,10 @@ export default async function AdminIngredientesPage({
         <TablaIngredientes ingredientes={ingredientes || []} categorias={categorias} />
 
         {/* Leyenda */}
-        <div className="mt-6 bg-white rounded-xl shadow-md p-4">
-          <h3 className="font-bold text-gray-800 mb-2">📖 Leyenda de columnas</h3>
-          <div className="space-y-2 text-xs text-gray-600">
-            <p><span className="font-semibold text-gray-700">General:</span> 🔬 Nombre científico · 🧬 Origen (vegetal/animal/mineral) · 📏 Unidad base · 🌱 Parte útil · 📅 Estacionalidad</p>
+        <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-2">📖 Leyenda de columnas</h3>
+          <div className="space-y-2 text-xs text-gray-600 dark:text-gray-300">
+            <p><span className="font-semibold text-gray-700 dark:text-gray-200">General:</span> 🔬 Nombre científico · 🧬 Origen (vegetal/animal/mineral) · 📏 Unidad base · 🌱 Parte útil · 📅 Estacionalidad</p>
             <p><span className="font-semibold text-amber-700">Macros:</span> 🔥 Cal (kcal) · 💪 Prot · 🍞 Carbs · 🥑 Grasas · 🌾 Fibra · 🍬 Azúcar · 💧 Agua · ⬜ Cenizas · 🍷 Alcohol · ☕ Cafeína (por 100 g)</p>
             <p><span className="font-semibold text-yellow-700">Grasas:</span> Sat · Mono · Poli (g) · Ω3 · Ω6 · Colest (mg)</p>
             <p><span className="font-semibold text-slate-700">Minerales:</span> Na, K, Ca, Mg, P, Fe, Zn, Cu, Mn, Cl, S (mg) · Se, I, F (mcg)</p>

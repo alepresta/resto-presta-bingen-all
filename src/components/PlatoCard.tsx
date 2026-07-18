@@ -25,13 +25,13 @@ export default function PlatoCard({ plato }: { plato: Plato }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden">
       <div className="p-6">
         {/* Header del plato */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold text-gray-800">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
                 {plato.nombre}
               </h3>
               {plato.es_estrella && (
@@ -39,7 +39,7 @@ export default function PlatoCard({ plato }: { plato: Plato }) {
               )}
             </div>
             {plato.descripcion && (
-              <p className="text-gray-600 mt-2 leading-relaxed">
+              <p className="text-gray-600 dark:text-gray-300 mt-2 leading-relaxed">
                 {plato.descripcion}
               </p>
             )}
@@ -98,7 +98,7 @@ export default function PlatoCard({ plato }: { plato: Plato }) {
             </button>
             {expanded && (
               <div className="mt-2 p-3 bg-amber-50 rounded-lg border-l-4 border-amber-400">
-                <p className="text-sm text-gray-700 italic">
+                <p className="text-sm text-gray-700 dark:text-gray-200 italic">
                   {plato.propiedades_hildegardianas}
                 </p>
               </div>

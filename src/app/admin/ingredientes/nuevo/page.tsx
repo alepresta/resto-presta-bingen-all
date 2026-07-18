@@ -151,7 +151,7 @@ export default function NuevoIngredientePage() {
 
   const InputField = ({ name, label, unit, step = '0.01' }: { name: string; label: string; unit?: string; step?: string }) => (
     <div>
-      <label className="block text-xs font-semibold text-gray-700 mb-1">{label}</label>
+      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1">{label}</label>
       <div className="relative">
         <input
           type="number"
@@ -159,16 +159,16 @@ export default function NuevoIngredientePage() {
           name={name}
           value={form[name]}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm pr-12"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm pr-12"
           placeholder="0.00"
         />
-        {unit && <span className="absolute right-3 top-2 text-xs text-gray-500">{unit}</span>}
+        {unit && <span className="absolute right-3 top-2 text-xs text-gray-500 dark:text-gray-400">{unit}</span>}
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-green-700 to-emerald-600 text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -193,7 +193,7 @@ export default function NuevoIngredientePage() {
         )}
 
         {/* Tabs de secciones */}
-        <div className="bg-white rounded-xl shadow-md mb-6 overflow-x-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md mb-6 overflow-x-auto">
           <div className="flex min-w-max">
             {secciones.map((sec) => (
               <button
@@ -201,7 +201,7 @@ export default function NuevoIngredientePage() {
                 type="button"
                 onClick={() => setSeccionActiva(sec.id)}
                 className={`flex-1 px-4 py-3 font-semibold text-sm whitespace-nowrap transition-all ${
-                  seccionActiva === sec.id ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                  seccionActiva === sec.id ? 'bg-green-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {sec.icono} {sec.nombre}
@@ -210,46 +210,46 @@ export default function NuevoIngredientePage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           {/* SECCIÓN: BÁSICO */}
           {seccionActiva === 'basico' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-800 border-b pb-2">📋 Datos Básicos</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b pb-2">📋 Datos Básicos</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre *</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Nombre *</label>
                   <input type="text" name="nombre" value={form.nombre} onChange={handleChange} required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="Ej: Zanahoria" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre Científico</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Nombre Científico</label>
                   <input type="text" name="nombre_cientifico" value={form.nombre_cientifico} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="Ej: Daucus carota" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Categoría *</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Categoría *</label>
                   <select name="categoria" value={form.categoria} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500">
                     {CATEGORIAS.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.icono} {cat.nombre}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Unidad Base</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Unidad Base</label>
                   <select name="unidad_base" value={form.unidad_base} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500">
                     <option value="gramos">Gramos</option>
                     <option value="ml">Mililitros</option>
                     <option value="unidades">Unidades</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Origen</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Origen</label>
                   <select name="origen" value={form.origen} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500">
                     <option value="">-- Seleccionar --</option>
                     {ORIGENES.map((o) => (
                       <option key={o.id} value={o.id}>{o.nombre}</option>
@@ -257,29 +257,29 @@ export default function NuevoIngredientePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Parte Útil</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Parte Útil</label>
                   <input type="text" name="parte_util" value={form.parte_util} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="Ej: raíz, hoja, fruto" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Estacionalidad</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Estacionalidad</label>
                   <input type="text" name="estacionalidad" value={form.estacionalidad} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="Ej: primavera,verano" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" name="activo" checked={form.activo} onChange={handleChange}
                       className="w-5 h-5 text-green-600 rounded" />
-                    <span className="text-sm font-semibold text-gray-700">Ingrediente activo</span>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Ingrediente activo</span>
                   </label>
                 </div>
               </div>
 
               {/* Alérgenos */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Alérgenos</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Alérgenos</label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {form.alergenos.map((a: string) => (
                     <span key={a} className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function NuevoIngredientePage() {
                 </div>
                 <select
                   onChange={(e) => { handleArrayChange('alergenos', e.target.value); e.target.value = ''; }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                 >
                   <option value="">+ Agregar alérgeno...</option>
                   {['gluten', 'lactosa', 'huevo', 'frutos_secos', 'soja', 'mariscos', 'pescado', 'mostaza', 'sesamo', 'sulfitos'].map((a) => (
@@ -304,7 +304,7 @@ export default function NuevoIngredientePage() {
           {/* SECCIÓN: MACROS */}
           {seccionActiva === 'macros' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-800 border-b pb-2">🔬 Macronutrientes (por 100g)</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b pb-2">🔬 Macronutrientes (por 100g)</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <InputField name="calorias" label="Calorías" unit="kcal" />
                 <InputField name="proteinas_g" label="Proteínas" unit="g" />
@@ -325,8 +325,8 @@ export default function NuevoIngredientePage() {
           {/* SECCIÓN: MINERALES */}
           {seccionActiva === 'minerales' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-800 border-b pb-2">⚗️ Minerales (por 100g)</h2>
-              <h3 className="font-semibold text-gray-700">Principales</h3>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b pb-2">⚗️ Minerales (por 100g)</h2>
+              <h3 className="font-semibold text-gray-700 dark:text-gray-200">Principales</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <InputField name="calcio_mg" label="Calcio" unit="mg" />
                 <InputField name="hierro_mg" label="Hierro" unit="mg" />
@@ -334,7 +334,7 @@ export default function NuevoIngredientePage() {
                 <InputField name="potasio_mg" label="Potasio" unit="mg" />
                 <InputField name="zinc_mg" label="Zinc" unit="mg" />
               </div>
-              <h3 className="font-semibold text-gray-700 mt-4">Traza</h3>
+              <h3 className="font-semibold text-gray-700 dark:text-gray-200 mt-4">Traza</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <InputField name="fosforo_mg" label="Fósforo" unit="mg" />
                 <InputField name="cobre_mg" label="Cobre" unit="mg" step="0.001" />
@@ -351,15 +351,15 @@ export default function NuevoIngredientePage() {
           {/* SECCIÓN: VITAMINAS */}
           {seccionActiva === 'vitaminas' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-800 border-b pb-2">💊 Vitaminas (por 100g)</h2>
-              <h3 className="font-semibold text-gray-700">Liposolubles</h3>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b pb-2">💊 Vitaminas (por 100g)</h2>
+              <h3 className="font-semibold text-gray-700 dark:text-gray-200">Liposolubles</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <InputField name="vitamina_a_mcg" label="Vitamina A" unit="mcg" />
                 <InputField name="vitamina_d_mcg" label="Vitamina D" unit="mcg" />
                 <InputField name="vitamina_e_mg" label="Vitamina E" unit="mg" step="0.001" />
                 <InputField name="vitamina_k_mcg" label="Vitamina K" unit="mcg" />
               </div>
-              <h3 className="font-semibold text-gray-700 mt-4">Hidrosolubles - Complejo B y C</h3>
+              <h3 className="font-semibold text-gray-700 dark:text-gray-200 mt-4">Hidrosolubles - Complejo B y C</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <InputField name="vitamina_b1_mg" label="B1 (Tiamina)" unit="mg" step="0.001" />
                 <InputField name="vitamina_b2_mg" label="B2 (Riboflavina)" unit="mg" step="0.001" />
@@ -376,7 +376,7 @@ export default function NuevoIngredientePage() {
           {/* SECCIÓN: GRASAS */}
           {seccionActiva === 'grasas' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-800 border-b pb-2">🥑 Ácidos Grasos (por 100g)</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b pb-2">🥑 Ácidos Grasos (por 100g)</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <InputField name="grasas_saturadas_g" label="Saturadas" unit="g" />
                 <InputField name="grasas_monoinsaturadas_g" label="Monoinsaturadas" unit="g" />
@@ -391,19 +391,19 @@ export default function NuevoIngredientePage() {
           {/* SECCIÓN: ÍNDICES */}
           {seccionActiva === 'indices' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-800 border-b pb-2">📊 Índices de Calidad</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b pb-2">📊 Índices de Calidad</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Índice Glucémico (0-100)</label>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1">Índice Glucémico (0-100)</label>
                   <input type="number" name="indice_glucemico" value={form.indice_glucemico} onChange={handleChange}
                     min="0" max="100"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
                 </div>
                 <InputField name="carga_glucemica" label="Carga Glucémica" unit="" />
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">ORAC (Antioxidantes)</label>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1">ORAC (Antioxidantes)</label>
                   <input type="number" name="valor_orac" value={form.valor_orac} onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
                 </div>
                 <InputField name="indice_pral" label="Índice PRAL" unit="" step="0.1" />
                 <InputField name="ph" label="pH" unit="" step="0.1" />
@@ -420,17 +420,17 @@ export default function NuevoIngredientePage() {
           {/* SECCIÓN: PROPIEDADES */}
           {seccionActiva === 'propiedades' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-800 border-b pb-2">✨ Propiedades Generales</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b pb-2">✨ Propiedades Generales</h2>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Contraindicaciones</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Contraindicaciones</label>
                 <textarea name="contraindicaciones" value={form.contraindicaciones} onChange={handleChange} rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
                   placeholder="Ej: No recomendado para personas con..." />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Beneficios para la salud</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Beneficios para la salud</label>
                 <textarea name="beneficios_hildegardianos" value={form.beneficios_hildegardianos} onChange={handleChange} rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
                   placeholder="Ej: Fortalece el sistema inmune, mejora la digestión..." />
               </div>
             </div>
@@ -439,12 +439,12 @@ export default function NuevoIngredientePage() {
           {/* SECCIÓN: HILDEGARDA */}
           {seccionActiva === 'hildegarda' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-800 border-b pb-2">🌿 Sabiduría Hildegardiana</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 border-b pb-2">🌿 Sabiduría Hildegardiana</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Temperamento del ingrediente</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Temperamento del ingrediente</label>
                   <select name="temperamento" value={form.temperamento} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500">
                     <option value="">-- Seleccionar --</option>
                     {TEMPERAMENTOS.map((t) => (
                       <option key={t.id} value={t.id}>{t.nombre}</option>
@@ -452,13 +452,13 @@ export default function NuevoIngredientePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Propiedades Hildegardianas</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Propiedades Hildegardianas</label>
                   <textarea name="propiedades_hildegardianas" value={form.propiedades_hildegardianas} onChange={handleChange} rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" />
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Compatible con temperamentos (beneficia a)
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
@@ -474,7 +474,7 @@ export default function NuevoIngredientePage() {
                 </div>
                 <select
                   onChange={(e) => { handleArrayChange('compatibilidad_temperamento', e.target.value); e.target.value = ''; }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                 >
                   <option value="">+ Agregar temperamento...</option>
                   {TEMPERAMENTOS.map((t) => (
@@ -494,7 +494,7 @@ export default function NuevoIngredientePage() {
             >
               {loading ? 'Guardando...' : '💾 Guardar Ingrediente'}
             </button>
-            <p className="text-xs text-gray-500 text-center mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
               Podés completar solo lo que sepas; los campos vacíos quedan como “sin dato”. Después podés editarlo para completar el resto.
             </p>
           </div>

@@ -200,7 +200,7 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
       )}
 
       <div className="flex justify-between items-center mb-4">
-        <p className="text-gray-600 text-sm">{usuarios.length} usuario(s)</p>
+        <p className="text-gray-600 dark:text-gray-300 text-sm">{usuarios.length} usuario(s)</p>
         <button
           onClick={abrirCrear}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold text-sm"
@@ -209,9 +209,9 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-x-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600 text-left">
+          <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300 text-left">
             <tr>
               <th className="px-4 py-3 font-semibold">Usuario</th>
               <th className="px-4 py-3 font-semibold">Nombre</th>
@@ -223,14 +223,14 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
           </thead>
           <tbody>
             {usuarios.map((u) => (
-              <tr key={u.id} className="border-t border-gray-100">
-                <td className="px-4 py-3 font-mono text-gray-700">{u.username || '—'}</td>
-                <td className="px-4 py-3 text-gray-800">
+              <tr key={u.id} className="border-t border-gray-100 dark:border-gray-700">
+                <td className="px-4 py-3 font-mono text-gray-700 dark:text-gray-200">{u.username || '—'}</td>
+                <td className="px-4 py-3 text-gray-800 dark:text-gray-100">
                   {[u.nombre, u.apellido].filter(Boolean).join(' ') || '—'}
                   {u.id === miId && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">vos</span>}
                 </td>
-                <td className="px-4 py-3 text-gray-600">{u.email || '—'}</td>
-                <td className="px-4 py-3 text-gray-600">{u.telefono || '—'}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{u.email || '—'}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{u.telefono || '—'}</td>
                 <td className="px-4 py-3">
                   <select
                     value={u.rol === 'admin' ? 'admin' : 'cliente'}
@@ -239,7 +239,7 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
                     className={`text-xs font-semibold rounded-full px-2 py-1 border ${
                       u.rol === 'admin'
                         ? 'bg-purple-50 text-purple-700 border-purple-200'
-                        : 'bg-gray-50 text-gray-700 border-gray-200'
+                        : 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700'
                     } disabled:opacity-60`}
                     title={u.id === miId ? 'No podés cambiar tu propio rol' : 'Asignar rol'}
                   >
@@ -278,7 +278,7 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
             ))}
             {usuarios.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                   No hay usuarios.
                 </td>
               </tr>
@@ -290,7 +290,7 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
       {/* Modal crear/editar */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setModal(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-indigo-700 to-blue-600 text-white px-5 py-4 flex justify-between items-center">
               <h3 className="text-lg font-bold">{modal.modo === 'crear' ? '➕ Nuevo usuario' : '✏️ Editar usuario'}</h3>
               <button onClick={() => setModal(null)} className="text-white text-2xl leading-none">✕</button>
@@ -298,21 +298,21 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Username</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Username</label>
                   <input
                     type="text"
                     value={form.username}
                     onChange={(e) => setForm({ ...form, username: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     placeholder="ej: mgonzalez"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Rol</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Rol</label>
                   <select
                     value={form.rol}
                     onChange={(e) => setForm({ ...form, rol: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   >
                     {ROLES.map((r) => (
                       <option key={r.valor} value={r.valor}>
@@ -322,51 +322,51 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Nombre</label>
                   <input
                     type="text"
                     value={form.nombre}
                     onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Apellido</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Apellido</label>
                   <input
                     type="text"
                     value={form.apellido}
                     onChange={(e) => setForm({ ...form, apellido: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Email</label>
                   <input
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Teléfono</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Teléfono</label>
                   <input
                     type="tel"
                     value={form.telefono}
                     onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               {modal.modo === 'crear' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Contraseña</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Contraseña</label>
                   <input
                     type="text"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     placeholder="Mínimo 6 caracteres"
                   />
                 </div>
@@ -374,21 +374,21 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
 
               {modal.modo === 'editar' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Nueva contraseña <span className="text-gray-400 font-normal">(opcional)</span>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+                    Nueva contraseña <span className="text-gray-400 dark:text-gray-500 font-normal">(opcional)</span>
                   </label>
                   <input
                     type="text"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     placeholder="Dejar vacío para no cambiarla"
                   />
                 </div>
               )}
             </div>
             <div className="px-5 py-4 border-t flex justify-end gap-2">
-              <button onClick={() => setModal(null)} className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+              <button onClick={() => setModal(null)} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600">
                 Cancelar
               </button>
               <button
@@ -406,28 +406,28 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
       {/* Modal cambiar contraseña */}
       {modalPass && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setModalPass(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-5 py-4 flex justify-between items-center">
               <h3 className="text-lg font-bold">🔑 Cambiar contraseña</h3>
               <button onClick={() => setModalPass(null)} className="text-white text-2xl leading-none">✕</button>
             </div>
             <div className="p-5 space-y-3">
-              <p className="text-sm text-gray-600">Usuario: <strong>{modalPass.nombre}</strong></p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Usuario: <strong>{modalPass.nombre}</strong></p>
               <input
                 type="text"
                 value={nuevaPass}
                 onChange={(e) => setNuevaPass(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
                 placeholder="Nueva contraseña (mín. 6)"
               />
-              <p className={`text-xs ${nuevaPass.length > 0 && nuevaPass.length < 6 ? 'text-red-600' : 'text-gray-400'}`}>
+              <p className={`text-xs ${nuevaPass.length > 0 && nuevaPass.length < 6 ? 'text-red-600' : 'text-gray-400 dark:text-gray-500'}`}>
                 {nuevaPass.length > 0 && nuevaPass.length < 6
                   ? `Faltan ${6 - nuevaPass.length} caracteres (mínimo 6)`
                   : 'La contraseña debe tener al menos 6 caracteres.'}
               </p>
             </div>
             <div className="px-5 py-4 border-t flex justify-end gap-2">
-              <button onClick={() => setModalPass(null)} className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+              <button onClick={() => setModalPass(null)} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600">
                 Cancelar
               </button>
               <button

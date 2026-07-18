@@ -117,7 +117,7 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
   return (
     <div className="relative">
       {mensaje && (
-        <div className="absolute top-0 right-0 transform -translate-y-full bg-white border border-gray-200 shadow-lg rounded-lg px-3 py-2 text-sm z-10 mb-2 whitespace-nowrap">
+        <div className="absolute top-0 right-0 transform -translate-y-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg px-3 py-2 text-sm z-10 mb-2 whitespace-nowrap">
           {mensaje}
         </div>
       )}

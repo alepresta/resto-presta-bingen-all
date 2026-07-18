@@ -85,7 +85,7 @@ export default function CrearGrupoPage() {
   const fechaMinimaStr = fechaMinima.toISOString().split('T')[0];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-indigo-700 to-blue-600 text-white shadow-lg">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -113,10 +113,10 @@ export default function CrearGrupoPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-6">
           {/* Duración */}
           <div>
-            <h2 className="text-lg font-bold text-gray-800 mb-4">📅 Duración del Grupo</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">📅 Duración del Grupo</h2>
             <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
@@ -124,7 +124,7 @@ export default function CrearGrupoPage() {
                 className={`p-4 rounded-lg border-2 font-semibold transition-all ${
                   duracion === 15
                     ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-indigo-500'
                 }`}
               >
                 <div className="text-2xl font-bold">15</div>
@@ -136,7 +136,7 @@ export default function CrearGrupoPage() {
                 className={`p-4 rounded-lg border-2 font-semibold transition-all ${
                   duracion === 21
                     ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-indigo-500'
                 }`}
               >
                 <div className="text-2xl font-bold">21</div>
@@ -148,7 +148,7 @@ export default function CrearGrupoPage() {
                 className={`p-4 rounded-lg border-2 font-semibold transition-all ${
                   duracion === 30
                     ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-indigo-500'
                 }`}
               >
                 <div className="text-2xl font-bold">30</div>
@@ -159,10 +159,10 @@ export default function CrearGrupoPage() {
 
           {/* Fechas */}
           <div>
-            <h2 className="text-lg font-bold text-gray-800 mb-4">🗓️ Fechas</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">🗓️ Fechas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Fecha de inicio *
                 </label>
                 <input
@@ -170,48 +170,48 @@ export default function CrearGrupoPage() {
                   value={fechaInicio}
                   min={fechaMinimaStr}
                   onChange={(e) => handleFechaInicioChange(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">Mínimo: mañana</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo: mañana</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Fecha de fin *
                 </label>
                 <input
                   type="date"
                   value={fechaFin}
                   onChange={(e) => setFechaFin(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   readOnly
                 />
-                <p className="text-xs text-gray-500 mt-1">Se calcula automáticamente</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Se calcula automáticamente</p>
               </div>
             </div>
           </div>
 
           {/* Palabra secreta */}
           <div>
-            <h2 className="text-lg font-bold text-gray-800 mb-4">🔐 Palabra Secreta</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">🔐 Palabra Secreta</h2>
             <div className="flex gap-3">
               <input
                 type="text"
                 value={palabraSecreta}
                 onChange={(e) => setPalabraSecreta(e.target.value.toUpperCase())}
                 maxLength={6}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-2xl text-center tracking-widest"
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-2xl text-center tracking-widest"
                 placeholder="ABC123"
               />
               <button
                 type="button"
                 onClick={() => setPalabraSecreta(generarPalabraSecreta())}
-                className="bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300 font-semibold"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-3 rounded-lg hover:bg-gray-300 font-semibold"
                 title="Generar nueva palabra"
               >
                 🔄
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Los clientes usarán esta palabra para unirse al grupo
             </p>
           </div>

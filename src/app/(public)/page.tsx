@@ -101,15 +101,15 @@ export default async function HomePage() {
         <div className="grid grid-cols-3 gap-4">
           <div className="card p-6 text-center">
             <p className="text-3xl md:text-4xl font-bold text-amber-700">{totalPlatos}</p>
-            <p className="text-sm text-gray-600 mt-1">Platos disponibles</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Platos disponibles</p>
           </div>
           <div className="card p-6 text-center">
             <p className="text-3xl md:text-4xl font-bold text-green-700">{totalRecetas}</p>
-            <p className="text-sm text-gray-600 mt-1">Recetas documentadas</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Recetas documentadas</p>
           </div>
           <div className="card p-6 text-center">
             <p className="text-3xl md:text-4xl font-bold text-emerald-700">{cobertura}%</p>
-            <p className="text-sm text-gray-600 mt-1">Cobertura de recetas</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Cobertura de recetas</p>
           </div>
         </div>
       </section>
@@ -118,7 +118,7 @@ export default async function HomePage() {
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <h2 className="text-4xl font-bold font-serif mb-3">Nuestro método</h2>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-600 dark:text-gray-300">
             Cada plato se evalúa con una doble mirada: la ciencia nutricional moderna y la sabiduría de Hildegarda.
           </p>
         </div>
@@ -128,12 +128,12 @@ export default async function HomePage() {
           <div className="card p-8 flex flex-col">
             <div className="text-5xl mb-4">🔬</div>
             <h3 className="text-xl font-bold mb-2">Análisis Nutricional Científico</h3>
-            <p className="text-gray-600 flex-1">
+            <p className="text-gray-600 dark:text-gray-300 flex-1">
               Calculamos calorías, macros (proteínas, carbohidratos, grasas), fibra, minerales y
               vitaminas de cada receta, comparándolos con los valores diarios recomendados (VDR)
               para detectar excesos y déficits.
             </p>
-            <ul className="text-sm text-gray-500 mt-4 space-y-1">
+            <ul className="text-sm text-gray-500 dark:text-gray-400 mt-4 space-y-1">
               <li>• Macros y micronutrientes por porción</li>
               <li>• Alertas de exceso y déficit vs. VDR</li>
               <li>• Promedios diarios del período</li>
@@ -144,12 +144,12 @@ export default async function HomePage() {
           <div className="card p-8 flex flex-col border-t-4 border-amber-500">
             <div className="text-5xl mb-4">🌿</div>
             <h3 className="text-xl font-bold mb-2">Análisis Nutricional Hildegardiano</h3>
-            <p className="text-gray-600 flex-1">
+            <p className="text-gray-600 dark:text-gray-300 flex-1">
               Según <em>Physica</em> y <em>Causae et Curae</em>: evaluamos <strong>Viriditas</strong>,{' '}
               <strong>Eucrasia</strong> (balance cálido/frío, seco/húmedo), venenos de cocina,
               pilares de vigor y maduración por fuego.
             </p>
-            <ul className="text-sm text-gray-500 mt-4 space-y-1">
+            <ul className="text-sm text-gray-500 dark:text-gray-400 mt-4 space-y-1">
               <li>• Subtilitat y Viriditas</li>
               <li>• Detección de venenos de cocina</li>
               <li>• Pilares: espelta, hinojo, galanga, castañas</li>
@@ -160,11 +160,11 @@ export default async function HomePage() {
           <div className="card p-8 flex flex-col">
             <div className="text-5xl mb-4">📖</div>
             <h3 className="text-xl font-bold mb-2">Recetas</h3>
-            <p className="text-gray-600 flex-1">
+            <p className="text-gray-600 dark:text-gray-300 flex-1">
               Cada receta detalla ingredientes, cantidades, pasos y notas hildegardianas.
               Son la base de todos los cálculos: sin receta no hay análisis.
             </p>
-            <ul className="text-sm text-gray-500 mt-4 space-y-1">
+            <ul className="text-sm text-gray-500 dark:text-gray-400 mt-4 space-y-1">
               <li>• Ingredientes con cantidades y unidades</li>
               <li>• Tiempo, porciones y dificultad</li>
               <li>• Notas y propiedades hildegardianas</li>
@@ -182,7 +182,7 @@ export default async function HomePage() {
           <div className="max-w-6xl mx-auto px-4">
             <div className="text-center mb-10">
               <h2 className="text-4xl font-bold font-serif mb-3">⭐ Recetas destacadas</h2>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-gray-600 dark:text-gray-300">
                 Especialidades de la casa con propiedades curativas específicas.
               </p>
             </div>
@@ -193,14 +193,14 @@ export default async function HomePage() {
                 const nota = receta?.notas_hildegardianas || plato.propiedades_hildegardianas;
                 return (
                   <div key={plato.id} className="card p-6 flex flex-col">
-                    <h3 className="text-lg font-bold text-gray-800 mb-1">{plato.nombre}</h3>
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">{plato.nombre}</h3>
                     {plato.descripcion && (
-                      <p className="text-sm text-gray-600 line-clamp-2">{plato.descripcion}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{plato.descripcion}</p>
                     )}
                     {nota && (
                       <p className="text-sm text-amber-700 italic mt-3 line-clamp-3">✨ {nota}</p>
                     )}
-                    <div className="flex flex-wrap gap-3 mt-4 text-xs text-gray-500">
+                    <div className="flex flex-wrap gap-3 mt-4 text-xs text-gray-500 dark:text-gray-400">
                       {receta?.tiempo_min ? <span>⏱️ {receta.tiempo_min} min</span> : null}
                       {receta?.dificultad ? <span>📊 {receta.dificultad}</span> : null}
                       {receta?.ingredientes?.length ? (
@@ -224,7 +224,7 @@ export default async function HomePage() {
       {/* Viriditas */}
       <section className="max-w-4xl mx-auto px-4 py-16 text-center">
         <h2 className="text-4xl font-bold font-serif mb-6">Viriditas</h2>
-        <p className="text-xl text-gray-700 leading-relaxed">
+        <p className="text-xl text-gray-700 dark:text-gray-200 leading-relaxed">
           La fuerza vital verde que Hildegarda describía como el poder sanador
           de la naturaleza. Cada plato está preparado con <strong>espelta</strong>,{' '}
           <strong>hierbas medicinales</strong> e <strong>ingredientes de estación</strong>{' '}

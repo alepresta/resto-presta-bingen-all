@@ -286,10 +286,10 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
   return (
     <div className="space-y-4">
       {/* Buscador de ingredientes */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-bold text-gray-800 mb-3">🔍 Agregar Ingrediente</h3>
+      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+        <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-3">🔍 Agregar Ingrediente</h3>
         {cargandoIngredientes && (
-          <p className="text-sm text-gray-600 mb-3">Cargando catálogo de ingredientes…</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">Cargando catálogo de ingredientes…</p>
         )}
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
@@ -302,12 +302,12 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
             }}
             onFocus={() => setMostrarResultados(true)}
             placeholder="Buscar ingrediente..."
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
           />
           <select
             value={categoriaFiltro}
             onChange={(e) => setCategoriaFiltro(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
           >
             {categorias.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.nombre}</option>
@@ -316,7 +316,7 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
           <button
             type="button"
             onClick={() => { setBusqueda(''); setCategoriaFiltro('todos'); }}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+            className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300"
           >
             Limpiar
           </button>
@@ -324,7 +324,7 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
 
         {/* Resultados de búsqueda */}
         {mostrarResultados && busqueda.length > 0 && (
-          <div className="bg-white border border-gray-300 rounded-lg max-h-60 overflow-y-auto mb-3">
+          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg max-h-60 overflow-y-auto mb-3">
             {ingredientesFiltrados.slice(0, 20).map((ing) => (
               <button
                 key={ing.id}
@@ -333,20 +333,20 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
                   const unidadBase = ing.unidad_base || 'gramos';
                   agregarIngrediente(ing, 100, unidadBase);
                 }}
-                className={`w-full text-left px-4 py-2 hover:bg-green-50 border-b last:border-b-0 text-gray-900 ${
-                  ingredienteSeleccionado?.id === ing.id ? 'bg-green-100' : 'bg-white'
+                className={`w-full text-left px-4 py-2 hover:bg-green-50 border-b last:border-b-0 text-gray-900 dark:text-gray-100 ${
+                  ingredienteSeleccionado?.id === ing.id ? 'bg-green-100' : 'bg-white dark:bg-gray-800'
                 }`}
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-900">{ing.nombre}</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{ing.nombre}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     {ing.calorias !== null ? `${ing.calorias} kcal` : 'Sin datos'}
                   </span>
                 </div>
               </button>
             ))}
             {ingredientesFiltrados.length === 0 && (
-              <p className="px-4 py-3 text-gray-500 text-center">No se encontraron ingredientes</p>
+              <p className="px-4 py-3 text-gray-500 dark:text-gray-400 text-center">No se encontraron ingredientes</p>
             )}
           </div>
         )}
@@ -359,21 +359,21 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Cantidad</label>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1">Cantidad</label>
                 <input
                   type="number"
                   value={cantidad}
                   onChange={(e) => setCantidad(parseFloat(e.target.value) || 0)}
                   step="0.1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Unidad</label>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1">Unidad</label>
                 <select
                   value={unidad}
                   onChange={(e) => setUnidad(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
                 >
                   <option value="gramos">gramos</option>
                   <option value="kg">kg</option>
@@ -401,31 +401,31 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
       </div>
 
       {/* Lista de ingredientes seleccionados */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="font-bold text-gray-800 mb-3">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-3">
           🥕 Ingredientes de la Receta ({value.length})
         </h3>
 
         {value.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">Aún no hay ingredientes</p>
+          <p className="text-gray-500 dark:text-gray-400 text-center py-4">Aún no hay ingredientes</p>
         ) : (
           <div className="space-y-2">
             {value.map((item) => (
-              <div key={item.ingrediente_id} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
+              <div key={item.ingrediente_id} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-800">{item.nombre}</p>
+                  <p className="font-semibold text-gray-800 dark:text-gray-100">{item.nombre}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <input
                       type="number"
                       value={item.cantidad}
                       onChange={(e) => actualizarCantidad(item.ingrediente_id, parseFloat(e.target.value) || 0)}
                       step="0.1"
-                      className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                      className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm"
                     />
                     <select
                       value={item.unidad}
                       onChange={(e) => actualizarUnidad(item.ingrediente_id, e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm text-gray-600"
+                      className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-600 dark:text-gray-300"
                     >
                       <option value="gramos">gramos</option>
                       <option value="kg">kg</option>
@@ -456,25 +456,25 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4">
           <h3 className="font-bold text-amber-800 mb-3">📊 Nutrición Total de la Receta</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white rounded p-3 text-center">
-              <p className="text-xs text-gray-600">🔥 Calorías</p>
+            <div className="bg-white dark:bg-gray-800 rounded p-3 text-center">
+              <p className="text-xs text-gray-600 dark:text-gray-300">🔥 Calorías</p>
               <p className="text-xl font-bold text-amber-600">{nutricion.calorias.toFixed(0)}</p>
-              <p className="text-xs text-gray-500">kcal</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">kcal</p>
             </div>
-            <div className="bg-white rounded p-3 text-center">
-              <p className="text-xs text-gray-600">💪 Proteínas</p>
+            <div className="bg-white dark:bg-gray-800 rounded p-3 text-center">
+              <p className="text-xs text-gray-600 dark:text-gray-300">💪 Proteínas</p>
               <p className="text-xl font-bold text-blue-600">{nutricion.proteinas.toFixed(1)}</p>
-              <p className="text-xs text-gray-500">g</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">g</p>
             </div>
-            <div className="bg-white rounded p-3 text-center">
-              <p className="text-xs text-gray-600">🍞 Carbohidratos</p>
+            <div className="bg-white dark:bg-gray-800 rounded p-3 text-center">
+              <p className="text-xs text-gray-600 dark:text-gray-300">🍞 Carbohidratos</p>
               <p className="text-xl font-bold text-orange-600">{nutricion.carbs.toFixed(1)}</p>
-              <p className="text-xs text-gray-500">g</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">g</p>
             </div>
-            <div className="bg-white rounded p-3 text-center">
-              <p className="text-xs text-gray-600">🥑 Grasas</p>
+            <div className="bg-white dark:bg-gray-800 rounded p-3 text-center">
+              <p className="text-xs text-gray-600 dark:text-gray-300">🥑 Grasas</p>
               <p className="text-xl font-bold text-yellow-600">{nutricion.grasas.toFixed(1)}</p>
-              <p className="text-xs text-gray-500">g</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">g</p>
             </div>
           </div>
           <p className="text-xs text-amber-700 mt-2 italic">

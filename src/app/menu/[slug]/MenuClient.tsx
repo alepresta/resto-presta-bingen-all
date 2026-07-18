@@ -62,7 +62,7 @@ export default function MenuClient({
               <img
                 src={restaurante.logo}
                 alt="Logo"
-                className="h-16 w-16 rounded-full bg-white p-1"
+                className="h-16 w-16 rounded-full bg-white dark:bg-gray-800 p-1"
               />
             )}
           </div>
@@ -70,12 +70,12 @@ export default function MenuClient({
       </header>
 
       {/* Banner del día */}
-      <div className="bg-white border-b">
+      <div className="bg-white dark:bg-gray-800 border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Hoy es</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm text-gray-600 dark:text-gray-300">Hoy es</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                 {diaInfo.nombre}
               </p>
               <p className="text-sm text-amber-600 font-semibold">
@@ -83,7 +83,7 @@ export default function MenuClient({
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-600">Menú del día</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Menú del día</p>
               <p className="text-3xl">🍽️</p>
             </div>
           </div>
@@ -102,10 +102,10 @@ export default function MenuClient({
         {categoriaActual && categoriaActual.platos.length > 0 ? (
           <>
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                 {categoriaActual.icono} {categoriaActual.nombre}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 {categoriaActual.cantidad} {categoriaActual.cantidad === 1 ? 'opción disponible' : 'opciones disponibles'}
               </p>
             </div>
@@ -119,7 +119,7 @@ export default function MenuClient({
         ) : (
           <div className="text-center py-16">
             <p className="text-6xl mb-4">🍽️</p>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-gray-300">
               No hay platos disponibles en esta categoría
             </p>
           </div>

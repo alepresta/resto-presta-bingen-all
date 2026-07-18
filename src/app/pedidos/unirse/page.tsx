@@ -79,34 +79,34 @@ export default function UnirseGrupoPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
           {step === 1 && (
             <>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Tus datos</h2>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Tus datos</h2>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                     Nombre completo *
                   </label>
                   <input
                     type="text"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="Tu nombre"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                     Email *
                   </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500"
                     placeholder="tu@email.com"
                   />
                 </div>
@@ -130,10 +130,10 @@ export default function UnirseGrupoPage() {
 
           {step === 2 && (
             <>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Palabra secreta</h2>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Palabra secreta</h2>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Ingresá la palabra que te compartieron
                 </label>
                 <input
@@ -141,10 +141,10 @@ export default function UnirseGrupoPage() {
                   value={palabraSecreta}
                   onChange={(e) => setPalabraSecreta(e.target.value.toUpperCase())}
                   maxLength={8}
-                  className="w-full px-4 py-4 border-2 border-gray-300 rounded-lg text-center text-3xl font-bold tracking-widest focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg text-center text-3xl font-bold tracking-widest focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="ABC123"
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   La palabra secreta la generó quien creó el grupo
                 </p>
               </div>
@@ -158,7 +158,7 @@ export default function UnirseGrupoPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-300"
+                  className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-lg hover:bg-gray-300"
                 >
                   ← Atrás
                 </button>

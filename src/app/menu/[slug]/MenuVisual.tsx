@@ -76,13 +76,13 @@ const TONO_CLASE: Record<ResumenLinea['tono'], string> = {
   malo: 'text-red-700',
   alerta: 'text-amber-700',
   bien: 'text-green-700',
-  neutro: 'text-gray-500',
+  neutro: 'text-gray-500 dark:text-gray-400',
 };
 
 function ResumenPlato({ resumen }: { resumen: ResumenLinea[] }) {
   if (!resumen || resumen.length === 0) return null;
   return (
-    <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-1.5">
       {resumen.map((linea, i) => (
         <div key={i}>
           <p className={`text-xs font-semibold flex items-center gap-1.5 ${TONO_CLASE[linea.tono]}`}>
@@ -94,7 +94,7 @@ function ResumenPlato({ resumen }: { resumen: ResumenLinea[] }) {
               {linea.detalle.map((d, j) => (
                 <li
                   key={j}
-                  className="text-[10px] leading-tight text-gray-500 before:content-['•'] before:mr-1 before:text-gray-300"
+                  className="text-[10px] leading-tight text-gray-500 dark:text-gray-400 before:content-['•'] before:mr-1 before:text-gray-300"
                 >
                   {d}
                 </li>
@@ -174,7 +174,7 @@ function ingredientesEscalados(
 function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
   if (!analisis.tieneDatos) {
     return (
-      <div className="bg-gray-50 border border-gray-200 p-4 rounded text-sm text-gray-500">
+      <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-4 rounded text-sm text-gray-500 dark:text-gray-400">
         ℹ️ Esta receta aún no tiene datos nutricionales cargados en sus ingredientes.
       </div>
     );
@@ -187,11 +187,11 @@ function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
           ⚠️ Este análisis es aproximado: la receta declarada no cuadra con el peso total cargado.
         </div>
       ) : null}
-      <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+      <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
         🔬 Datos nutricionales (por porción)
       </h3>
       {analisis.porcionesEstimadas && analisis.pesoTotalGramos ? (
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
           Ingredientes totales: {(analisis.pesoTotalGramos / 1000).toFixed(2)} kg · cocido estimado:{' '}
           {analisis.pesoCocidoEstimadoGramos ? `${(analisis.pesoCocidoEstimadoGramos / 1000).toFixed(2)} kg` : 'n/d'} ·{' '}
           {analisis.porcionesEstimadas}{' '}
@@ -204,12 +204,12 @@ function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
         {MACROS_MODAL.map((m) => (
           <div key={m.clave} className="bg-purple-50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500">{m.label}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{m.label}</p>
             <p className="text-base font-bold text-purple-700">
               {fmt(nutricion[m.clave as keyof typeof nutricion])}
-              <span className="text-xs font-normal text-gray-500"> {m.unidad}</span>
+              <span className="text-xs font-normal text-gray-500 dark:text-gray-400"> {m.unidad}</span>
             </p>
-            <p className="text-[10px] text-gray-400">{Math.round(porcentajeVDR[m.clave] || 0)}% VDR</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">{Math.round(porcentajeVDR[m.clave] || 0)}% VDR</p>
           </div>
         ))}
       </div>
@@ -222,13 +222,13 @@ function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
             const pct = Math.round(porcentajeVDR[m.clave] || 0);
             const bajo = pct < 15;
             return (
-              <div key={m.clave} className="bg-gray-50 rounded-lg p-2 text-center">
-                <p className="text-xs text-gray-500">{m.label}</p>
-                <p className="text-sm font-semibold text-gray-700">
+              <div key={m.clave} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">{m.label}</p>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                   {fmt(nutricion[m.clave as keyof typeof nutricion])}
-                  <span className="text-[10px] font-normal text-gray-400"> {m.unidad}</span>
+                  <span className="text-[10px] font-normal text-gray-400 dark:text-gray-500"> {m.unidad}</span>
                 </p>
-                <p className={`text-[10px] ${bajo ? 'text-amber-600 font-semibold' : 'text-gray-400'}`}>
+                <p className={`text-[10px] ${bajo ? 'text-amber-600 font-semibold' : 'text-gray-400 dark:text-gray-500'}`}>
                   {pct}% VDR{bajo ? ' · bajo' : ''}
                 </p>
               </div>
@@ -249,12 +249,12 @@ function DatosHildegardianos({ analisis }: { analisis: AnalisisPlato }) {
       </h3>
       <div className="flex items-center gap-3 mb-3">
         <span className="text-2xl font-bold text-emerald-700">{h.puntaje}</span>
-        <span className="text-sm text-gray-600">/100 · {h.veredicto}</span>
+        <span className="text-sm text-gray-600 dark:text-gray-300">/100 · {h.veredicto}</span>
       </div>
       {h.pilares.length > 0 && (
         <div className="mb-2">
           <p className="text-xs font-semibold text-emerald-800">✨ Pilares de vigor:</p>
-          <ul className="text-sm text-gray-700 list-disc pl-5">
+          <ul className="text-sm text-gray-700 dark:text-gray-200 list-disc pl-5">
             {h.pilares.map((p, i) => (
               <li key={i}><strong>{p.nombre}</strong>: {p.razon}</li>
             ))}
@@ -264,7 +264,7 @@ function DatosHildegardianos({ analisis }: { analisis: AnalisisPlato }) {
       {h.venenos.length > 0 && (
         <div className="mb-2">
           <p className="text-xs font-semibold text-red-700">🚫 Venenos de cocina:</p>
-          <ul className="text-sm text-gray-700 list-disc pl-5">
+          <ul className="text-sm text-gray-700 dark:text-gray-200 list-disc pl-5">
             {h.venenos.map((v, i) => (
               <li key={i}><strong>{v.nombre}</strong>: {v.razon}</li>
             ))}
@@ -274,7 +274,7 @@ function DatosHildegardianos({ analisis }: { analisis: AnalisisPlato }) {
       {h.precauciones.length > 0 && (
         <div className="mb-2">
           <p className="text-xs font-semibold text-amber-700">⚠️ Precauciones:</p>
-          <ul className="text-sm text-gray-700 list-disc pl-5">
+          <ul className="text-sm text-gray-700 dark:text-gray-200 list-disc pl-5">
             {h.precauciones.map((p, i) => (
               <li key={i}><strong>{p.nombre}</strong>: {p.motivo}</li>
             ))}
@@ -284,7 +284,7 @@ function DatosHildegardianos({ analisis }: { analisis: AnalisisPlato }) {
       {h.recomendaciones.length > 0 && (
         <div className="mt-2 space-y-1">
           {h.recomendaciones.map((r, i) => (
-            <p key={i} className="text-sm text-gray-700">{r}</p>
+            <p key={i} className="text-sm text-gray-700 dark:text-gray-200">{r}</p>
           ))}
         </div>
       )}
@@ -296,7 +296,7 @@ function TarjetaPlato({ plato, onSelect }: { plato: Plato; onSelect: (p: Plato) 
   return (
     <div
       onClick={() => plato.receta && onSelect(plato)}
-      className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden flex flex-col ${
+      className={`bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden flex flex-col ${
         plato.receta ? 'cursor-pointer hover:scale-105' : ''
       }`}
     >
@@ -320,14 +320,14 @@ function TarjetaPlato({ plato, onSelect }: { plato: Plato; onSelect: (p: Plato) 
 
       <div className="p-6 flex flex-col flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-lg font-bold text-gray-800">{plato.nombre}</h3>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{plato.nombre}</h3>
           {plato.receta && (
             <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-semibold">
               📖 Receta
             </span>
           )}
         </div>
-        <p className="text-gray-600 text-sm mt-1">{plato.descripcion}</p>
+        <p className="text-gray-600 dark:text-gray-300 text-sm mt-1">{plato.descripcion}</p>
 
         {plato.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3">
@@ -419,9 +419,9 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     : platoSeleccionado?.receta?.porciones || 1;
 
   return (
-    <>
+    <div className="min-h-screen dark:bg-gray-900">
       {/* Navegación Principal: Tabs */}
-      <div className="bg-white border-b shadow-md sticky top-0 z-20">
+      <div className="bg-white dark:bg-gray-800 border-b shadow-md sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex gap-2 py-3">
             <button
@@ -432,7 +432,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
               className={`flex-1 md:flex-none px-6 py-3 rounded-lg font-bold text-sm md:text-base transition-all ${
                 vistaActiva === 'principales'
                   ? 'bg-amber-500 text-white shadow-lg scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               🍽️ Platos Principales
@@ -445,7 +445,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
               className={`flex-1 md:flex-none px-6 py-3 rounded-lg font-bold text-sm md:text-base transition-all ${
                 vistaActiva === 'extras'
                   ? 'bg-amber-500 text-white shadow-lg scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               ☕ Extras
@@ -458,9 +458,9 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
       {vistaActiva === 'principales' && (
         <>
           {/* Selector de Días */}
-          <div className="bg-amber-50 border-b shadow-sm">
+          <div className="bg-amber-50 dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm">
             <div className="max-w-6xl mx-auto px-4 py-4">
-              <h2 className="text-sm font-semibold text-gray-600 mb-3 text-center">
+              <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-3 text-center">
                 📅 Seleccioná el día de la semana
               </h2>
               <button
@@ -468,7 +468,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                 className={`w-full mb-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${
                   diaActivo === 0
                     ? 'bg-amber-500 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                 }`}
               >
                 🗓️ Disponibles todos los días
@@ -481,7 +481,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                     className={`flex flex-col items-center p-2 md:p-3 rounded-lg transition-all ${
                       diaActivo === dia.id
                         ? 'bg-amber-500 text-white shadow-lg scale-105'
-                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     <span className="text-xl md:text-2xl mb-1">{dia.icono}</span>
@@ -496,7 +496,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
           {/* Contenido: Platos del día */}
           <main className="max-w-6xl mx-auto px-4 py-8">
             <div className="mb-6 text-center">
-              <h2 className="text-2xl font-bold text-gray-800">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                 {diaActivo === 0
                   ? '🗓️ Platos disponibles todos los días'
                   : `🍽️ Platos del ${dias.find(d => d.id === diaActivo)?.nombre}`}
@@ -508,7 +508,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
             {platosPrincipales.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No hay platos disponibles para esta selección</p>
+                <p className="text-gray-500 dark:text-gray-400 text-lg">No hay platos disponibles para esta selección</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -525,7 +525,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
       {vistaActiva === 'extras' && (
         <>
           {/* Selector de Categorías */}
-          <div className="bg-amber-50 border-b shadow-sm sticky top-[72px] z-10">
+          <div className="bg-amber-50 dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm sticky top-[72px] z-10">
             <div className="max-w-6xl mx-auto px-4 py-3">
               <div className="flex gap-2 overflow-x-auto">
                 <button
@@ -533,7 +533,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   className={`flex-shrink-0 px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-all ${
                     categoriaActiva === null
                       ? 'bg-amber-500 text-white shadow-lg'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                   }`}
                 >
                   🍽️ Todos
@@ -545,7 +545,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                     className={`flex-shrink-0 px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-all ${
                       categoriaActiva === cat.id
                         ? 'bg-amber-500 text-white shadow-lg'
-                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     {cat.icono} {cat.nombre} ({cat.platos.length} platos)
@@ -560,13 +560,13 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
             {extrasFiltrados.map((categoria) => (
               <div key={categoria.id} className="mb-12">
                 <div className="mb-6 text-center">
-                  <h2 className="text-2xl font-bold text-gray-800">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                     {categoria.icono} {categoria.nombre}
                   </h2>
                   <p className="text-sm text-amber-700 mt-2 font-semibold">
                     {categoria.platos.length} platos disponibles
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     El conteo de esta vista corresponde a platos publicados en el menú.
                   </p>
                 </div>
@@ -589,7 +589,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
           onClick={() => setPlatoSeleccionado(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 bg-gradient-to-r from-amber-700 to-orange-600 text-white p-6 rounded-t-2xl">
@@ -651,13 +651,13 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
               {/* Ingredientes */}
               <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
                   🥕 Ingredientes (para {porcionesModal} persona{porcionesModal === 1 ? '' : 's'})
                 </h3>
                 <ul className="space-y-2">
                   {ingredientesModal.map((ing, i) => (
                     <li key={i} className="flex justify-between items-center bg-amber-50 p-2 rounded">
-                      <span className="font-medium text-gray-700">{ing.nombre}</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-200">{ing.nombre}</span>
                       <span className="text-amber-700 font-semibold">
                         {ing.textoCantidad}
                       </span>
@@ -668,7 +668,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
               {/* Pasos */}
               <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
                   👨‍🍳 Preparación
                 </h3>
                 <ol className="space-y-3">
@@ -677,7 +677,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                       <span className="flex-shrink-0 w-8 h-8 bg-amber-600 text-white rounded-full flex items-center justify-center font-bold">
                         {i + 1}
                       </span>
-                      <p className="text-gray-700 pt-1">{textoDePaso(paso)}</p>
+                      <p className="text-gray-700 dark:text-gray-200 pt-1">{textoDePaso(paso)}</p>
                     </li>
                   ))}
                 </ol>
@@ -689,7 +689,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   <h3 className="text-lg font-bold text-amber-800 mb-2 flex items-center gap-2">
                     ✨ Sabiduría de Santa Hildegarda
                   </h3>
-                  <p className="text-gray-700 italic">
+                  <p className="text-gray-700 dark:text-gray-200 italic">
                     {platoSeleccionado.receta.notas_hildegardianas}
                   </p>
                 </div>
@@ -701,7 +701,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   <h3 className="text-lg font-bold text-emerald-800 mb-2 flex items-center gap-2">
                     🌿 Informe Hildegardiano
                   </h3>
-                  <p className="text-gray-700 whitespace-pre-line">
+                  <p className="text-gray-700 dark:text-gray-200 whitespace-pre-line">
                     {platoSeleccionado.receta.interpretacion_hildegardiana}
                   </p>
                 </div>
@@ -710,6 +710,6 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

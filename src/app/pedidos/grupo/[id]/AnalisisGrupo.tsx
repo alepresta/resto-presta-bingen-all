@@ -95,7 +95,7 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
 
   if (cargando && !data) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-4 text-center text-gray-500">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 text-center text-gray-500 dark:text-gray-400">
         ⏳ Calculando análisis…
       </div>
     );
@@ -103,13 +103,13 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-4 text-red-600 text-sm">❌ {error}</div>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 text-red-600 text-sm">❌ {error}</div>
     );
   }
 
   if (!data || data.vacio) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-4 text-center text-gray-500 text-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
         Seleccioná platos para ver el análisis nutricional.
       </div>
     );
@@ -120,8 +120,8 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
   return (
     <div className="space-y-4">
       {/* Resumen total */}
-      <div className="bg-white rounded-xl shadow-md p-4">
-        <h2 className="font-bold text-gray-800 mb-3">📊 Análisis nutricional del grupo</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+        <h2 className="font-bold text-gray-800 dark:text-gray-100 mb-3">📊 Análisis nutricional del grupo</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <Macro label="Calorías" valor={total.calorias} unidad="kcal" color="bg-orange-50 text-orange-800" />
           <Macro label="Proteínas" valor={total.proteinas} unidad="g" color="bg-red-50 text-red-800" />
@@ -130,7 +130,7 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
           <Macro label="Fibra" valor={total.fibra} unidad="g" color="bg-green-50 text-green-800" />
         </div>
         {promedioDiario && (
-          <p className="text-xs text-gray-500 mt-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
             Promedio diario: {fmt(promedioDiario.calorias)} kcal · {fmt(promedioDiario.proteinas, 1)} g proteínas · {fmt(promedioDiario.fibra, 1)} g fibra
           </p>
         )}
@@ -138,10 +138,10 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
 
       {/* Análisis hildegardiano */}
       {hildegardiano && (
-        <div className="bg-white rounded-xl shadow-md p-4">
-          <h3 className="font-bold text-gray-800 mb-2">🌿 Análisis hildegardiano</h3>
-          <p className="text-sm text-gray-700 mb-2">{hildegardiano.balance}</p>
-          <div className="w-full h-4 rounded-full overflow-hidden flex bg-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-2">🌿 Análisis hildegardiano</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-200 mb-2">{hildegardiano.balance}</p>
+          <div className="w-full h-4 rounded-full overflow-hidden flex bg-gray-100 dark:bg-gray-700">
             <div
               className="bg-orange-500 h-full flex items-center justify-center text-[10px] text-white"
               style={{ width: `${hildegardiano.porcCalido}%` }}
@@ -164,10 +164,10 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
       )}
 
       {/* Por día */}
-      <div className="bg-white rounded-xl shadow-md p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
         <button
           onClick={() => setDiasAbiertos((v) => !v)}
-          className="w-full flex justify-between items-center font-bold text-gray-800"
+          className="w-full flex justify-between items-center font-bold text-gray-800 dark:text-gray-100"
         >
           <span>📅 Análisis por día</span>
           <span>{diasAbiertos ? '▲' : '▼'}</span>
@@ -187,8 +187,8 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
                 return (
                   <div key={fecha} className="border rounded-lg p-3">
                     <div className="flex justify-between items-center mb-1">
-                      <p className="font-semibold text-gray-800 text-sm capitalize">{label}</p>
-                      <p className="text-xs text-gray-500">{d.platos} platos</p>
+                      <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm capitalize">{label}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{d.platos} platos</p>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                       <span>🔥 {fmt(d.calorias)} kcal</span>
@@ -204,8 +204,8 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
       </div>
 
       {/* Por plato (individual + receta) */}
-      <div className="bg-white rounded-xl shadow-md p-4">
-        <h3 className="font-bold text-gray-800 mb-3">🍽️ Análisis individual de cada plato</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+        <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-3">🍽️ Análisis individual de cada plato</h3>
         <div className="space-y-2">
           {porPlato.map((p) => {
             const abierto = platoAbierto === p.plato_id;
@@ -216,12 +216,12 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
                   className="w-full flex justify-between items-center p-3 text-left"
                 >
                   <div>
-                    <p className="font-semibold text-gray-800 text-sm">{p.nombre}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm">{p.nombre}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {fmt(p.nutricion.calorias)} kcal · {fmt(p.nutricion.proteinas, 1)} g prot · por porción
                     </p>
                   </div>
-                  <span className="text-gray-400">{abierto ? '▲' : '▼'}</span>
+                  <span className="text-gray-400 dark:text-gray-500">{abierto ? '▲' : '▼'}</span>
                 </button>
 
                 {abierto && (
@@ -237,9 +237,9 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
 
                     {/* Receta */}
                     {p.receta ? (
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <p className="font-semibold text-gray-800 text-sm mb-1">📖 Receta</p>
-                        <p className="text-xs text-gray-500 mb-2">
+                      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                        <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm mb-1">📖 Receta</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                           {p.receta.porciones} porciones
                           {p.receta.tiempo_min ? ` · ${p.receta.tiempo_min} min` : ''}
                           {p.receta.dificultad ? ` · ${p.receta.dificultad}` : ''}
@@ -247,15 +247,15 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
 
                         {p.receta.ingredientes.length > 0 && (
                           <>
-                            <p className="text-xs font-semibold text-gray-700 mt-2 mb-1">Ingredientes</p>
-                            <ul className="text-xs text-gray-700 space-y-0.5">
+                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 mt-2 mb-1">Ingredientes</p>
+                            <ul className="text-xs text-gray-700 dark:text-gray-200 space-y-0.5">
                               {p.receta.ingredientes.map((ing, i) => (
                                 <li key={i} className="flex justify-between gap-2">
                                   <span>
                                     {ing.nombre}
                                     {ing.veneno && <span className="text-red-600 ml-1" title="Veneno hildegardiano">⚠️</span>}
                                   </span>
-                                  <span className="text-gray-500 whitespace-nowrap">
+                                  <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                     {ing.cantidad} {ing.unidad}
                                   </span>
                                 </li>
@@ -266,8 +266,8 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
 
                         {p.receta.pasos && p.receta.pasos.length > 0 && (
                           <>
-                            <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Preparación</p>
-                            <ol className="text-xs text-gray-700 list-decimal list-inside space-y-0.5">
+                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 mt-3 mb-1">Preparación</p>
+                            <ol className="text-xs text-gray-700 dark:text-gray-200 list-decimal list-inside space-y-0.5">
                               {p.receta.pasos.map((paso, i) => (
                                 <li key={i}>{paso}</li>
                               ))}
@@ -280,7 +280,7 @@ export default function AnalisisGrupo({ grupoId, refreshKey }: AnalisisGrupoProp
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-400">Este plato no tiene receta cargada.</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">Este plato no tiene receta cargada.</p>
                     )}
                   </div>
                 )}

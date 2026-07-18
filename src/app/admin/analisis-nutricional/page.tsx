@@ -122,7 +122,7 @@ export default function AnalisisNutricionalPage() {
   const BarraProgreso = ({ valor, maximo, color }: { valor: number; maximo: number; color: string }) => {
     const porcentaje = Math.min((valor / maximo) * 100, 100);
     return (
-      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
         <div className={`h-2 rounded-full ${color}`} style={{ width: `${porcentaje}%` }} />
       </div>
     );
@@ -131,7 +131,7 @@ export default function AnalisisNutricionalPage() {
   const totalCaloriasTemp = Object.values(temperamentos).reduce((sum, t) => sum + t.calorias, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-purple-700 to-pink-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -146,15 +146,15 @@ export default function AnalisisNutricionalPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Analizar un grupo puntual */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6 border-l-4 border-emerald-500">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">👥 Analizar un grupo</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6 border-l-4 border-emerald-500">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">👥 Analizar un grupo</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-3">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Grupo</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Grupo</label>
               <select
                 value={grupoSel}
                 onChange={(e) => setGrupoSel(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="">Seleccioná un grupo…</option>
                 {grupos.map((g: any) => (
@@ -174,7 +174,7 @@ export default function AnalisisNutricionalPage() {
               </button>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Analiza el grupo elegido usando sus propias fechas (sin importar si está confirmado).
           </p>
 
@@ -195,7 +195,7 @@ export default function AnalisisNutricionalPage() {
                 className={`flex-1 py-3 px-6 rounded-lg font-bold transition-all ${
                   tabActiva === 'nutricional'
                     ? 'bg-purple-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 🧪 Análisis Nutricional
@@ -205,7 +205,7 @@ export default function AnalisisNutricionalPage() {
                 className={`flex-1 py-3 px-6 rounded-lg font-bold transition-all ${
                   tabActiva === 'hildegardiano'
                     ? 'bg-green-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 🌿 Informe Hildegardiano
@@ -217,8 +217,8 @@ export default function AnalisisNutricionalPage() {
               <>
                 {/* Balance Hildegardiano (simplificado) */}
                 {totalCaloriasTemp > 0 && (
-                  <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">🌿 Balance de Temperamentos</h2>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">🌿 Balance de Temperamentos</h2>
                     <div className="space-y-3">
                       {Object.entries(temperamentos)
                         .filter(([, data]) => data.calorias > 0)
@@ -231,14 +231,14 @@ export default function AnalisisNutricionalPage() {
                               <div className="flex justify-between items-center mb-1">
                                 <div className="flex items-center gap-2">
                                   <span className="text-xl">{info.icono}</span>
-                                  <span className="font-semibold text-gray-800">{info.nombre}</span>
+                                  <span className="font-semibold text-gray-800 dark:text-gray-100">{info.nombre}</span>
                                 </div>
                                 <div className="text-right">
-                                  <span className="font-bold text-gray-800">{porcentaje.toFixed(1)}%</span>
-                                  <span className="text-xs text-gray-500 ml-2">({data.calorias.toFixed(0)} kcal)</span>
+                                  <span className="font-bold text-gray-800 dark:text-gray-100">{porcentaje.toFixed(1)}%</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">({data.calorias.toFixed(0)} kcal)</span>
                                 </div>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-4">
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
                                 <div className={`h-4 rounded-full ${info.color} transition-all`} style={{ width: `${porcentaje}%` }} />
                               </div>
                             </div>
@@ -250,7 +250,7 @@ export default function AnalisisNutricionalPage() {
 
                 {/* Alertas */}
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-gray-800 mb-4">🚨 Alertas Nutricionales</h2>
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">🚨 Alertas Nutricionales</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {alertas.map((alerta, i) => (
                       <div
@@ -282,20 +282,20 @@ export default function AnalisisNutricionalPage() {
                 </div>
 
                 {/* Tabla comparativa VDR */}
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-                  <h2 className="text-xl font-bold text-gray-800 mb-4">📋 Tabla Comparativa: Menú vs VDR</h2>
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">📋 Tabla Comparativa: Menú vs VDR</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
+                      <thead className="bg-gray-50 dark:bg-gray-900 border-b">
                         <tr>
-                          <th className="text-left px-4 py-3 font-semibold text-gray-700">Nutriente</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">Promedio/día</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">VDR</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">% Cumplimiento</th>
-                          <th className="text-center px-4 py-3 font-semibold text-gray-700">Estado</th>
+                          <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Nutriente</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Promedio/día</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">VDR</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">% Cumplimiento</th>
+                          <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Estado</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {[
                           { grupo: '🔥 Macronutrientes' },
                           { nombre: 'Calorías', valor: resumen.promedioDiario.calorias, vdr: 2000, unidad: 'kcal', porcentaje: resumen.porcentajeVDR.calorias, tipo: 'rango' },
@@ -328,14 +328,14 @@ export default function AnalisisNutricionalPage() {
                           { nombre: 'Vitamina B12', valor: resumen.promedioDiario.vitaminaB12, vdr: 2.4, unidad: 'mcg', porcentaje: resumen.porcentajeVDR.vitaminaB12, tipo: 'min' },
                         ].map((row: any, i: number) => (
                           row.grupo ? (
-                            <tr key={i} className="bg-gray-50">
-                              <td colSpan={5} className="px-4 py-2 font-bold text-gray-700">{row.grupo}</td>
+                            <tr key={i} className="bg-gray-50 dark:bg-gray-900">
+                              <td colSpan={5} className="px-4 py-2 font-bold text-gray-700 dark:text-gray-200">{row.grupo}</td>
                             </tr>
                           ) : (
                             <tr key={i}>
                               <td className="px-4 py-3">{row.nombre}</td>
                               <td className="px-4 py-3 text-right font-semibold">{Number(row.valor).toFixed(1)} {row.unidad}</td>
-                              <td className="px-4 py-3 text-right text-gray-600">{row.vdr} {row.unidad}{row.tipo === 'max' ? ' (máx)' : ''}</td>
+                              <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{row.vdr} {row.unidad}{row.tipo === 'max' ? ' (máx)' : ''}</td>
                               <td className="px-4 py-3 text-right font-bold">{Number(row.porcentaje).toFixed(0)}%</td>
                               <td className="px-4 py-3 text-center">
                                 {(() => {
@@ -364,27 +364,27 @@ export default function AnalisisNutricionalPage() {
                 </div>
 
                 {/* Desglose diario */}
-                <div className="bg-white rounded-xl shadow-md p-6">
-                  <h2 className="text-xl font-bold text-gray-800 mb-4">📅 Desglose Diario</h2>
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">📅 Desglose Diario</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
+                      <thead className="bg-gray-50 dark:bg-gray-900 border-b">
                         <tr>
-                          <th className="text-left px-4 py-3 font-semibold text-gray-700">Fecha</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">Platos</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">🔥 kcal</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">💪 Prot</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">🍞 Carbs</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">🥑 Grasas</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-700">🧂 Sodio</th>
+                          <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Fecha</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Platos</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">🔥 kcal</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">💪 Prot</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">🍞 Carbs</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">🥑 Grasas</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">🧂 Sodio</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {Object.entries(porDia)
                           .sort(([a], [b]) => a.localeCompare(b))
                           .map(([fecha, data]: [string, any]) => (
-                            <tr key={fecha} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 font-semibold text-gray-800">
+                            <tr key={fecha} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <td className="px-4 py-3 font-semibold text-gray-800 dark:text-gray-100">
                                 {new Date(fecha).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
                               </td>
                               <td className="px-4 py-3 text-right">{data.platos}</td>
@@ -393,7 +393,7 @@ export default function AnalisisNutricionalPage() {
                               <td className="px-4 py-3 text-right text-orange-600">{data.carbohidratos.toFixed(1)}g</td>
                               <td className="px-4 py-3 text-right text-yellow-600">{data.grasas.toFixed(1)}g</td>
                               <td className="px-4 py-3 text-right">
-                                <span className={data.sodio > 2300 ? 'text-red-600 font-bold' : 'text-gray-700'}>
+                                <span className={data.sodio > 2300 ? 'text-red-600 font-bold' : 'text-gray-700 dark:text-gray-200'}>
                                   {data.sodio.toFixed(0)} mg
                                 </span>
                               </td>
@@ -416,60 +416,60 @@ export default function AnalisisNutricionalPage() {
                   informe.diagnostico.color === 'orange' ? 'bg-orange-50 border-orange-500' :
                   'bg-red-50 border-red-500'
                 }`}>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                     🎯 Diagnóstico Final: {informe.diagnostico.nivel}
                   </h2>
-                  <p className="text-gray-700 text-lg">{informe.diagnostico.mensaje}</p>
+                  <p className="text-gray-700 dark:text-gray-200 text-lg">{informe.diagnostico.mensaje}</p>
                 </div>
 
                 {/* Grid de índices principales */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {/* 🟢 VIRIDITAS */}
-                  <div className="bg-white rounded-xl shadow-md p-6 border-l-8 border-green-500">
-                    <h3 className="text-lg font-bold text-gray-800 mb-3">🟢 Viriditas (Vigor Verde)</h3>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-8 border-green-500">
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">🟢 Viriditas (Vigor Verde)</h3>
                     <div className="flex items-center gap-4 mb-3">
                       <div className="text-5xl font-bold text-green-600">
                         {informe.viriditas.puntaje.toFixed(1)}
                       </div>
-                      <div className="text-sm text-gray-600">/ 10</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">/ 10</div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-3">
                       <div
                         className="h-3 rounded-full bg-green-500 transition-all"
                         style={{ width: `${(informe.viriditas.puntaje / 10) * 100}%` }}
                       />
                     </div>
-                    <p className="text-sm text-gray-700">{informe.viriditas.interpretacion}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-200">{informe.viriditas.interpretacion}</p>
                   </div>
 
                   {/* ⚖️ EUCRASIA */}
-                  <div className="bg-white rounded-xl shadow-md p-6 border-l-8 border-blue-500">
-                    <h3 className="text-lg font-bold text-gray-800 mb-3">⚖️ Eucrasia (Balance de Humores)</h3>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-8 border-blue-500">
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">⚖️ Eucrasia (Balance de Humores)</h3>
                     <div className="flex items-center gap-4 mb-3">
                       <div className="text-5xl font-bold text-blue-600">
                         {informe.eucrasia.puntaje.toFixed(1)}
                       </div>
-                      <div className="text-sm text-gray-600">/ 10</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">/ 10</div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mb-3">
                       <div className="bg-red-50 p-2 rounded text-center">
-                        <p className="text-xs text-gray-600">🔥 Cálido</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">🔥 Cálido</p>
                         <p className="font-bold text-red-600">{informe.eucrasia.calido.toFixed(0)}%</p>
                       </div>
                       <div className="bg-blue-50 p-2 rounded text-center">
-                        <p className="text-xs text-gray-600">❄️ Frío</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">❄️ Frío</p>
                         <p className="font-bold text-blue-600">{informe.eucrasia.frio.toFixed(0)}%</p>
                       </div>
                       <div className="bg-amber-50 p-2 rounded text-center">
-                        <p className="text-xs text-gray-600">☀️ Seco</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">☀️ Seco</p>
                         <p className="font-bold text-amber-600">{informe.eucrasia.seco.toFixed(0)}%</p>
                       </div>
                       <div className="bg-teal-50 p-2 rounded text-center">
-                        <p className="text-xs text-gray-600">💧 Húmedo</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">💧 Húmedo</p>
                         <p className="font-bold text-teal-600">{informe.eucrasia.humedo.toFixed(0)}%</p>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700">{informe.eucrasia.interpretacion}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-200">{informe.eucrasia.interpretacion}</p>
                   </div>
                 </div>
 
@@ -479,7 +479,7 @@ export default function AnalisisNutricionalPage() {
                   <div className={`rounded-xl shadow-md p-6 border-l-8 ${
                     informe.venenos.cantidad === 0 ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'
                   }`}>
-                    <h3 className="text-lg font-bold text-gray-800 mb-3">🚫 Venenos de Cocina</h3>
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">🚫 Venenos de Cocina</h3>
                     <div className="text-5xl font-bold mb-3">
                       {informe.venenos.cantidad === 0 ? (
                         <span className="text-green-600">✅</span>
@@ -487,13 +487,13 @@ export default function AnalisisNutricionalPage() {
                         <span className="text-red-600">{informe.venenos.cantidad}</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-700 mb-3">{informe.venenos.interpretacion}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-200 mb-3">{informe.venenos.interpretacion}</p>
                     {informe.venenos.cantidad > 0 && (
                       <div className="space-y-2 mt-3">
                         {[...new Set(informe.venenos.lista.map(v => v.nombre))].map((nombre, i) => (
-                          <div key={i} className="bg-white p-2 rounded text-xs">
+                          <div key={i} className="bg-white dark:bg-gray-800 p-2 rounded text-xs">
                             <p className="font-semibold text-red-700">{nombre}</p>
-                            <p className="text-gray-600">{informe.venenos.lista.find(v => v.nombre === nombre)?.razon}</p>
+                            <p className="text-gray-600 dark:text-gray-300">{informe.venenos.lista.find(v => v.nombre === nombre)?.razon}</p>
                           </div>
                         ))}
                       </div>
@@ -501,36 +501,36 @@ export default function AnalisisNutricionalPage() {
                   </div>
 
                   {/* ✨ PILARES DE ALEGRÍA */}
-                  <div className="bg-white rounded-xl shadow-md p-6 border-l-8 border-purple-500">
-                    <h3 className="text-lg font-bold text-gray-800 mb-3">✨ Pilares de Alegría</h3>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-8 border-purple-500">
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">✨ Pilares de Alegría</h3>
                     <div className="flex items-center gap-4 mb-3">
                       <div className="text-5xl font-bold text-purple-600">
                         {informe.pilares.presentes.length}
                       </div>
-                      <div className="text-sm text-gray-600">/ 4</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">/ 4</div>
                     </div>
                     <div className="space-y-1 mb-3">
                       {['Espelta', 'Hinojo', 'Galanga', 'Castañas'].map((pilar) => (
                         <div key={pilar} className="flex items-center gap-2">
                           <span>{informe.pilares.presentes.includes(pilar) ? '✅' : '❌'}</span>
-                          <span className="text-sm text-gray-700">{pilar}</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">{pilar}</span>
                         </div>
                       ))}
                     </div>
-                    <p className="text-sm text-gray-700">{informe.pilares.interpretacion}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-200">{informe.pilares.interpretacion}</p>
                   </div>
 
                   {/* 🔥 MADURACIÓN POR FUEGO */}
                   <div className={`rounded-xl shadow-md p-6 border-l-8 ${
                     informe.maduracion.porcentajeCocido >= 85 ? 'bg-green-50 border-green-500' : 'bg-orange-50 border-orange-500'
                   }`}>
-                    <h3 className="text-lg font-bold text-gray-800 mb-3">🔥 Maduración por Fuego</h3>
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">🔥 Maduración por Fuego</h3>
                     <div className="flex items-center gap-4 mb-3">
                       <div className="text-5xl font-bold text-orange-600">
                         {informe.maduracion.porcentajeCocido.toFixed(0)}%
                       </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-3">
                       <div
                         className={`h-3 rounded-full transition-all ${
                           informe.maduracion.porcentajeCocido >= 85 ? 'bg-green-500' : 'bg-orange-500'
@@ -538,19 +538,19 @@ export default function AnalisisNutricionalPage() {
                         style={{ width: `${informe.maduracion.porcentajeCocido}%` }}
                       />
                     </div>
-                    <p className="text-sm text-gray-700">{informe.maduracion.interpretacion}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-200">{informe.maduracion.interpretacion}</p>
                   </div>
                 </div>
 
                 {/* 🔄 COMPENSACIÓN */}
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-                  <h3 className="text-lg font-bold text-gray-800 mb-3">🔄 Secuencia Compensatoria</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">🔄 Secuencia Compensatoria</h3>
                   <div className="flex items-center gap-4 mb-3">
                     <div className="text-4xl font-bold text-cyan-600">
                       {informe.compensacion.porcentaje.toFixed(0)}%
                     </div>
                     <div className="flex-1">
-                      <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                         <div
                           className="h-3 rounded-full bg-cyan-500 transition-all"
                           style={{ width: `${informe.compensacion.porcentaje}%` }}
@@ -558,19 +558,19 @@ export default function AnalisisNutricionalPage() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-700">{informe.compensacion.interpretacion}</p>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-200">{informe.compensacion.interpretacion}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     Hildegarda: "Después de un alimento seco debe seguir uno húmedo para que se equilibren"
                   </p>
                 </div>
 
                 {/* 📋 RECOMENDACIONES */}
                 <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-md p-6 border-l-8 border-amber-500">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">📋 Recomendaciones Hildegardianas</h3>
+                  <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">📋 Recomendaciones Hildegardianas</h3>
                   <div className="space-y-3">
                     {informe.recomendaciones.map((rec, i) => (
-                      <div key={i} className="bg-white p-4 rounded-lg shadow-sm">
-                        <p className="text-gray-800">{rec}</p>
+                      <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                        <p className="text-gray-800 dark:text-gray-100">{rec}</p>
                       </div>
                     ))}
                   </div>

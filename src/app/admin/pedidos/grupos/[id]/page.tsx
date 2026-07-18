@@ -155,7 +155,7 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
   const totalPlatosGeneral = resumenPorDia.reduce((s, d) => s + d.totalPlatosDia, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-indigo-700 to-blue-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -168,7 +168,7 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
             <Link href="/admin/pedidos/grupos" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-semibold">
               ← Volver
             </Link>
-            <Link href={`/pedidos/grupo/${grupo.id}`} className="bg-white text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-lg text-sm font-semibold" target="_blank">
+            <Link href={`/pedidos/grupo/${grupo.id}`} className="bg-white dark:bg-gray-800 text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-lg text-sm font-semibold" target="_blank">
               👁️ Ver como cliente
             </Link>
           </div>
@@ -178,55 +178,55 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500">
-            <p className="text-xs text-gray-600 font-semibold">ESTADO</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-blue-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">ESTADO</p>
             <p className={`text-lg font-bold mt-1 ${
               grupo.estado === 'confirmado' ? 'text-green-600' :
               grupo.estado === 'armando' ? 'text-yellow-600' :
-              grupo.estado === 'cancelado' ? 'text-red-600' : 'text-gray-600'
+              grupo.estado === 'cancelado' ? 'text-red-600' : 'text-gray-600 dark:text-gray-300'
             }`}>
               {grupo.estado.toUpperCase()}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
-            <p className="text-xs text-gray-600 font-semibold">MIEMBROS</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-purple-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">MIEMBROS</p>
             <p className="text-2xl font-bold">{totalMiembros}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
-            <p className="text-xs text-gray-600 font-semibold">CONFIRMADOS</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-green-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">CONFIRMADOS</p>
             <p className="text-2xl font-bold">{miembrosConfirmados}/{totalMiembros}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-amber-500">
-            <p className="text-xs text-gray-600 font-semibold">PLATOS A PREPARAR</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-amber-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">PLATOS A PREPARAR</p>
             <p className="text-2xl font-bold">{totalPlatosGeneral}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-orange-500">
-            <p className="text-xs text-gray-600 font-semibold">TOTAL</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-orange-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">TOTAL</p>
             <p className="text-2xl font-bold">${totalGeneral.toLocaleString('es-AR')}</p>
           </div>
         </div>
 
         {/* Acciones del grupo (confirmar / desconfirmar / cancelar / eliminar) */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-800">⚙️ Acciones del grupo</h2>
-            <p className="text-sm text-gray-500">Confirmá o desconfirmá el pedido, o gestioná su estado.</p>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">⚙️ Acciones del grupo</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Confirmá o desconfirmá el pedido, o gestioná su estado.</p>
           </div>
           <AccionesGrupo grupoId={grupo.id} estado={grupo.estado} />
         </div>
 
         {/* Gestión de miembros (sin límite) */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">👥 Miembros del Grupo ({totalMiembros})</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">👥 Miembros del Grupo ({totalMiembros})</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {grupo.miembros?.map((miembro: any) => (
-              <div key={miembro.id} className={`p-4 rounded-lg border-2 ${miembro.confirmado_general ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-gray-200'}`}>
+              <div key={miembro.id} className={`p-4 rounded-lg border-2 ${miembro.confirmado_general ? 'bg-green-50 border-green-500' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'}`}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-bold text-gray-800">{miembro.cliente?.nombre}</p>
-                    <p className="text-sm text-gray-600">{miembro.cliente?.email}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="font-bold text-gray-800 dark:text-gray-100">{miembro.cliente?.nombre}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{miembro.cliente?.email}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Rol: {miembro.rol}{miembro.joined_at ? ` · Se unió: ${new Date(miembro.joined_at).toLocaleDateString('es-AR')}` : ''}
                     </p>
                   </div>
@@ -237,7 +237,7 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
               </div>
             ))}
             {totalMiembros === 0 && (
-              <p className="text-gray-500">Este grupo todavía no tiene miembros.</p>
+              <p className="text-gray-500 dark:text-gray-400">Este grupo todavía no tiene miembros.</p>
             )}
           </div>
 

@@ -21,7 +21,7 @@ export default async function AdminGruposPage() {
     .order('fecha_inicio', { ascending: false });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-gradient-to-r from-indigo-700 to-blue-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -37,7 +37,7 @@ export default async function AdminGruposPage() {
             </Link>
             <Link
               href="/admin/pedidos/grupos/nuevo"
-              className="bg-white text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-lg text-sm font-semibold"
+              className="bg-white dark:bg-gray-800 text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-lg text-sm font-semibold"
             >
               ➕ Crear Grupo
             </Link>
@@ -54,24 +54,24 @@ export default async function AdminGruposPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500">
-            <p className="text-xs text-gray-600 font-semibold">TOTAL GRUPOS</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-blue-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">TOTAL GRUPOS</p>
             <p className="text-2xl font-bold">{grupos?.length || 0}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-yellow-500">
-            <p className="text-xs text-gray-600 font-semibold">ARMANDO</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-yellow-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">ARMANDO</p>
             <p className="text-2xl font-bold">
               {grupos?.filter((g) => g.estado === 'armando').length || 0}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
-            <p className="text-xs text-gray-600 font-semibold">CONFIRMADOS</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-green-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">CONFIRMADOS</p>
             <p className="text-2xl font-bold">
               {grupos?.filter((g) => g.estado === 'confirmado').length || 0}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
-            <p className="text-xs text-gray-600 font-semibold">MIEMBROS TOTALES</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-purple-500">
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">MIEMBROS TOTALES</p>
             <p className="text-2xl font-bold">
               {grupos?.reduce((sum, g) => sum + (g.miembros?.length || 0), 0) || 0}
             </p>
@@ -121,7 +121,7 @@ export default async function AdminGruposPage() {
                   {/* Info del grupo */}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <h3 className="font-bold text-gray-800 text-xl">
+                      <h3 className="font-bold text-gray-800 dark:text-gray-100 text-xl">
                         🔐 {grupo.palabra_secreta}
                       </h3>
                       <span className={`px-4 py-2 rounded-full text-sm font-bold ${colores.badge} shadow-sm`}>
@@ -131,22 +131,22 @@ export default async function AdminGruposPage() {
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <div>
-                        <p className="text-gray-500 text-xs">📅 Período</p>
-                        <p className="font-semibold text-gray-800">
+                        <p className="text-gray-500 dark:text-gray-400 text-xs">📅 Período</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-100">
                           {new Date(grupo.fecha_inicio).toLocaleDateString('es-AR')} - {new Date(grupo.fecha_fin).toLocaleDateString('es-AR')}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-500 text-xs">👥 Miembros</p>
-                        <p className="font-semibold text-gray-800">{totalMiembros}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs">👥 Miembros</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-100">{totalMiembros}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500 text-xs">✅ Confirmados</p>
-                        <p className="font-semibold text-gray-800">{miembrosConfirmados}/{totalMiembros}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs">✅ Confirmados</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-100">{miembrosConfirmados}/{totalMiembros}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500 text-xs">🍽️ Platos</p>
-                        <p className="font-semibold text-gray-800">{totalItems}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs">🍽️ Platos</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-100">{totalItems}</p>
                       </div>
                     </div>
                   </div>
@@ -171,8 +171,8 @@ export default async function AdminGruposPage() {
         </div>
 
         {(!grupos || grupos.length === 0) && (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <p className="text-gray-500 text-lg mb-4">No hay grupos creados aún</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">No hay grupos creados aún</p>
             <Link
               href="/admin/pedidos/grupos/nuevo"
               className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 font-semibold"

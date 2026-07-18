@@ -134,7 +134,7 @@ export default function CrearGrupoPage() {
             <div
               key={s}
               className={`flex-1 h-2 mx-1 rounded-full ${
-                s <= step ? 'bg-amber-500' : 'bg-gray-200'
+                s <= step ? 'bg-amber-500' : 'bg-gray-200 dark:bg-gray-700'
               }`}
             />
           ))}
@@ -142,45 +142,45 @@ export default function CrearGrupoPage() {
 
         {/* Paso 1: Datos personales */}
         {step === 1 && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Tus datos</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Tus datos</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Nombre completo *
                 </label>
                 <input
                   type="text"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                   placeholder="Ej: María González"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Email *
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                   placeholder="maria@ejemplo.com"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Teléfono (opcional)
                 </label>
                 <input
                   type="tel"
                   value={telefono}
                   onChange={(e) => setTelefono(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                   placeholder="+54 11 1234-5678"
                 />
               </div>
@@ -210,8 +210,8 @@ export default function CrearGrupoPage() {
 
         {/* Paso 2: Fechas */}
         {step === 2 && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Fechas del plan</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Fechas del plan</h2>
             
             <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded">
               <p className="text-amber-800">
@@ -221,7 +221,7 @@ export default function CrearGrupoPage() {
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Fecha de inicio (mínimo {fechaMinima.toLocaleDateString('es-AR')})
                 </label>
                 <input
@@ -229,12 +229,12 @@ export default function CrearGrupoPage() {
                   value={fechaInicio}
                   min={fechaMinimaStr}
                   onChange={(e) => setFechaInicio(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                   Fecha de fin (máximo 30 días)
                 </label>
                 <input
@@ -242,7 +242,7 @@ export default function CrearGrupoPage() {
                   value={fechaFin}
                   min={fechaInicio || fechaMinimaStr}
                   onChange={(e) => setFechaFin(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               
@@ -265,7 +265,7 @@ export default function CrearGrupoPage() {
               {!logueado && (
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-300"
+                  className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-lg hover:bg-gray-300"
                 >
                   ← Atrás
                 </button>
@@ -315,36 +315,36 @@ export default function CrearGrupoPage() {
           };
 
           return (
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
               <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">¡Grupo creado!</h2>
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">¡Grupo creado!</h2>
 
               <div className="bg-gradient-to-r from-amber-100 to-orange-100 p-6 rounded-xl mb-4">
-                <p className="text-sm text-gray-600 mb-2">Tu código para invitar es:</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Tu código para invitar es:</p>
                 <div className="text-5xl font-bold text-amber-700 tracking-widest">
                   {grupoCreado.palabra_secreta}
                 </div>
               </div>
 
               {/* Datos del grupo */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-left space-y-1">
-                <p className="text-sm text-gray-700">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6 text-left space-y-1">
+                <p className="text-sm text-gray-700 dark:text-gray-200">
                   <span className="font-semibold">👤 Creado por:</span> {nombre}
                 </p>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-gray-700 dark:text-gray-200">
                   <span className="font-semibold">📅 Fechas del plan:</span> {rangoFechas}
                 </p>
               </div>
 
               {/* Mensaje para copiar y pegar / WhatsApp */}
               <div className="text-left mb-6">
-                <p className="font-semibold text-gray-800 mb-2">📱 Mensaje para compartir:</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-100 mb-2">📱 Mensaje para compartir:</p>
                 <textarea
                   readOnly
                   value={mensaje}
                   onFocus={(e) => e.target.select()}
                   rows={8}
-                  className="w-full text-sm px-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 resize-none"
+                  className="w-full text-sm px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 resize-none"
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                   <button

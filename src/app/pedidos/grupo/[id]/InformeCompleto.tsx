@@ -44,12 +44,12 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
   }, [grupoId, refreshKey]);
 
   if (cargando && !data) {
-    return <div className="bg-white rounded-xl shadow-md p-4 text-center text-gray-500">⏳ Generando informe completo…</div>;
+    return <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 text-center text-gray-500 dark:text-gray-400">⏳ Generando informe completo…</div>;
   }
-  if (error) return <div className="bg-white rounded-xl shadow-md p-4 text-red-600 text-sm">❌ {error}</div>;
+  if (error) return <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 text-red-600 text-sm">❌ {error}</div>;
   if (!data || data.vacio) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-4 text-center text-gray-500 text-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
         Seleccioná platos para generar el informe completo.
       </div>
     );
@@ -93,21 +93,21 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
 
   const Barra = ({ label, valor, color }: { label: string; valor: number; color: string }) => (
     <div>
-      <div className="flex justify-between text-xs text-gray-600 mb-0.5">
+      <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300 mb-0.5">
         <span>{label}</span>
         <span>{fmt(valor)}%</span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
         <div className={`h-2 rounded-full ${color}`} style={{ width: `${Math.min(valor, 100)}%` }} />
       </div>
     </div>
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-md">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md">
       <button
         onClick={() => setAbierto((v) => !v)}
-        className="w-full flex justify-between items-center p-4 font-bold text-gray-800"
+        className="w-full flex justify-between items-center p-4 font-bold text-gray-800 dark:text-gray-100"
       >
         <span>🧪 Informe completo (hildegardiano + científico)</span>
         <span>{abierto ? '▲' : '▼'}</span>
@@ -117,7 +117,7 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
         <div className="px-4 pb-4 space-y-5">
           {/* Diagnóstico */}
           {h?.diagnostico && (
-            <div className={`border-l-4 rounded-lg p-4 ${COLOR_DIAG[h.diagnostico.color] || 'bg-gray-50 border-gray-400 text-gray-800'}`}>
+            <div className={`border-l-4 rounded-lg p-4 ${COLOR_DIAG[h.diagnostico.color] || 'bg-gray-50 dark:bg-gray-900 border-gray-400 text-gray-800 dark:text-gray-100'}`}>
               <p className="font-bold">🎯 Diagnóstico: {h.diagnostico.nivel}</p>
               <p className="text-sm mt-1">{h.diagnostico.mensaje}</p>
             </div>
@@ -126,28 +126,28 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
           {/* Viriditas + Eucrasia */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="border rounded-lg p-4">
-              <p className="font-semibold text-gray-800">🟢 Viriditas (Vigor Verde)</p>
-              <p className="text-3xl font-bold text-green-600">{fmt(h.viriditas.puntaje, 1)}<span className="text-base text-gray-400"> / 10</span></p>
-              <p className="text-xs text-gray-600 mt-1">{h.viriditas.interpretacion}</p>
+              <p className="font-semibold text-gray-800 dark:text-gray-100">🟢 Viriditas (Vigor Verde)</p>
+              <p className="text-3xl font-bold text-green-600">{fmt(h.viriditas.puntaje, 1)}<span className="text-base text-gray-400 dark:text-gray-500"> / 10</span></p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{h.viriditas.interpretacion}</p>
             </div>
             <div className="border rounded-lg p-4">
-              <p className="font-semibold text-gray-800">⚖️ Eucrasia (Balance de Humores)</p>
-              <p className="text-3xl font-bold text-amber-600 mb-2">{fmt(h.eucrasia.puntaje, 1)}<span className="text-base text-gray-400"> / 10</span></p>
+              <p className="font-semibold text-gray-800 dark:text-gray-100">⚖️ Eucrasia (Balance de Humores)</p>
+              <p className="text-3xl font-bold text-amber-600 mb-2">{fmt(h.eucrasia.puntaje, 1)}<span className="text-base text-gray-400 dark:text-gray-500"> / 10</span></p>
               <div className="space-y-2">
                 <Barra label="🔥 Cálido" valor={h.eucrasia.calido} color="bg-orange-500" />
                 <Barra label="❄️ Frío" valor={h.eucrasia.frio} color="bg-blue-500" />
                 <Barra label="☀️ Seco" valor={h.eucrasia.seco} color="bg-yellow-500" />
                 <Barra label="💧 Húmedo" valor={h.eucrasia.humedo} color="bg-teal-500" />
               </div>
-              <p className="text-xs text-gray-600 mt-2">{h.eucrasia.interpretacion}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">{h.eucrasia.interpretacion}</p>
             </div>
           </div>
 
           {/* Venenos + Pilares */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="border rounded-lg p-4">
-              <p className="font-semibold text-gray-800">🚫 Venenos de Cocina ({h.venenos.cantidad})</p>
-              <p className="text-xs text-gray-600 mt-1">{h.venenos.interpretacion}</p>
+              <p className="font-semibold text-gray-800 dark:text-gray-100">🚫 Venenos de Cocina ({h.venenos.cantidad})</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{h.venenos.interpretacion}</p>
               {h.venenos.lista.length > 0 && (
                 <ul className="mt-2 text-xs text-red-700 space-y-1">
                   {Array.from(new Map(h.venenos.lista.map((v: any) => [v.nombre, v])).values()).map((v: any, i: number) => (
@@ -159,40 +159,40 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
               )}
             </div>
             <div className="border rounded-lg p-4">
-              <p className="font-semibold text-gray-800">✨ Pilares de Alegría ({h.pilares.presentes.length}/4)</p>
+              <p className="font-semibold text-gray-800 dark:text-gray-100">✨ Pilares de Alegría ({h.pilares.presentes.length}/4)</p>
               <div className="flex flex-wrap gap-2 mt-2">
                 {['Espelta', 'Hinojo', 'Galanga', 'Castañas'].map((p) => {
                   const ok = h.pilares.presentes.includes(p);
                   return (
-                    <span key={p} className={`text-xs px-2 py-1 rounded-full ${ok ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
+                    <span key={p} className={`text-xs px-2 py-1 rounded-full ${ok ? 'bg-green-100 text-green-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'}`}>
                       {ok ? '✅' : '⬜'} {p}
                     </span>
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-600 mt-2">{h.pilares.interpretacion}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">{h.pilares.interpretacion}</p>
             </div>
           </div>
 
           {/* Maduración + Compensación */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="border rounded-lg p-4">
-              <p className="font-semibold text-gray-800">🔥 Maduración por Fuego</p>
-              <p className="text-2xl font-bold text-gray-800">{fmt(h.maduracion.porcentajeCocido)}%</p>
-              <p className="text-xs text-gray-600 mt-1">{h.maduracion.interpretacion}</p>
+              <p className="font-semibold text-gray-800 dark:text-gray-100">🔥 Maduración por Fuego</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{fmt(h.maduracion.porcentajeCocido)}%</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{h.maduracion.interpretacion}</p>
             </div>
             <div className="border rounded-lg p-4">
-              <p className="font-semibold text-gray-800">🔄 Secuencia Compensatoria</p>
-              <p className="text-2xl font-bold text-gray-800">{fmt(h.compensacion.porcentaje)}%</p>
-              <p className="text-xs text-gray-600 mt-1">{h.compensacion.interpretacion}</p>
+              <p className="font-semibold text-gray-800 dark:text-gray-100">🔄 Secuencia Compensatoria</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{fmt(h.compensacion.porcentaje)}%</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{h.compensacion.interpretacion}</p>
             </div>
           </div>
 
           {/* Recomendaciones */}
           {h.recomendaciones?.length > 0 && (
             <div className="border rounded-lg p-4 bg-amber-50">
-              <p className="font-semibold text-gray-800 mb-2">📋 Recomendaciones Hildegardianas</p>
-              <ul className="text-sm text-gray-700 space-y-2">
+              <p className="font-semibold text-gray-800 dark:text-gray-100 mb-2">📋 Recomendaciones Hildegardianas</p>
+              <ul className="text-sm text-gray-700 dark:text-gray-200 space-y-2">
                 {h.recomendaciones.map((r: string, i: number) => (
                   <li key={i}>{r}</li>
                 ))}
@@ -202,7 +202,7 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
 
           {/* Alertas nutricionales */}
           <div className="border rounded-lg p-4">
-            <p className="font-semibold text-gray-800 mb-2">🔬 Alertas nutricionales (científico)</p>
+            <p className="font-semibold text-gray-800 dark:text-gray-100 mb-2">🔬 Alertas nutricionales (científico)</p>
             <ul className="text-sm space-y-1">
               {n.alertas.map((a: any, i: number) => (
                 <li
@@ -219,11 +219,11 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
 
           {/* Tabla comparativa VDR */}
           <div className="border rounded-lg p-4">
-            <p className="font-semibold text-gray-800 mb-2">📊 Menú vs VDR (promedio diario)</p>
+            <p className="font-semibold text-gray-800 dark:text-gray-100 mb-2">📊 Menú vs VDR (promedio diario)</p>
             <div className="overflow-x-auto -mx-2 px-2">
-              <table className="w-full text-xs min-w-[420px] text-gray-800">
+              <table className="w-full text-xs min-w-[420px] text-gray-800 dark:text-gray-100">
                 <thead>
-                  <tr className="text-left text-gray-600 border-b border-gray-300">
+                  <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-gray-300 dark:border-gray-600">
                     <th className="py-1 pr-2 font-semibold">Nutriente</th>
                     <th className="py-1 pr-2 font-semibold">Prom/día</th>
                     <th className="py-1 pr-2 font-semibold">VDR</th>
@@ -235,19 +235,19 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
                   {filas.map((f: any, i: number) => {
                     if (f.grupo) {
                       return (
-                        <tr key={i} className="bg-gray-100">
-                          <td colSpan={5} className="py-1 px-1 font-semibold text-gray-800">{f.grupo}</td>
+                        <tr key={i} className="bg-gray-100 dark:bg-gray-700">
+                          <td colSpan={5} className="py-1 px-1 font-semibold text-gray-800 dark:text-gray-100">{f.grupo}</td>
                         </tr>
                       );
                     }
                     const pv = n.porcentajeVDR?.[f.key] ?? 0;
                     const ok = f.max ? pv <= 100 : pv >= 80;
                     return (
-                      <tr key={i} className="border-b border-gray-200 last:border-0">
-                        <td className="py-1 pr-2 text-gray-700">{f.l}</td>
-                        <td className="py-1 pr-2 whitespace-nowrap font-semibold text-gray-900">{fmt(f.prom, 1)} {f.u}</td>
-                        <td className="py-1 pr-2 whitespace-nowrap text-gray-600">{fmt(f.vdr)} {f.u}{f.max ? ' (máx)' : ''}</td>
-                        <td className="py-1 pr-2 font-semibold text-gray-900">{fmt(pv)}%</td>
+                      <tr key={i} className="border-b border-gray-200 dark:border-gray-700 last:border-0">
+                        <td className="py-1 pr-2 text-gray-700 dark:text-gray-200">{f.l}</td>
+                        <td className="py-1 pr-2 whitespace-nowrap font-semibold text-gray-900 dark:text-gray-100">{fmt(f.prom, 1)} {f.u}</td>
+                        <td className="py-1 pr-2 whitespace-nowrap text-gray-600 dark:text-gray-300">{fmt(f.vdr)} {f.u}{f.max ? ' (máx)' : ''}</td>
+                        <td className="py-1 pr-2 font-semibold text-gray-900 dark:text-gray-100">{fmt(pv)}%</td>
                         <td className={`py-1 font-semibold ${ok ? 'text-green-700' : 'text-orange-700'}`}>{ok ? '✅ OK' : '⚠️ Bajo'}</td>
                       </tr>
                     );
@@ -255,7 +255,7 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
                 </tbody>
               </table>
             </div>
-            <p className="text-[10px] text-gray-400 mt-2">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
               Promedio sobre {n.diasConDatos} día(s) con platos{n.diasSinDatos > 0 ? ` · ${n.diasSinDatos} día(s) sin datos` : ''}.
             </p>
           </div>
