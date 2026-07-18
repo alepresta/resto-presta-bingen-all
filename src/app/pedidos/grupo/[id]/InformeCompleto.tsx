@@ -10,10 +10,10 @@ interface InformeCompletoProps {
 const fmt = (n: number, dec = 0) => (n ?? 0).toLocaleString('es-AR', { maximumFractionDigits: dec });
 
 const COLOR_DIAG: Record<string, string> = {
-  green: 'bg-green-50 border-green-500 text-green-800',
-  yellow: 'bg-yellow-50 border-yellow-500 text-yellow-800',
-  orange: 'bg-orange-50 border-orange-500 text-orange-800',
-  red: 'bg-red-50 border-red-500 text-red-800',
+  green: 'bg-green-50 dark:bg-green-950/40 border-green-500 dark:border-green-700 text-green-800 dark:text-green-200',
+  yellow: 'bg-yellow-50 dark:bg-yellow-950/40 border-yellow-500 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200',
+  orange: 'bg-orange-50 dark:bg-orange-950/40 border-orange-500 dark:border-orange-700 text-orange-800 dark:text-orange-200',
+  red: 'bg-red-50 dark:bg-red-950/40 border-red-500 dark:border-red-700 text-red-800 dark:text-red-200',
 };
 
 export default function InformeCompleto({ grupoId, refreshKey }: InformeCompletoProps) {
@@ -125,12 +125,12 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
 
           {/* Viriditas + Eucrasia */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-4 dark:border-gray-700">
               <p className="font-semibold text-gray-800 dark:text-gray-100">🟢 Viriditas (Vigor Verde)</p>
               <p className="text-3xl font-bold text-green-600">{fmt(h.viriditas.puntaje, 1)}<span className="text-base text-gray-400 dark:text-gray-500"> / 10</span></p>
               <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{h.viriditas.interpretacion}</p>
             </div>
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-4 dark:border-gray-700">
               <p className="font-semibold text-gray-800 dark:text-gray-100">⚖️ Eucrasia (Balance de Humores)</p>
               <p className="text-3xl font-bold text-amber-600 mb-2">{fmt(h.eucrasia.puntaje, 1)}<span className="text-base text-gray-400 dark:text-gray-500"> / 10</span></p>
               <div className="space-y-2">
@@ -145,7 +145,7 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
 
           {/* Venenos + Pilares */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-4 dark:border-gray-700">
               <p className="font-semibold text-gray-800 dark:text-gray-100">🚫 Venenos de Cocina ({h.venenos.cantidad})</p>
               <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{h.venenos.interpretacion}</p>
               {h.venenos.lista.length > 0 && (
@@ -158,7 +158,7 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
                 </ul>
               )}
             </div>
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-4 dark:border-gray-700">
               <p className="font-semibold text-gray-800 dark:text-gray-100">✨ Pilares de Alegría ({h.pilares.presentes.length}/4)</p>
               <div className="flex flex-wrap gap-2 mt-2">
                 {['Espelta', 'Hinojo', 'Galanga', 'Castañas'].map((p) => {
@@ -190,7 +190,7 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
 
           {/* Recomendaciones */}
           {h.recomendaciones?.length > 0 && (
-            <div className="border rounded-lg p-4 bg-amber-50">
+            <div className="border rounded-lg p-4 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900">
               <p className="font-semibold text-gray-800 dark:text-gray-100 mb-2">📋 Recomendaciones Hildegardianas</p>
               <ul className="text-sm text-gray-700 dark:text-gray-200 space-y-2">
                 {h.recomendaciones.map((r: string, i: number) => (
@@ -201,14 +201,18 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
           )}
 
           {/* Alertas nutricionales */}
-          <div className="border rounded-lg p-4">
+          <div className="border rounded-lg p-4 dark:border-gray-700">
             <p className="font-semibold text-gray-800 dark:text-gray-100 mb-2">🔬 Alertas nutricionales (científico)</p>
             <ul className="text-sm space-y-1">
               {n.alertas.map((a: any, i: number) => (
                 <li
                   key={i}
                   className={
-                    a.tipo === 'deficit' ? 'text-orange-700' : a.tipo === 'exceso' ? 'text-red-700' : 'text-blue-700'
+                    a.tipo === 'deficit'
+                      ? 'text-orange-700 dark:text-orange-300'
+                      : a.tipo === 'exceso'
+                      ? 'text-red-700 dark:text-red-300'
+                      : 'text-blue-700 dark:text-blue-300'
                   }
                 >
                   {a.icono} {a.mensaje}
@@ -218,7 +222,7 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
           </div>
 
           {/* Tabla comparativa VDR */}
-          <div className="border rounded-lg p-4">
+          <div className="border rounded-lg p-4 dark:border-gray-700">
             <p className="font-semibold text-gray-800 dark:text-gray-100 mb-2">📊 Menú vs VDR (promedio diario)</p>
             <div className="overflow-x-auto -mx-2 px-2">
               <table className="w-full text-xs min-w-[420px] text-gray-800 dark:text-gray-100">
@@ -248,7 +252,7 @@ export default function InformeCompleto({ grupoId, refreshKey }: InformeCompleto
                         <td className="py-1 pr-2 whitespace-nowrap font-semibold text-gray-900 dark:text-gray-100">{fmt(f.prom, 1)} {f.u}</td>
                         <td className="py-1 pr-2 whitespace-nowrap text-gray-600 dark:text-gray-300">{fmt(f.vdr)} {f.u}{f.max ? ' (máx)' : ''}</td>
                         <td className="py-1 pr-2 font-semibold text-gray-900 dark:text-gray-100">{fmt(pv)}%</td>
-                        <td className={`py-1 font-semibold ${ok ? 'text-green-700' : 'text-orange-700'}`}>{ok ? '✅ OK' : '⚠️ Bajo'}</td>
+                        <td className={`py-1 font-semibold ${ok ? 'text-green-700 dark:text-green-300' : 'text-orange-700 dark:text-orange-300'}`}>{ok ? '✅ OK' : '⚠️ Bajo'}</td>
                       </tr>
                     );
                   })}

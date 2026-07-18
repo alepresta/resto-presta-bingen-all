@@ -227,10 +227,10 @@ function temperamentoLabel(valor: string | null | undefined): string {
 // Estado tipo semáforo de un valor respecto a su meta diaria (calorías, proteínas)
 function estadoMeta(val: number, meta: number) {
   const pct = meta ? (val / meta) * 100 : 0;
-  if (pct >= 130) return { emoji: '🔴', label: 'Exceso', bg: 'bg-red-100 text-red-800', bar: 'bg-red-500' };
-  if (pct >= 90) return { emoji: '🟢', label: 'Adecuado', bg: 'bg-green-100 text-green-800', bar: 'bg-green-500' };
-  if (pct >= 60) return { emoji: '🟡', label: 'Bajo', bg: 'bg-yellow-100 text-yellow-800', bar: 'bg-yellow-500' };
-  return { emoji: '🟠', label: 'Muy bajo', bg: 'bg-orange-100 text-orange-800', bar: 'bg-orange-500' };
+  if (pct >= 130) return { emoji: '🔴', label: 'Exceso', bg: 'bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200', bar: 'bg-red-500' };
+  if (pct >= 90) return { emoji: '🟢', label: 'Adecuado', bg: 'bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-200', bar: 'bg-green-500' };
+  if (pct >= 60) return { emoji: '🟡', label: 'Bajo', bg: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-200', bar: 'bg-yellow-500' };
+  return { emoji: '🟠', label: 'Muy bajo', bg: 'bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-200', bar: 'bg-orange-500' };
 }
 
 // Describe en palabras simples cuánto aporta respecto a lo recomendado
@@ -1219,7 +1219,7 @@ export default function CalendarioPedidos({
                             : menuBloqueado
                             ? 'bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 opacity-60'
                             : item
-                            ? 'bg-green-100 border-2 border-green-500'
+                            ? 'bg-green-100 dark:bg-green-950/30 border-2 border-green-500 dark:border-green-700'
                             : 'bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-300 dark:border-gray-600'
                         }`}
                       >
@@ -1239,7 +1239,7 @@ export default function CalendarioPedidos({
                               <p className={`text-sm font-bold ${imagenFondo ? 'text-white drop-shadow' : 'text-gray-800 dark:text-gray-100'}`}>
                                 {item.plato?.nombre || 'Cargando...'}
                               </p>
-                              <p className={`text-xs font-semibold mt-1 ${imagenFondo ? 'text-emerald-200' : 'text-green-700'}`}>
+                              <p className={`text-xs font-semibold mt-1 ${imagenFondo ? 'text-emerald-200' : 'text-green-700 dark:text-green-300'}`}>
                                 ${item.plato?.precio.toLocaleString('es-AR')}
                               </p>
                               <p className={`text-xs mt-1 ${imagenFondo ? 'text-white/80' : 'text-gray-600 dark:text-gray-300'}`}>
@@ -1254,7 +1254,7 @@ export default function CalendarioPedidos({
                         </button>
 
                         {item && (
-                          <div className={`mt-2 pt-2 border-t ${imagenFondo ? 'border-white/30' : 'border-white/70'}`}>
+                          <div className={`mt-2 pt-2 border-t ${imagenFondo ? 'border-white/30' : 'border-white/70 dark:border-gray-700'}`}>
                             <p className={`text-[11px] font-semibold ${imagenFondo ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`}>
                               👍 {cantAcuerdo}/{miembrosState.length} de acuerdo
                             </p>
@@ -1276,7 +1276,7 @@ export default function CalendarioPedidos({
                                 type="button"
                                 onClick={() => setModalAbierto({ fecha: fechaStr, tipo: tipo.id })}
                                 disabled={cargando}
-                                className="mt-1 w-full text-[11px] font-semibold text-amber-700 hover:underline"
+                                className="mt-1 w-full text-[11px] font-semibold text-amber-700 dark:text-amber-300 hover:underline"
                               >
                                 ✏️ Proponer otro plato
                               </button>
@@ -1305,14 +1305,14 @@ export default function CalendarioPedidos({
                   // Veredicto hildegardiano resumido para la barra compacta
                   const estHild =
                     ad.puntaje >= 70
-                      ? { emoji: '🟢', label: 'Muy equilibrado', bg: 'bg-green-100 text-green-800' }
+                      ? { emoji: '🟢', label: 'Muy equilibrado', bg: 'bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-200' }
                       : ad.puntaje >= 40
-                      ? { emoji: '🟡', label: 'Aceptable', bg: 'bg-yellow-100 text-yellow-800' }
-                      : { emoji: '🔴', label: 'Poco equilibrado', bg: 'bg-red-100 text-red-800' };
+                      ? { emoji: '🟡', label: 'Aceptable', bg: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-200' }
+                      : { emoji: '🔴', label: 'Poco equilibrado', bg: 'bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200' };
                   // Micronutrientes: ausentes, insuficientes y excesos
                   const { ausentes, insuficientes, excesos, bajos } = evaluarNutrientes(ad.n);
                   return (
-                    <div className="mt-3 pt-3 border-t">
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                       {/* Resumen compacto siempre visible */}
                       <div className="flex flex-wrap items-center gap-2 text-xs">
                         <span className="font-semibold text-gray-700 dark:text-gray-200">📊 Resumen del día:</span>
@@ -1323,16 +1323,16 @@ export default function CalendarioPedidos({
                           {estProt.emoji} Proteínas: {estProt.label}
                         </span>
                         {bajos > 0 ? (
-                          <span className="bg-red-100 text-red-800 rounded px-2 py-0.5 font-semibold">
+                          <span className="bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200 rounded px-2 py-0.5 font-semibold">
                             ⚠️ {bajos} vitaminas/minerales bajos
                           </span>
                         ) : (
-                          <span className="bg-green-100 text-green-800 rounded px-2 py-0.5 font-semibold">
+                          <span className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-200 rounded px-2 py-0.5 font-semibold">
                             ✅ Vitaminas y minerales cubiertos
                           </span>
                         )}
                         {excesos.length > 0 && (
-                          <span className="bg-orange-100 text-orange-800 rounded px-2 py-0.5 font-semibold">
+                          <span className="bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-200 rounded px-2 py-0.5 font-semibold">
                             ⚠️ Exceso de {excesos.map((k) => NUTRIENTE_META[k].l.toLowerCase()).join(', ')}
                           </span>
                         )}
@@ -1340,7 +1340,7 @@ export default function CalendarioPedidos({
                           🌿 Santa Hildegarda: {estHild.label}
                         </span>
                         {ad.bajaConfianza && (
-                          <span className="rounded px-2 py-0.5 font-semibold bg-amber-100 text-amber-800">
+                          <span className="rounded px-2 py-0.5 font-semibold bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200">
                             ⚠️ Análisis aproximado
                           </span>
                         )}
@@ -1348,7 +1348,7 @@ export default function CalendarioPedidos({
                           <button
                             onClick={() => toggleAnalisisDia(fechaStr, 'cientifico')}
                             className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                              tab === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                              tab === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/50'
                             }`}
                           >
                             🔬 Científico
@@ -1356,7 +1356,7 @@ export default function CalendarioPedidos({
                           <button
                             onClick={() => toggleAnalisisDia(fechaStr, 'hildegardiano')}
                             className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                              tab === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              tab === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
                             }`}
                           >
                             🌿 Hildegardiano
@@ -1366,7 +1366,7 @@ export default function CalendarioPedidos({
 
                       {/* Detalle científico del día: en lenguaje simple */}
                       {tab === 'cientifico' && (
-                        <div className="mt-2 bg-blue-50 rounded-lg p-3 space-y-3">
+                        <div className="mt-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 space-y-3">
                           <p className="text-xs text-gray-600 dark:text-gray-300">
                             Esto es lo que aportan los platos elegidos para <strong>una persona en todo el día</strong>.
                           </p>
@@ -1376,7 +1376,7 @@ export default function CalendarioPedidos({
                             { l: 'Calorías', val: cal, meta: metaCal, u: 'kcal', pct: pctCal, est: estCal },
                             { l: 'Proteínas', val: prot, meta: metaProt, u: 'g', pct: pctProt, est: estProt },
                           ].map((g) => (
-                            <div key={g.l} className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-blue-100">
+                            <div key={g.l} className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-blue-100 dark:border-blue-900">
                               <div className="flex justify-between items-center">
                                 <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{g.l}</span>
                                 <span className={`text-xs font-semibold rounded px-2 py-0.5 ${g.est.bg}`}>
@@ -1411,7 +1411,7 @@ export default function CalendarioPedidos({
                                       {ausentes.map((k) => (
                                         <span
                                           key={k}
-                                          className="bg-red-100 text-red-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                          className="bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200 rounded px-2 py-0.5 text-xs font-semibold"
                                         >
                                           {NUTRIENTE_META[k].l}
                                         </span>
@@ -1428,7 +1428,7 @@ export default function CalendarioPedidos({
                                       {insuficientes.map((k) => (
                                         <span
                                           key={k}
-                                          className="bg-yellow-100 text-yellow-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                          className="bg-yellow-100 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-200 rounded px-2 py-0.5 text-xs font-semibold"
                                         >
                                           {NUTRIENTE_META[k].l}
                                         </span>
@@ -1442,7 +1442,7 @@ export default function CalendarioPedidos({
 
                           {/* Nutrientes en exceso (sal, azúcar, grasas saturadas) */}
                           {excesos.length > 0 && (
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-orange-200">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-orange-200 dark:border-orange-900">
                               <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">⚠️ En exceso</p>
                               <p className="text-xs text-gray-700 dark:text-gray-200 mb-1">
                                 Este día tiene <strong>más de lo recomendado</strong> de:
@@ -1451,7 +1451,7 @@ export default function CalendarioPedidos({
                                 {excesos.map((k) => (
                                   <span
                                     key={k}
-                                    className="bg-orange-100 text-orange-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                    className="bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-200 rounded px-2 py-0.5 text-xs font-semibold"
                                   >
                                     {NUTRIENTE_META[k].l}
                                   </span>
@@ -1492,7 +1492,7 @@ export default function CalendarioPedidos({
                             ? 'Media: mezcla de alimentos frescos y elaborados.'
                             : 'Baja: predominan alimentos poco frescos o muy procesados.';
                         return (
-                          <div className="mt-2 bg-emerald-50 rounded-lg p-3 space-y-3 text-xs text-gray-700 dark:text-gray-200">
+                          <div className="mt-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-3 space-y-3 text-xs text-gray-700 dark:text-gray-200">
                             <p className="text-xs text-gray-600 dark:text-gray-300">
                               Según la alimentación de <strong>Santa Hildegarda de Bingen</strong>, que busca el equilibrio
                               entre alimentos que «calientan» y «refrescan» el cuerpo.
@@ -1504,7 +1504,7 @@ export default function CalendarioPedidos({
                             </div>
 
                             {/* ¿Calienta o refresca? */}
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100 dark:border-emerald-900">
                               <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">🌡️ ¿Calienta o refresca?</p>
                               {(ad.porcCalido > 0 || ad.porcFrio > 0) ? (
                                 <div className="w-full h-5 rounded-full overflow-hidden flex bg-gray-100 dark:bg-gray-700 mb-1">
@@ -1528,13 +1528,13 @@ export default function CalendarioPedidos({
                             </div>
 
                             {/* Frescura / energía vital */}
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100 dark:border-emerald-900">
                               <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">🌿 Frescura y energía vital</p>
                               <p className="text-xs text-gray-600 dark:text-gray-300">{viridTexto}</p>
                             </div>
 
                             {/* Pilares del bienestar y venenos */}
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100 space-y-1">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100 dark:border-emerald-900 space-y-1">
                               {ad.pilares.length > 0 && (
                                 <p className="text-emerald-800 text-xs">
                                   <strong>✨ Incluye pilares del bienestar:</strong> {ad.pilares.join(', ')}.
@@ -1658,16 +1658,16 @@ export default function CalendarioPedidos({
                             {estProt.emoji} Proteínas/día: {estProt.label}
                           </span>
                           {bajos > 0 ? (
-                            <span className="bg-red-100 text-red-800 rounded px-2 py-0.5 font-semibold">
+                            <span className="bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200 rounded px-2 py-0.5 font-semibold">
                               ⚠️ {bajos} vitaminas/minerales bajos
                             </span>
                           ) : (
-                            <span className="bg-green-100 text-green-800 rounded px-2 py-0.5 font-semibold">
+                            <span className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-200 rounded px-2 py-0.5 font-semibold">
                               ✅ Vitaminas y minerales cubiertos
                             </span>
                           )}
                           {excesos.length > 0 && (
-                            <span className="bg-orange-100 text-orange-800 rounded px-2 py-0.5 font-semibold">
+                            <span className="bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-200 rounded px-2 py-0.5 font-semibold">
                               ⚠️ Exceso de {excesos.map((k) => NUTRIENTE_META[k].l.toLowerCase()).join(', ')}
                             </span>
                           )}
@@ -1678,7 +1678,7 @@ export default function CalendarioPedidos({
                             <button
                               onClick={() => setInformeTab((t) => (t === 'cientifico' ? null : 'cientifico'))}
                               className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                informeTab === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                informeTab === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/50'
                               }`}
                             >
                               🔬 Científico
@@ -1686,7 +1686,7 @@ export default function CalendarioPedidos({
                             <button
                               onClick={() => setInformeTab((t) => (t === 'hildegardiano' ? null : 'hildegardiano'))}
                               className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                informeTab === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                informeTab === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
                               }`}
                             >
                               🌿 Hildegardiano
@@ -1696,7 +1696,7 @@ export default function CalendarioPedidos({
 
                         {/* Detalle científico del plan (promedio diario) */}
                         {informeTab === 'cientifico' && (
-                          <div className="mt-2 bg-blue-50 rounded-lg p-3 space-y-3">
+                          <div className="mt-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 space-y-3">
                             <p className="text-xs text-gray-600 dark:text-gray-300">
                               Promedio por día a lo largo de los {dias} días del plan, para una persona.
                             </p>
@@ -1705,7 +1705,7 @@ export default function CalendarioPedidos({
                               { l: 'Calorías', val: calProm, meta: VDR_DIA.calorias, u: 'kcal', pct: pctCal, est: estCal },
                               { l: 'Proteínas', val: protProm, meta: VDR_DIA.proteinas, u: 'g', pct: pctProt, est: estProt },
                             ].map((g) => (
-                              <div key={g.l} className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-blue-100">
+                              <div key={g.l} className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-blue-100 dark:border-blue-900">
                                 <div className="flex justify-between items-center">
                                   <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{g.l} (promedio diario)</span>
                                   <span className={`text-xs font-semibold rounded px-2 py-0.5 ${g.est.bg}`}>
@@ -1739,7 +1739,7 @@ export default function CalendarioPedidos({
                                         {ausentes.map((k) => (
                                           <span
                                             key={k}
-                                            className="bg-red-100 text-red-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                            className="bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200 rounded px-2 py-0.5 text-xs font-semibold"
                                           >
                                             {NUTRIENTE_META[k].l}
                                           </span>
@@ -1756,7 +1756,7 @@ export default function CalendarioPedidos({
                                         {insuficientes.map((k) => (
                                           <span
                                             key={k}
-                                            className="bg-yellow-100 text-yellow-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                            className="bg-yellow-100 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-200 rounded px-2 py-0.5 text-xs font-semibold"
                                           >
                                             {NUTRIENTE_META[k].l}
                                           </span>
@@ -1770,7 +1770,7 @@ export default function CalendarioPedidos({
 
                             {/* Nutrientes en exceso en promedio (sal, azúcar, grasas saturadas) */}
                             {excesos.length > 0 && (
-                              <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-orange-200">
+                              <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-orange-200 dark:border-orange-900">
                                 <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">⚠️ En exceso</p>
                                 <p className="text-xs text-gray-700 dark:text-gray-200 mb-1">
                                   En promedio, el plan tiene <strong>más de lo recomendado</strong> de:
@@ -1779,7 +1779,7 @@ export default function CalendarioPedidos({
                                   {excesos.map((k) => (
                                     <span
                                       key={k}
-                                      className="bg-orange-100 text-orange-800 rounded px-2 py-0.5 text-xs font-semibold"
+                                      className="bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-200 rounded px-2 py-0.5 text-xs font-semibold"
                                     >
                                       {NUTRIENTE_META[k].l}
                                     </span>
@@ -1820,7 +1820,7 @@ export default function CalendarioPedidos({
                               ? 'Media: mezcla de alimentos frescos y elaborados.'
                               : 'Baja: predominan alimentos poco frescos o muy procesados.';
                           return (
-                            <div className="mt-2 bg-emerald-50 rounded-lg p-3 space-y-3 text-xs text-gray-700 dark:text-gray-200">
+                            <div className="mt-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-3 space-y-3 text-xs text-gray-700 dark:text-gray-200">
                               <p className="text-xs text-gray-600 dark:text-gray-300">
                                 Según la alimentación de <strong>Santa Hildegarda de Bingen</strong>, en todo el plan.
                               </p>
@@ -1829,7 +1829,7 @@ export default function CalendarioPedidos({
                                 {verdicto.emoji} {verdicto.label}
                               </div>
 
-                              <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100">
+                              <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100 dark:border-emerald-900">
                                 <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">🌡️ ¿Calienta o refresca?</p>
                                 {(ar.porcCalido > 0 || ar.porcFrio > 0) ? (
                                   <div className="w-full h-5 rounded-full overflow-hidden flex bg-gray-100 dark:bg-gray-700 mb-1">
@@ -1859,16 +1859,16 @@ export default function CalendarioPedidos({
 
                               <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-emerald-100 space-y-1">
                                 {ar.pilares.length > 0 && (
-                                  <p className="text-emerald-800 text-xs">
+                                  <p className="text-emerald-800 dark:text-emerald-200 text-xs">
                                     <strong>✨ Incluye pilares del bienestar:</strong> {ar.pilares.join(', ')}.
                                   </p>
                                 )}
                                 {ar.venenos.length > 0 ? (
-                                  <p className="text-red-700 text-xs">
+                                  <p className="text-red-700 dark:text-red-300 text-xs">
                                     <strong>⚠️ Contiene ingredientes que Hildegarda desaconseja:</strong> {ar.venenos.join(', ')}.
                                   </p>
                                 ) : (
-                                  <p className="text-green-700 text-xs">✅ No contiene ingredientes desaconsejados.</p>
+                                  <p className="text-green-700 dark:text-green-300 text-xs">✅ No contiene ingredientes desaconsejados.</p>
                                 )}
                               </div>
                             </div>
@@ -1938,7 +1938,7 @@ export default function CalendarioPedidos({
             </div>
 
             {/* 🔍 BUSCADOR INTEGRADO */}
-            <div className="sticky top-[120px] bg-amber-50 border-b border-amber-200 p-4 z-10">
+            <div className="sticky top-[120px] bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900 p-4 z-10">
               {/* Barra de búsqueda */}
               <div className="flex gap-2 mb-3">
                 <div className="flex-1 relative">
@@ -2006,7 +2006,7 @@ export default function CalendarioPedidos({
               </div>
 
               {/* Resumen de resultados */}
-              <div className="mt-2 text-xs text-amber-800">
+              <div className="mt-2 text-xs text-amber-800 dark:text-amber-200">
                 Mostrando <strong>{getPlatosDisponibles(modalAbierto.fecha, modalAbierto.tipo).length}</strong> platos disponibles
               </div>
             </div>
@@ -2069,7 +2069,7 @@ export default function CalendarioPedidos({
                           {plato.receta && (
                             <button
                               onClick={() => abrir('cientifico')}
-                              className={`font-semibold py-2 rounded-lg text-xs sm:text-sm ${vista === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}
+                              className={`font-semibold py-2 rounded-lg text-xs sm:text-sm ${vista === 'cientifico' ? 'bg-blue-700 text-white' : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/50'}`}
                             >
                               🔬 Científico
                             </button>
@@ -2077,7 +2077,7 @@ export default function CalendarioPedidos({
                           {plato.receta && (
                             <button
                               onClick={() => abrir('hildegardiano')}
-                              className={`font-semibold py-2 rounded-lg text-xs sm:text-sm ${vista === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+                              className={`font-semibold py-2 rounded-lg text-xs sm:text-sm ${vista === 'hildegardiano' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'}`}
                             >
                               🌿 Hildegardiano
                             </button>
@@ -2130,7 +2130,7 @@ export default function CalendarioPedidos({
 
                         {/* Sección: Análisis científico completo (por porción) */}
                         {vista === 'cientifico' && a && (
-                          <div className="mt-3 bg-blue-50 rounded-lg p-3 space-y-3">
+                          <div className="mt-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 space-y-3">
                             <div>
                               <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">🔬 Análisis nutricional científico</p>
                               <p className="text-[11px] text-gray-500 dark:text-gray-400">
@@ -2216,7 +2216,7 @@ export default function CalendarioPedidos({
 
                         {/* Sección: Análisis hildegardiano completo (por porción) */}
                         {vista === 'hildegardiano' && a && (
-                          <div className="mt-3 bg-emerald-50 rounded-lg p-3 space-y-2">
+                          <div className="mt-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-3 space-y-2">
                             <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">🌿 Análisis hildegardiano (por porción)</p>
 
                             {/* Interpretación editorial (cargada por el admin) */}
@@ -2230,12 +2230,12 @@ export default function CalendarioPedidos({
                             <div
                               className={`rounded-lg px-3 py-2 text-xs font-semibold ${
                                 a.evaluacion.nivel === 'no_hildegardiano'
-                                  ? 'bg-red-100 text-red-800'
+                                  ? 'bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200'
                                   : a.evaluacion.nivel === 'con_precaucion'
-                                  ? 'bg-yellow-100 text-yellow-800'
+                                  ? 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-200'
                                   : a.evaluacion.nivel === 'excelente'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-blue-100 text-blue-800'
+                                  ? 'bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-200'
+                                  : 'bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-200'
                               }`}
                             >
                               {a.evaluacion.veredicto} · {a.evaluacion.puntaje}/100
@@ -2266,7 +2266,7 @@ export default function CalendarioPedidos({
 
                             {/* Pilares de vigor (reglas por nombre) */}
                             {a.evaluacion.pilares.length > 0 && (
-                              <div className="text-[11px] text-emerald-800">
+                              <div className="text-[11px] text-emerald-800 dark:text-emerald-200">
                                 <p className="font-semibold">✨ Pilares de vigor:</p>
                                 <ul className="list-disc list-inside">
                                   {a.evaluacion.pilares.map((p, i) => (
@@ -2278,7 +2278,7 @@ export default function CalendarioPedidos({
 
                             {/* Venenos de cocina */}
                             {a.evaluacion.venenos.length > 0 ? (
-                              <div className="text-[11px] text-red-700">
+                              <div className="text-[11px] text-red-700 dark:text-red-300">
                                 <p className="font-semibold">🚫 Venenos de cocina:</p>
                                 <ul className="list-disc list-inside">
                                   {a.evaluacion.venenos.map((v, i) => (
@@ -2292,7 +2292,7 @@ export default function CalendarioPedidos({
 
                             {/* Precauciones */}
                             {a.evaluacion.precauciones.length > 0 && (
-                              <div className="text-[11px] text-yellow-800">
+                              <div className="text-[11px] text-yellow-800 dark:text-yellow-300">
                                 <p className="font-semibold">⚠️ Usar con precaución:</p>
                                 <ul className="list-disc list-inside">
                                   {a.evaluacion.precauciones.map((p, i) => (
@@ -2304,14 +2304,14 @@ export default function CalendarioPedidos({
 
                             {/* Especias cálidas */}
                             {a.evaluacion.especiasCalidas.length > 0 && (
-                              <p className="text-[11px] text-amber-800">
+                              <p className="text-[11px] text-amber-800 dark:text-amber-200">
                                 🌶️ Especias cálidas (calientan el "frío interior"): {a.evaluacion.especiasCalidas.join(', ')}
                               </p>
                             )}
 
                             {/* Recomendaciones */}
                             {a.evaluacion.recomendaciones.length > 0 && (
-                              <div className="text-[11px] text-gray-700 dark:text-gray-200 border-t border-emerald-200 pt-2">
+                              <div className="text-[11px] text-gray-700 dark:text-gray-200 border-t border-emerald-200 dark:border-emerald-900 pt-2">
                                 <p className="font-semibold mb-1">📋 Recomendaciones:</p>
                                 <ul className="space-y-0.5">
                                   {a.evaluacion.recomendaciones.map((r, i) => (
@@ -2323,12 +2323,12 @@ export default function CalendarioPedidos({
 
                             {/* Cualidades por ingrediente (todos los datos de la BD) */}
                             {plato.receta?.ingredientes && plato.receta.ingredientes.length > 0 && (
-                              <div className="border-t border-emerald-200 pt-2">
+                              <div className="border-t border-emerald-200 dark:border-emerald-900 pt-2">
                                 <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-200 mb-1">🧾 Cualidades por ingrediente</p>
                                 <div className="overflow-x-auto -mx-1 px-1">
                                   <table className="w-full text-[11px] text-gray-800 dark:text-gray-100 min-w-[340px]">
                                     <thead>
-                                      <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-emerald-300">
+                                      <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-emerald-300 dark:border-emerald-900">
                                         <th className="py-1 pr-2 font-semibold">Ingrediente</th>
                                         <th className="py-1 pr-2 font-semibold">Temperamento</th>
                                         <th className="py-1 pr-2 font-semibold">Sutileza</th>
