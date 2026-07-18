@@ -149,10 +149,10 @@ function ingredientesEscalados(
   receta: Receta,
   porcionesObjetivo: number
 ): Array<Ingrediente & { textoCantidad: string }> {
-  const porcionesBase = receta.porciones_base && receta.porciones_base > 0
-    ? receta.porciones_base
-    : receta.porciones && receta.porciones > 0
-      ? receta.porciones
+  const porcionesBase = receta.porciones && receta.porciones > 0
+    ? receta.porciones
+    : receta.porciones_base && receta.porciones_base > 0
+      ? receta.porciones_base
       : 1;
 
   return receta.ingredientes.map((ing) => {
@@ -414,9 +414,9 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     ? ingredientesEscalados(platoSeleccionado.receta, porcionesModal)
     : [];
 
-  const porcionesBaseModal = platoSeleccionado?.receta?.porciones_base && platoSeleccionado.receta.porciones_base > 0
-    ? platoSeleccionado.receta.porciones_base
-    : platoSeleccionado?.receta?.porciones || 1;
+  const porcionesBaseModal = platoSeleccionado?.receta?.porciones && platoSeleccionado.receta.porciones > 0
+    ? platoSeleccionado.receta.porciones
+    : platoSeleccionado?.receta?.porciones_base || 1;
 
   return (
     <div className="min-h-screen dark:bg-gray-900">

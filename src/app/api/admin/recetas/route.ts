@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
         plato_id: platoIdFinal,
         tiempo_min,
         porciones,
+        porciones_base: porciones && porciones > 0 ? porciones : 1,
         dificultad,
         pasos,
         ingredientes,

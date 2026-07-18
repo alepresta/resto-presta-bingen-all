@@ -56,8 +56,14 @@ export async function obtenerInformeDualPorReceta(
     ingrediente: Array.isArray(ri.ingrediente) ? ri.ingrediente[0] : ri.ingrediente,
   })) as RecetaIngredienteInforme[];
 
-  // porciones_base viene de la migracion 0007; si no existe, el plan manda base 4.
-  const porcionesBase = receta.porciones_base || 4;
+  // Los ingredientes se cargan para la cantidad de `porciones` declarada en la
+  // receta, asi que esa es la base real de escalado. `porciones_base` (migracion
+  // 0007) trae un default de 4 que la app nunca setea, por lo que no es fiable:
+  // se prioriza `porciones` para no inflar los valores nutricionales.
+  const porcionesBase =
+    (receta.porciones && receta.porciones > 0 && receta.porciones) ||
+    (receta.porciones_base && receta.porciones_base > 0 && receta.porciones_base) ||
+    4;
   const porcionesObjetivo = Math.max(1, porcionesSolicitadas || porcionesBase);
 
   const nombreReceta = Array.isArray(receta.platos)
