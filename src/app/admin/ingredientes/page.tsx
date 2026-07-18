@@ -87,25 +87,25 @@ export default async function AdminIngredientesPage({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-green-500 text-gray-900 dark:text-gray-100">
             <p className="text-xs text-gray-700 dark:text-gray-200 font-semibold">TOTAL</p>
-            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none" style={{ color: '#111827', opacity: 1 }}>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none">
               {ingredientes?.length || 0}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-amber-500 text-gray-900 dark:text-gray-100">
             <p className="text-xs text-gray-700 dark:text-gray-200 font-semibold">CATEGORÍAS</p>
-            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none" style={{ color: '#111827', opacity: 1 }}>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none">
               {Object.keys(conteoPorCategoria).length}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-blue-500 text-gray-900 dark:text-gray-100">
             <p className="text-xs text-gray-700 dark:text-gray-200 font-semibold">CON CALORÍAS</p>
-            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none" style={{ color: '#111827', opacity: 1 }}>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none">
               {ingredientes?.filter((i) => i.calorias !== null).length || 0}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-purple-500 text-gray-900 dark:text-gray-100">
             <p className="text-xs text-gray-700 dark:text-gray-200 font-semibold">CON IG</p>
-            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none" style={{ color: '#111827', opacity: 1 }}>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-none">
               {ingredientes?.filter((i) => i.indice_glucemico !== null).length || 0}
             </p>
           </div>

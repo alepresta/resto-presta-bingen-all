@@ -175,7 +175,9 @@ export default function ListaComprasPage() {
                   <label
                     key={g.id}
                     className={`flex items-center gap-3 px-3 py-2 border rounded-lg cursor-pointer ${
-                      activo ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      activo
+                        ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-500'
+                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <input
@@ -266,8 +268,8 @@ export default function ListaComprasPage() {
             </div>
 
             {/* Nutrición total */}
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 mb-6">
-              <h2 className="text-lg font-bold text-amber-800 mb-4">📊 Nutrición Total del Período</h2>
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 border border-amber-200 dark:border-gray-700 rounded-xl p-6 mb-6">
+              <h2 className="text-lg font-bold text-amber-800 dark:text-amber-200 mb-4">📊 Nutrición Total del Período</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-center">
                   <p className="text-xs text-gray-600 dark:text-gray-300">🔥 Calorías</p>
@@ -314,7 +316,7 @@ export default function ListaComprasPage() {
                     key={categoria}
                     className={`bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border-l-4 ${info.color.split(' ')[0]}`}
                   >
-                    <div className={`p-4 ${info.color.split(' ')[1]} border-b`}>
+                    <div className={`p-4 ${info.color.split(' ')[1]} dark:bg-gray-900 border-b`}>
                       <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                         <span className="text-2xl">{info.icono}</span>
                         {info.nombre}
@@ -333,7 +335,7 @@ export default function ListaComprasPage() {
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                   <h3 className="font-bold text-gray-800 dark:text-gray-100">{ing.nombre}</h3>
-                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
+                                    <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 px-2 py-0.5 rounded-full font-semibold border border-blue-200 dark:border-blue-700">
                                     {ing.presentacion}
                                   </span>
                                 </div>

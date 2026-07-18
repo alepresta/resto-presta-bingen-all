@@ -130,7 +130,7 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
               type="button"
               onClick={confirmarGrupo}
               disabled={cargando}
-              className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 font-semibold text-sm disabled:opacity-50"
+              className="bg-green-500 dark:bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-600 dark:hover:bg-green-500 font-semibold text-sm disabled:opacity-50"
               title="Confirmar grupo"
             >
               ✅ Confirmar
@@ -139,7 +139,7 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
               type="button"
               onClick={cancelarGrupo}
               disabled={cargando}
-              className="bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 font-semibold text-sm disabled:opacity-50"
+              className="bg-orange-500 dark:bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 font-semibold text-sm disabled:opacity-50"
               title="Cancelar grupo"
             >
               ❌ Cancelar
@@ -153,7 +153,7 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
             type="button"
             onClick={desconfirmarGrupo}
             disabled={cargando}
-            className="bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600 font-semibold text-sm disabled:opacity-50"
+            className="bg-yellow-500 dark:bg-yellow-600 text-white dark:text-gray-900 px-3 py-2 rounded-lg hover:bg-yellow-600 dark:hover:bg-yellow-500 font-semibold text-sm disabled:opacity-50"
             title="Desconfirmar grupo (volver a armando)"
           >
             ↩️ Desconfirmar
@@ -165,7 +165,7 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
           type="button"
           onClick={eliminarGrupo}
           disabled={cargando}
-          className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 font-semibold text-sm disabled:opacity-50"
+          className="bg-red-500 dark:bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-500 font-semibold text-sm disabled:opacity-50"
           title="Eliminar grupo"
         >
           🗑️ Eliminar

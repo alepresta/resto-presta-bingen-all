@@ -88,23 +88,23 @@ export default async function AdminGruposPage() {
             // Colores según estado
             const estadoColores = {
               confirmado: {
-                bg: 'bg-green-50',
-                border: 'border-green-500',
-                badge: 'bg-green-500 text-white',
+                bg: 'bg-green-50 dark:bg-green-950/30',
+                border: 'border-green-500 dark:border-green-400',
+                badge: 'bg-green-500 dark:bg-green-400 text-white dark:text-gray-900',
                 icono: '✅',
                 texto: 'CONFIRMADO'
               },
               armando: {
-                bg: 'bg-yellow-50',
-                border: 'border-yellow-500',
-                badge: 'bg-yellow-500 text-white',
+                bg: 'bg-yellow-100 dark:bg-yellow-950/40',
+                border: 'border-yellow-600 dark:border-yellow-300',
+                badge: 'bg-yellow-600 dark:bg-yellow-300 text-white dark:text-gray-900 dark:shadow-none',
                 icono: '⏳',
                 texto: 'ARMANDO'
               },
               cancelado: {
-                bg: 'bg-red-50',
-                border: 'border-red-500',
-                badge: 'bg-red-500 text-white',
+                bg: 'bg-red-50 dark:bg-red-950/30',
+                border: 'border-red-500 dark:border-red-400',
+                badge: 'bg-red-500 dark:bg-red-400 text-white dark:text-gray-900',
                 icono: '❌',
                 texto: 'CANCELADO'
               }
@@ -121,7 +121,7 @@ export default async function AdminGruposPage() {
                   {/* Info del grupo */}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <h3 className="font-bold text-gray-800 dark:text-gray-100 text-xl">
+                      <h3 className="font-bold text-gray-900 dark:text-gray-50 text-xl leading-tight">
                         🔐 {grupo.palabra_secreta}
                       </h3>
                       <span className={`px-4 py-2 rounded-full text-sm font-bold ${colores.badge} shadow-sm`}>
@@ -132,21 +132,21 @@ export default async function AdminGruposPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <div>
                         <p className="text-gray-500 dark:text-gray-400 text-xs">📅 Período</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-100">
+                        <p className="font-semibold text-gray-950 dark:text-gray-50 leading-tight">
                           {new Date(grupo.fecha_inicio).toLocaleDateString('es-AR')} - {new Date(grupo.fecha_fin).toLocaleDateString('es-AR')}
                         </p>
                       </div>
                       <div>
                         <p className="text-gray-500 dark:text-gray-400 text-xs">👥 Miembros</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-100">{totalMiembros}</p>
+                        <p className="font-semibold text-gray-950 dark:text-gray-50">{totalMiembros}</p>
                       </div>
                       <div>
                         <p className="text-gray-500 dark:text-gray-400 text-xs">✅ Confirmados</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-100">{miembrosConfirmados}/{totalMiembros}</p>
+                        <p className="font-semibold text-gray-950 dark:text-gray-50">{miembrosConfirmados}/{totalMiembros}</p>
                       </div>
                       <div>
                         <p className="text-gray-500 dark:text-gray-400 text-xs">🍽️ Platos</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-100">{totalItems}</p>
+                        <p className="font-semibold text-gray-950 dark:text-gray-50">{totalItems}</p>
                       </div>
                     </div>
                   </div>
@@ -155,7 +155,7 @@ export default async function AdminGruposPage() {
                   <div className="flex gap-2">
                     <Link
                       href={`/admin/pedidos/grupos/${grupo.id}`}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-semibold text-sm"
+                      className="bg-blue-600 dark:bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-500 font-semibold text-sm shadow-sm"
                     >
                       👁️ Ver
                     </Link>

@@ -702,11 +702,11 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
               {/* Notas Hildegardianas */}
               {platoSeleccionado.receta.notas_hildegardianas && (
-                <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-amber-600 p-4 rounded">
-                  <h3 className="text-lg font-bold text-amber-800 mb-2 flex items-center gap-2">
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 border-l-4 border-amber-600 dark:border-amber-400 p-4 rounded">
+                  <h3 className="text-lg font-bold text-amber-800 dark:text-amber-200 mb-2 flex items-center gap-2">
                     ✨ Sabiduría de Santa Hildegarda
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-200 italic">
+                  <p className="text-gray-700 dark:text-gray-100 italic leading-relaxed">
                     {platoSeleccionado.receta.notas_hildegardianas}
                   </p>
                 </div>
@@ -714,11 +714,11 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
               {/* Interpretación Hildegardiana (informe editorial) */}
               {platoSeleccionado.receta.interpretacion_hildegardiana && (
-                <div className="bg-gradient-to-br from-emerald-50 to-green-50 border-l-4 border-emerald-600 p-4 rounded">
-                  <h3 className="text-lg font-bold text-emerald-800 mb-2 flex items-center gap-2">
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-gray-800 dark:to-gray-900 border-l-4 border-emerald-600 dark:border-emerald-400 p-4 rounded">
+                  <h3 className="text-lg font-bold text-emerald-800 dark:text-emerald-200 mb-2 flex items-center gap-2">
                     🌿 Informe Hildegardiano
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-200 whitespace-pre-line">
+                  <p className="text-gray-700 dark:text-gray-100 whitespace-pre-line leading-relaxed">
                     {platoSeleccionado.receta.interpretacion_hildegardiana}
                   </p>
                 </div>

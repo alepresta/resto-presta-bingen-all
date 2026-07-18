@@ -425,7 +425,7 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
                     <select
                       value={item.unidad}
                       onChange={(e) => actualizarUnidad(item.ingrediente_id, e.target.value)}
-                      className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-600 dark:text-gray-300"
+                      className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
                     >
                       <option value="gramos">gramos</option>
                       <option value="kg">kg</option>
