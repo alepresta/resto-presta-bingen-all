@@ -673,9 +673,9 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                 </h3>
                 <ul className="space-y-2">
                   {ingredientesModal.map((ing, i) => (
-                    <li key={i} className="flex justify-between items-center bg-amber-50 p-2 rounded">
-                      <span className="font-medium text-gray-700 dark:text-gray-200">{ing.nombre}</span>
-                      <span className="text-amber-700 font-semibold">
+                    <li key={i} className="flex justify-between items-center bg-amber-50 dark:bg-gray-800 border border-amber-100 dark:border-gray-700 p-2 rounded-lg">
+                      <span className="font-medium text-gray-700 dark:text-gray-100">{ing.nombre}</span>
+                      <span className="text-amber-700 dark:text-amber-300 font-semibold">
                         {ing.textoCantidad}
                       </span>
                     </li>
