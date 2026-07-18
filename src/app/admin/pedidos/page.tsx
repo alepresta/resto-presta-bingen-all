@@ -56,23 +56,23 @@ export default async function AdminPedidosPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-blue-500">
             <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">TOTAL PEDIDOS</p>
-            <p className="text-2xl font-bold">{grupos?.length || 0}</p>
+            <p className="text-2xl font-bold text-gray-950 dark:text-gray-50 leading-tight">{grupos?.length || 0}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-yellow-500">
             <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">ARMANDO</p>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold text-gray-950 dark:text-gray-50 leading-tight">
               {grupos?.filter((g) => g.estado === 'armando').length || 0}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-green-500">
             <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">CONFIRMADOS</p>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold text-gray-950 dark:text-gray-50 leading-tight">
               {grupos?.filter((g) => g.estado === 'confirmado').length || 0}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border-l-4 border-red-500">
             <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold">CANCELADOS</p>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold text-gray-950 dark:text-gray-50 leading-tight">
               {grupos?.filter((g) => g.estado === 'cancelado').length || 0}
             </p>
           </div>
@@ -139,17 +139,17 @@ export default async function AdminPedidosPage() {
                       </div>
                       <div>
                         <p className="text-gray-500 dark:text-gray-400 text-xs">👥 Miembros</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-100">{totalMiembros}/4</p>
+                        <p className="font-semibold text-gray-950 dark:text-gray-50 leading-tight">{totalMiembros}/4</p>
                       </div>
                       <div>
                         <p className="text-gray-500 dark:text-gray-400 text-xs">✅ Confirmados</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-100">
+                        <p className="font-semibold text-gray-950 dark:text-gray-50 leading-tight">
                           {miembrosConfirmados}/{totalMiembros}
                         </p>
                       </div>
                       <div>
                         <p className="text-gray-500 dark:text-gray-400 text-xs">🍽️ Platos</p>
-                        <p className="font-semibold text-gray-800 dark:text-gray-100">{totalItems}</p>
+                        <p className="font-semibold text-gray-950 dark:text-gray-50 leading-tight">{totalItems}</p>
                       </div>
                     </div>
                   </div>
