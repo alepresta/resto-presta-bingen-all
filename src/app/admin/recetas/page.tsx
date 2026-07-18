@@ -54,7 +54,7 @@ export default async function AdminRecetasPage() {
   const { data: recetas, error: errorRecetas } = await supabase
     .from('recetas')
     .select(`
-      id, tiempo_min, porciones, dificultad, ingredientes, pasos, notas_hildegardianas, plato_id,
+      id, tiempo_min, porciones, estado, dificultad, ingredientes, pasos, notas_hildegardianas, plato_id,
       plato:plato_id ( id, nombre, categoria_id, disponible, precio, dia_semana_id, alergenos )
     `)
     .order('id', { ascending: false });
@@ -105,6 +105,7 @@ export default async function AdminRecetasPage() {
       alergenos: plato?.alergenos ?? [],
       tiempo_min: r.tiempo_min ?? null,
       porciones: r.porciones ?? null,
+      estado: r.estado ?? 'borrador',
       dificultad: r.dificultad ?? null,
       numIngredientes: ingredientesValidos.length || (Array.isArray(r.ingredientes) ? r.ingredientes.length : 0),
       numPasos: Array.isArray(r.pasos) ? r.pasos.length : 0,

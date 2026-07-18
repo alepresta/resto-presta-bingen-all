@@ -1,5 +1,6 @@
 // src/app/admin/page.tsx
 import { redirect } from 'next/navigation';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { getUsuarioConRol } from '@/lib/supabase/server';
 
 export default async function AdminDashboardPage() {
@@ -11,6 +12,26 @@ export default async function AdminDashboardPage() {
 
   const session = usuario;
   const soloLectura = usuario.rol === 'lector';
+  const supabase = createServerSupabaseClient();
+
+  const [platosRes, recetasRes, pedidosActivosRes] = await Promise.all([
+    supabase
+      .from('platos')
+      .select('id', { count: 'exact', head: true })
+      .eq('disponible', true),
+    supabase.from('recetas').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('grupos_pedido')
+      .select('id', { count: 'exact', head: true })
+      .eq('estado', 'armando'),
+  ]);
+
+  const totalPlatosActivos = platosRes.count ?? 0;
+  const totalRecetas = recetasRes.count ?? 0;
+  const pedidosActivos = pedidosActivosRes.count ?? 0;
+  const cobertura = totalPlatosActivos > 0
+    ? Math.min(100, Math.round((totalRecetas / totalPlatosActivos) * 100))
+    : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -32,20 +53,24 @@ export default async function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-4 border-amber-500">
             <h3 className="text-gray-600 dark:text-gray-300 text-sm font-semibold">PLATOS</h3>
-            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">110</p>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{totalPlatosActivos}</p>
             <p className="text-xs text-green-600 mt-1">✓ Activos</p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-4 border-green-500">
             <h3 className="text-gray-600 dark:text-gray-300 text-sm font-semibold">RECETAS</h3>
-            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">93</p>
-            <p className="text-xs text-amber-600 mt-1">84% cobertura</p>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{totalRecetas}</p>
+            <p className="text-xs text-amber-600 mt-1">{cobertura}% cobertura</p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-4 border-blue-500">
             <h3 className="text-gray-600 dark:text-gray-300 text-sm font-semibold">PEDIDOS</h3>
-            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">0</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Sin pedidos activos</p>
+            <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{pedidosActivos}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {pedidosActivos > 0
+                ? `${pedidosActivos} pedido${pedidosActivos === 1 ? '' : 's'} activo${pedidosActivos === 1 ? '' : 's'}`
+                : 'Sin pedidos activos'}
+            </p>
           </div>
         </div>
 

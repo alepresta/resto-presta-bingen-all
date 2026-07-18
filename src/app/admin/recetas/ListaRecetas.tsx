@@ -20,6 +20,7 @@ interface RecetaItem {
   disponible: boolean;
   precio: number | null;
   dia_semana_id: number | null;
+  estado: 'borrador' | 'en_proceso' | 'aprobada';
   alergenos?: string[] | null;
   tiempo_min: number | null;
   porciones: number | null;
@@ -127,6 +128,12 @@ const IG_INFO: Record<'bajo' | 'medio' | 'alto', { label: string; color: string 
   alto: { label: 'IG alto', color: 'bg-red-100 text-red-700' },
 };
 
+const ESTADO_RECETA_INFO: Record<RecetaItem['estado'], { label: string; color: string }> = {
+  borrador: { label: '🟡 Borrador', color: 'bg-amber-100 text-amber-800' },
+  en_proceso: { label: '🔵 En proceso', color: 'bg-sky-100 text-sky-800' },
+  aprobada: { label: '🟢 Aprobada', color: 'bg-green-100 text-green-800' },
+};
+
 function temperamentoDominante(r: RecetaItem): string | null {
   if (!r.ingredientes) return null;
   const temps: Record<string, number> = {};
@@ -160,7 +167,8 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
   const [temperamentoFiltro, setTemperamentoFiltro] = useState<string>('');
   const [soloSinVenenos, setSoloSinVenenos] = useState(false);
   const [soloBaseAlegria, setSoloBaseAlegria] = useState(false);
-  const [estadoFiltro, setEstadoFiltro] = useState<'todos' | 'publicados' | 'despublicados'>('todos');
+  const [visibilidadFiltro, setVisibilidadFiltro] = useState<'todos' | 'publicados' | 'despublicados'>('todos');
+  const [estadoRecetaFiltro, setEstadoRecetaFiltro] = useState<'todos' | RecetaItem['estado']>('todos');
   const [precioFiltro, setPrecioFiltro] = useState<'todos' | 'gratis' | 'con_precio'>('todos');
   const [glutenFiltro, setGlutenFiltro] = useState<'todos' | 'con' | 'sin'>('todos');
   const [igFiltro, setIgFiltro] = useState<'todos' | 'bajo' | 'medio' | 'alto'>('todos');
@@ -187,8 +195,10 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
         if (!coincideNombre && !coincideTextoCompleto) return false;
       }
 
-      if (estadoFiltro === 'publicados' && !r.disponible) return false;
-      if (estadoFiltro === 'despublicados' && r.disponible) return false;
+      if (visibilidadFiltro === 'publicados' && !r.disponible) return false;
+      if (visibilidadFiltro === 'despublicados' && r.disponible) return false;
+
+      if (estadoRecetaFiltro !== 'todos' && r.estado !== estadoRecetaFiltro) return false;
 
       const esGratis = r.precio === null || r.precio === undefined || r.precio <= 0;
       if (precioFiltro === 'gratis' && !esGratis) return false;
@@ -236,7 +246,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
 
       return true;
     });
-  }, [recetas, textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, estadoFiltro, precioFiltro, glutenFiltro, igFiltro, diaFiltro, vitaminasSel, mineralesSel]);
+  }, [recetas, textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, visibilidadFiltro, estadoRecetaFiltro, precioFiltro, glutenFiltro, igFiltro, diaFiltro, vitaminasSel, mineralesSel]);
 
   const filtrosActivos = useMemo(() => {
     const filtros: string[] = [];
@@ -252,8 +262,12 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
     if (soloSinVenenos) filtros.push('Solo sin venenos');
     if (soloBaseAlegria) filtros.push('Solo base alegria');
 
-    if (estadoFiltro === 'publicados') filtros.push('Estado: Publicados');
-    if (estadoFiltro === 'despublicados') filtros.push('Estado: Ocultos');
+    if (visibilidadFiltro === 'publicados') filtros.push('Publicación: Publicados');
+    if (visibilidadFiltro === 'despublicados') filtros.push('Publicación: Ocultos');
+
+    if (estadoRecetaFiltro !== 'todos') {
+      filtros.push(`Estado receta: ${ESTADO_RECETA_INFO[estadoRecetaFiltro].label.replace(/^[^\s]+\s/, '')}`);
+    }
 
     if (precioFiltro === 'gratis') filtros.push('Precio: Gratis');
     if (precioFiltro === 'con_precio') filtros.push('Precio: Con precio');
@@ -272,7 +286,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
     if (mineralesSel.length > 0) filtros.push(`Minerales: ${mineralesSel.length}`);
 
     return filtros;
-  }, [textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, estadoFiltro, precioFiltro, glutenFiltro, igFiltro, diaFiltro, vitaminasSel, mineralesSel]);
+  }, [textoBusqueda, categoriaFiltro, temperamentoFiltro, soloSinVenenos, soloBaseAlegria, visibilidadFiltro, estadoRecetaFiltro, precioFiltro, glutenFiltro, igFiltro, diaFiltro, vitaminasSel, mineralesSel]);
 
   const limpiarFiltros = () => {
     setTextoBusqueda('');
@@ -280,7 +294,8 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
     setTemperamentoFiltro('');
     setSoloSinVenenos(false);
     setSoloBaseAlegria(false);
-    setEstadoFiltro('todos');
+    setVisibilidadFiltro('todos');
+    setEstadoRecetaFiltro('todos');
     setPrecioFiltro('todos');
     setGlutenFiltro('todos');
     setIgFiltro('todos');
@@ -290,7 +305,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
   };
 
   const hayFiltros = textoBusqueda || categoriaFiltro || temperamentoFiltro || soloSinVenenos || soloBaseAlegria
-    || estadoFiltro !== 'todos' || precioFiltro !== 'todos' || glutenFiltro !== 'todos' || igFiltro !== 'todos' || diaFiltro !== ''
+    || visibilidadFiltro !== 'todos' || estadoRecetaFiltro !== 'todos' || precioFiltro !== 'todos' || glutenFiltro !== 'todos' || igFiltro !== 'todos' || diaFiltro !== ''
     || vitaminasSel.length > 0 || mineralesSel.length > 0;
 
   return (
@@ -409,7 +424,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
           </div>
 
           {/* Fila 2 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-3 mt-3">
             <div>
               <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📅 Día</label>
               <select value={diaFiltro} onChange={(e) => setDiaFiltro(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
@@ -421,8 +436,17 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">👁️ Estado</label>
-              <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📝 Estado receta</label>
+              <select value={estadoRecetaFiltro} onChange={(e) => setEstadoRecetaFiltro(e.target.value as typeof estadoRecetaFiltro)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+                <option value="todos">Todos</option>
+                <option value="borrador">🟡 Borrador</option>
+                <option value="en_proceso">🔵 En proceso</option>
+                <option value="aprobada">🟢 Aprobada</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">👁️ Publicación</label>
+              <select value={visibilidadFiltro} onChange={(e) => setVisibilidadFiltro(e.target.value as typeof visibilidadFiltro)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
                 <option value="todos">Todos</option>
                 <option value="publicados">🟢 Publicados</option>
                 <option value="despublicados">⚪ Despublicados</option>
@@ -549,6 +573,7 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
               const tieneBaseAlegria = r.ingredientes?.some((ri) => ri.ingrediente?.es_base_alegria) || false;
               const igCat = categoriaIG(r.indiceGlucemico);
               const categoria = CATEGORIAS[r.categoria_id];
+              const estadoInfo = ESTADO_RECETA_INFO[r.estado] || ESTADO_RECETA_INFO.borrador;
 
               return (
                 <div key={r.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
@@ -567,6 +592,9 @@ export default function ListaRecetas({ recetas, totalRecetas, platosSinReceta, c
 
                       <div className="flex flex-wrap gap-1 mt-2">
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-indigo-100 text-indigo-700">📅 {nombreDia(r.dia_semana_id)}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${estadoInfo.color}`}>
+                          {estadoInfo.label}
+                        </span>
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${r.disponible ? 'bg-green-100 text-green-700' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                           {r.disponible ? '🟢 Publicado' : '⚪ Oculto'}
                         </span>
