@@ -973,7 +973,7 @@ export default function CalendarioPedidos({
   // Si el usuario NO es miembro, sólo puede ver la tarjeta para unirse con el código.
   if (!esMiembro) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50">
+      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
           <div className="max-w-6xl mx-auto px-4 py-6">
             <p className="text-teal-100 text-xs font-semibold uppercase tracking-wide">🔑 Grupo de pedido</p>
@@ -983,7 +983,7 @@ export default function CalendarioPedidos({
 
         {mensaje && (
           <div className="max-w-6xl mx-auto px-4 py-2">
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg">{mensaje}</div>
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-200 px-4 py-3 rounded-lg">{mensaje}</div>
           </div>
         )}
 
@@ -1017,7 +1017,7 @@ export default function CalendarioPedidos({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <p className="text-teal-100 text-xs font-semibold uppercase tracking-wide">🔑 Código para unirse</p>
