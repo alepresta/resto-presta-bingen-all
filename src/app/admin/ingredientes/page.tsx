@@ -12,26 +12,65 @@ export default async function AdminIngredientesPage({
   const busqueda = searchParams?.q;
 
   // Construir query con filtros - TRAEMOS TODAS LAS COLUMNAS DE LA BD
-  let query = supabase
-    .from('ingredientes')
-    .select('*')
-    .order('nombre');
+  // Supabase limita a 1000 filas por consulta, así que paginamos para traer todo.
+  const construirQuery = () => {
+    let query = supabase
+      .from('ingredientes')
+      .select('*')
+      .order('nombre');
 
-  if (categoria && categoria !== 'todos') {
-    query = query.eq('categoria', categoria);
+    if (categoria && categoria !== 'todos') {
+      query = query.eq('categoria', categoria);
+    }
+
+    if (busqueda) {
+      query = query.ilike('nombre', `%${busqueda}%`);
+    }
+
+    return query;
+  };
+
+  const PAGE_SIZE = 1000;
+  let ingredientes: any[] = [];
+  let error: any = null;
+  let desde = 0;
+
+  while (true) {
+    const { data, error: pageError } = await construirQuery().range(desde, desde + PAGE_SIZE - 1);
+
+    if (pageError) {
+      error = pageError;
+      break;
+    }
+
+    if (!data || data.length === 0) break;
+
+    ingredientes = ingredientes.concat(data);
+
+    if (data.length < PAGE_SIZE) break;
+
+    desde += PAGE_SIZE;
   }
 
-  if (busqueda) {
-    query = query.ilike('nombre', `%${busqueda}%`);
+  // Contar por categoría (paginado para superar el límite de 1000 filas)
+  let conteoCategorias: any[] = [];
+  let desdeConteo = 0;
+
+  while (true) {
+    const { data, error: conteoError } = await supabase
+      .from('ingredientes')
+      .select('categoria')
+      .eq('activo', true)
+      .range(desdeConteo, desdeConteo + PAGE_SIZE - 1);
+
+    if (conteoError || !data || data.length === 0) break;
+
+    conteoCategorias = conteoCategorias.concat(data);
+
+    if (data.length < PAGE_SIZE) break;
+
+    desdeConteo += PAGE_SIZE;
   }
-
-  const { data: ingredientes, error } = await query;
-
-  // Contar por categoría
-  const { data: conteoCategorias } = await supabase
-    .from('ingredientes')
-    .select('categoria')
-    .eq('activo', true);
 
   const conteoPorCategoria = (conteoCategorias || []).reduce((acc: any, ing: any) => {
     acc[ing.categoria] = (acc[ing.categoria] || 0) + 1;

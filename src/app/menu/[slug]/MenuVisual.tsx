@@ -151,11 +151,7 @@ function ingredientesEscalados(
   receta: Receta,
   porcionesObjetivo: number
 ): Array<Ingrediente & { textoCantidad: string }> {
-  const porcionesBase = receta.porciones && receta.porciones > 0
-    ? receta.porciones
-    : receta.porciones_base && receta.porciones_base > 0
-      ? receta.porciones_base
-      : 1;
+  const porcionesBase = obtenerPorcionesBaseReceta(receta);
 
   return receta.ingredientes.map((ing) => {
     const escalado = escalarIngrediente({
@@ -171,6 +167,13 @@ function ingredientesEscalados(
       textoCantidad: escalado.textoMostrado,
     };
   });
+}
+
+function obtenerPorcionesBaseReceta(receta: Receta | null | undefined): number {
+  if (!receta) return 1;
+  if (receta.porciones && receta.porciones > 0) return receta.porciones;
+  if (receta.porciones_base && receta.porciones_base > 0) return receta.porciones_base;
+  return 1;
 }
 
 function DatosCientificos({ analisis }: { analisis: AnalisisPlato }) {
@@ -423,7 +426,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     : categoriasExtras;
 
   const seleccionarPlato = (plato: Plato) => {
-    setPorcionesModal(1);
+    setPorcionesModal(obtenerPorcionesBaseReceta(plato.receta));
     setPlatoSeleccionado(plato);
   };
 
@@ -431,9 +434,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     ? ingredientesEscalados(platoSeleccionado.receta, porcionesModal)
     : [];
 
-  const porcionesBaseModal = platoSeleccionado?.receta?.porciones && platoSeleccionado.receta.porciones > 0
-    ? platoSeleccionado.receta.porciones
-    : platoSeleccionado?.receta?.porciones_base || 1;
+  const porcionesBaseModal = obtenerPorcionesBaseReceta(platoSeleccionado?.receta);
 
   return (
     <div className="min-h-screen dark:bg-gray-900">
@@ -652,7 +653,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   recetaId={platoSeleccionado.receta.id}
                   endpoint="/api/menu/receta"
                   mostrarExport={false}
-                  porcionesIniciales={1}
+                  porcionesIniciales={porcionesBaseModal}
                   onPorcionesChange={setPorcionesModal}
                 />
               ) : (
