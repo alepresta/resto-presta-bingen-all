@@ -179,6 +179,9 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
             </>
           ) : (
             <>
+              <span className="text-white/95 text-xs sm:text-sm font-semibold px-2 py-1">
+                Hola {usuario.nombre}
+              </span>
               {puedeVerPanel ? (
                 <>
                   <Link href="/admin" className={btnBase}>⚙️ Panel</Link>
