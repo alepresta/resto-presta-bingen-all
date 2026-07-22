@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
 
   const columnas =
     vista === 'selector'
-      ? 'id,nombre,categoria,unidad_base,calorias,proteinas_g,carbohidratos_g,grasas_g,activo'
+      ? 'id,nombre,categoria,unidad_base,calorias,proteinas_g,carbohidratos_g,grasas_g,activo,' +
+        'temperamento,nivel_subtilitat,es_veneno_hildegardiano,es_base_alegria,requiere_coccion,' +
+        'impacto_livor,viriditas_index,humor_principal,frecuencia_recomendada,apto_para_enfermos,' +
+        'impacto_bilis_negra,estacion_ideal,beneficios_hildegardianos,contraindicaciones'
       : '*';
 
   const construirQuery = () => {

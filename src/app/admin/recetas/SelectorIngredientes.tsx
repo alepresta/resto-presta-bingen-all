@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { clasificarIngrediente } from '@/lib/hildegarda';
 
-const CACHE_KEY_INGREDIENTES_SELECTOR = 'admin_recetas_ingredientes_selector_v1';
+const CACHE_KEY_INGREDIENTES_SELECTOR = 'admin_recetas_ingredientes_selector_v2';
 let ingredientesCacheMemoria: Ingrediente[] | null = null;
 
 interface Ingrediente {
@@ -14,6 +15,20 @@ interface Ingrediente {
   proteinas_g: number | null;
   carbohidratos_g: number | null;
   grasas_g: number | null;
+  temperamento?: string | null;
+  nivel_subtilitat?: number | null;
+  es_veneno_hildegardiano?: boolean | null;
+  es_base_alegria?: boolean | null;
+  requiere_coccion?: boolean | null;
+  impacto_livor?: string | null;
+  viriditas_index?: string | null;
+  humor_principal?: string | null;
+  frecuencia_recomendada?: string | null;
+  apto_para_enfermos?: boolean | null;
+  impacto_bilis_negra?: string | null;
+  estacion_ideal?: string | null;
+  beneficios_hildegardianos?: string | null;
+  contraindicaciones?: string | null;
 }
 
 interface IngredienteSeleccionado {
@@ -26,6 +41,219 @@ interface IngredienteSeleccionado {
 interface SelectorIngredientesProps {
   value: IngredienteSeleccionado[];
   onChange: (ingredientes: IngredienteSeleccionado[]) => void;
+}
+
+interface UnidadOpcion {
+  value: string;
+  label: string;
+  /** cantidad * factor = equivalente en la unidad base (g o ml) */
+  factor: number;
+  /** Unidad base equivalente (g o ml). */
+  equivalente: 'g' | 'ml';
+}
+
+// Unidades disponibles con su equivalencia aproximada en gramos o mililitros.
+const UNIDADES: UnidadOpcion[] = [
+  { value: 'gramos', label: 'gramos', factor: 1, equivalente: 'g' },
+  { value: 'kg', label: 'kg', factor: 1000, equivalente: 'g' },
+  { value: 'ml', label: 'ml', factor: 1, equivalente: 'ml' },
+  { value: 'litros', label: 'litros', factor: 1000, equivalente: 'ml' },
+  { value: 'unidades', label: 'unidades', factor: 100, equivalente: 'g' },
+  { value: 'cucharadas', label: 'cucharadas', factor: 15, equivalente: 'g' },
+  { value: 'cucharadas_liquida', label: 'cucharadas líquida', factor: 15, equivalente: 'ml' },
+  { value: 'cucharadita', label: 'cucharadita', factor: 5, equivalente: 'g' },
+  { value: 'cucharadita_liquida', label: 'cucharadita líquida', factor: 5, equivalente: 'ml' },
+  { value: 'tazas', label: 'tazas líquido', factor: 240, equivalente: 'ml' },
+  { value: 'tazas_peso', label: 'tazas peso', factor: 200, equivalente: 'g' },
+  { value: 'punado', label: 'puñado', factor: 30, equivalente: 'g' },
+  { value: 'punta_cuchillo', label: 'punta de cuchillo', factor: 0.5, equivalente: 'g' },
+  { value: 'pizca', label: 'pizca', factor: 0.5, equivalente: 'g' },
+  { value: 'diente', label: 'diente', factor: 5, equivalente: 'g' },
+];
+
+/** Devuelve el texto de equivalencia (ej: "≈ 1500 g") o null si la unidad es desconocida. */
+function equivalenteTexto(cantidad: number, unidadValue: string): string | null {
+  const u = UNIDADES.find((x) => x.value === unidadValue);
+  if (!u) return null;
+  const cantidadNum = typeof cantidad === 'number' ? cantidad : parseFloat(cantidad);
+  const base = Number.isFinite(cantidadNum) ? cantidadNum : 0;
+  const total = base * u.factor;
+  const valor = Math.round(total * 100) / 100;
+  // Para las unidades base (factor 1) usamos "=" y para las convertidas "≈".
+  const simbolo = u.factor === 1 ? '=' : '≈';
+  return `${simbolo} ${valor} ${u.equivalente}`;
+}
+
+interface AdvertenciaHildegardiana {
+  tipo: string;
+  icono: string;
+  texto: string;
+  clases: string;
+}
+
+interface ResumenHildegardiano {
+  /** Semáforo general del ingrediente. */
+  estado: {
+    nivel: 'recomendado' | 'precaucion' | 'evitar';
+    icono: string;
+    texto: string;
+    clases: string;
+  };
+  /** Datos informativos neutros (viriditas, subtilitat, temperamento, frecuencia). */
+  datos: AdvertenciaHildegardiana[];
+  /** Alertas reales (amarillo/rojo). */
+  alertas: AdvertenciaHildegardiana[];
+  /** Beneficios destacados (verde). */
+  beneficios: AdvertenciaHildegardiana[];
+}
+
+const CLASES = {
+  rojo: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 border border-red-200 dark:border-red-800',
+  ambar:
+    'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 border border-amber-200 dark:border-amber-800',
+  verde:
+    'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200 border border-green-200 dark:border-green-800',
+  naranja:
+    'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 border border-orange-200 dark:border-orange-800',
+  lima: 'bg-lime-100 text-lime-800 dark:bg-lime-900/40 dark:text-lime-200 border border-lime-200 dark:border-lime-800',
+  azul: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 border border-blue-200 dark:border-blue-800',
+  gris: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600',
+  violeta:
+    'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200 border border-purple-200 dark:border-purple-800',
+} as const;
+
+const VIRIDITAS_ETIQUETA: Record<string, { texto: string; clases: string }> = {
+  maximo: { texto: 'Viriditas máxima', clases: CLASES.verde },
+  alto: { texto: 'Viriditas alta', clases: CLASES.verde },
+  moderado: { texto: 'Viriditas moderada', clases: CLASES.lima },
+  bajo: { texto: 'Viriditas baja', clases: CLASES.ambar },
+  nulo: { texto: 'Viriditas nula', clases: CLASES.rojo },
+};
+
+const FRECUENCIA_ETIQUETA: Record<string, { texto: string; clases: string }> = {
+  diario: { texto: 'Uso diario', clases: CLASES.verde },
+  ocasional: { texto: 'Uso ocasional', clases: CLASES.azul },
+  medicinal: { texto: 'Solo medicinal', clases: CLASES.violeta },
+  prohibido: { texto: 'Prohibido', clases: CLASES.rojo },
+};
+
+const TEMPERAMENTO_ETIQUETA: Record<string, string> = {
+  calido: 'Cálido',
+  frio: 'Frío',
+  templado: 'Templado',
+  neutro: 'Neutro',
+  frio_suave: 'Frío suave',
+  calido_suave: 'Cálido suave',
+  calido_seco: 'Cálido y seco',
+  calido_humedo: 'Cálido y húmedo',
+  frio_seco: 'Frío y seco',
+  frio_humedo: 'Frío y húmedo',
+};
+
+/**
+ * Genera el resumen hildegardiano de un ingrediente combinando los campos de la
+ * base de datos con la clasificación por nombre.
+ *
+ * Estructura la información en 4 grupos con jerarquía clara:
+ *  1. estado: un semáforo general (verde/amarillo/rojo).
+ *  2. datos: información neutra (viriditas, subtilitat, temperamento, frecuencia).
+ *  3. alertas: motivos de precaución o rechazo (amarillo/rojo).
+ *  4. beneficios: virtudes destacadas (verde).
+ */
+function resumenHildegardiano(ingrediente?: Ingrediente, nombre?: string): ResumenHildegardiano {
+  const nom = ingrediente?.nombre || nombre || '';
+  const c = clasificarIngrediente(nom);
+
+  const datos: AdvertenciaHildegardiana[] = [];
+  const alertas: AdvertenciaHildegardiana[] = [];
+  const beneficios: AdvertenciaHildegardiana[] = [];
+
+  const esVeneno = !!(ingrediente?.es_veneno_hildegardiano || c.veneno);
+  const viriditas = ingrediente?.viriditas_index || null;
+  const subtilitat = ingrediente?.nivel_subtilitat ?? null;
+  const frecuencia = ingrediente?.frecuencia_recomendada || null;
+  const contraindicacion = ingrediente?.contraindicaciones?.trim() || c.precaucion || '';
+
+  // ---- DATOS NEUTROS (siempre en gris para que no compitan con las alertas) ----
+  if (viriditas && VIRIDITAS_ETIQUETA[viriditas]) {
+    datos.push({ tipo: 'viriditas', icono: '🌿', texto: VIRIDITAS_ETIQUETA[viriditas].texto, clases: CLASES.gris });
+  }
+  if (subtilitat != null) {
+    // El Subtilitat es el indicador principal: se colorea según su nivel.
+    const clasesSub = subtilitat > 6 ? CLASES.verde : subtilitat >= 4 ? CLASES.ambar : CLASES.rojo;
+    datos.push({ tipo: 'subtilitat', icono: '✨', texto: `Subtilitat ${subtilitat}/10`, clases: clasesSub });
+  }
+  if (ingrediente?.temperamento) {
+    datos.push({
+      tipo: 'temperamento',
+      icono: '🌡️',
+      texto: TEMPERAMENTO_ETIQUETA[ingrediente.temperamento] || ingrediente.temperamento,
+      clases: CLASES.gris,
+    });
+  }
+  if (frecuencia && FRECUENCIA_ETIQUETA[frecuencia]) {
+    datos.push({ tipo: 'frecuencia', icono: '📅', texto: FRECUENCIA_ETIQUETA[frecuencia].texto, clases: CLASES.gris });
+  }
+
+  // ---- ALERTAS (motivos concretos) ----
+  if (esVeneno) {
+    alertas.push({
+      tipo: 'veneno',
+      icono: '🚫',
+      texto: c.razonVeneno ? `Veneno de cocina: ${c.razonVeneno}` : 'Veneno de cocina',
+      clases: CLASES.rojo,
+    });
+  }
+  if (frecuencia === 'prohibido' && !esVeneno) {
+    alertas.push({ tipo: 'prohibido', icono: '⛔', texto: 'Uso prohibido', clases: CLASES.rojo });
+  }
+  if (contraindicacion) {
+    alertas.push({ tipo: 'contraindicacion', icono: '⚠️', texto: `Contraindicación: ${contraindicacion}`, clases: CLASES.ambar });
+  }
+  if (ingrediente?.requiere_coccion) {
+    alertas.push({ tipo: 'coccion', icono: '🔥', texto: 'Requiere cocción', clases: CLASES.ambar });
+  }
+  if (ingrediente?.apto_para_enfermos === false) {
+    alertas.push({ tipo: 'enfermos', icono: '🤒', texto: 'No apto para enfermos', clases: CLASES.ambar });
+  }
+
+  // ---- BENEFICIOS ----
+  if (c.pilar) {
+    beneficios.push({ tipo: 'pilar', icono: '🏛️', texto: `Pilar de vigor: ${c.pilar}`, clases: CLASES.verde });
+  }
+  if (ingrediente?.es_base_alegria) {
+    beneficios.push({ tipo: 'alegria', icono: '😊', texto: 'Base de alegría', clases: CLASES.verde });
+  }
+  if (c.especiaCalida) {
+    beneficios.push({ tipo: 'especia', icono: '🌶️', texto: 'Especia cálida', clases: CLASES.verde });
+  }
+
+  // ---- SEMÁFORO GENERAL ----
+  // El Subtilitat es el indicador más confiable: cuando existe, manda.
+  //   >6  → recomendado (verde) · 4-6 → precaución (amarillo) · <4 → evitar (rojo)
+  // Excepción de seguridad: los venenos y lo prohibido siempre son rojos.
+  // Si no hay Subtilitat, se usa la viriditas / alertas como respaldo.
+  let nivel: ResumenHildegardiano['estado']['nivel'];
+
+  if (esVeneno || frecuencia === 'prohibido') {
+    nivel = 'evitar';
+  } else if (subtilitat != null) {
+    nivel = subtilitat > 6 ? 'recomendado' : subtilitat >= 4 ? 'precaucion' : 'evitar';
+  } else {
+    const esRojo = viriditas === 'nulo';
+    const esAmarillo =
+      !esRojo && (alertas.length > 0 || viriditas === 'bajo' || frecuencia === 'medicinal');
+    nivel = esRojo ? 'evitar' : esAmarillo ? 'precaucion' : 'recomendado';
+  }
+
+  const estado: ResumenHildegardiano['estado'] =
+    nivel === 'evitar'
+      ? { nivel: 'evitar', icono: '🚫', texto: 'Evitar', clases: CLASES.rojo }
+      : nivel === 'precaucion'
+      ? { nivel: 'precaucion', icono: '⚠️', texto: 'Usar con precaución', clases: CLASES.ambar }
+      : { nivel: 'recomendado', icono: '✅', texto: 'Recomendado', clases: CLASES.verde };
+
+  return { estado, datos, alertas, beneficios };
 }
 
 const CATEGORIAS_ETIQUETAS: Record<string, string> = {
@@ -375,15 +603,15 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
                   onChange={(e) => setUnidad(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
                 >
-                  <option value="gramos">gramos</option>
-                  <option value="kg">kg</option>
-                  <option value="ml">ml</option>
-                  <option value="litros">litros</option>
-                  <option value="unidades">unidades</option>
-                  <option value="cucharadas">cucharadas</option>
-                  <option value="cucharadita">cucharadita</option>
-                  <option value="tazas">tazas</option>
+                  {UNIDADES.map((u) => (
+                    <option key={u.value} value={u.value}>{u.label}</option>
+                  ))}
                 </select>
+                {equivalenteTexto(cantidad, unidad) && (
+                  <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-1">
+                    {equivalenteTexto(cantidad, unidad)}
+                  </p>
+                )}
               </div>
             </div>
             <button
@@ -427,16 +655,74 @@ export default function SelectorIngredientes({ value, onChange }: SelectorIngred
                       onChange={(e) => actualizarUnidad(item.ingrediente_id, e.target.value)}
                       className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
                     >
-                      <option value="gramos">gramos</option>
-                      <option value="kg">kg</option>
-                      <option value="ml">ml</option>
-                      <option value="litros">litros</option>
-                      <option value="unidades">unidades</option>
-                      <option value="cucharadas">cucharadas</option>
-                      <option value="cucharadita">cucharadita</option>
-                      <option value="tazas">tazas</option>
+                      {UNIDADES.map((u) => (
+                        <option key={u.value} value={u.value}>{u.label}</option>
+                      ))}
                     </select>
+                    {equivalenteTexto(item.cantidad, item.unidad) && (
+                      <span className="text-xs text-green-700 dark:text-green-400 font-semibold whitespace-nowrap">
+                        {equivalenteTexto(item.cantidad, item.unidad)}
+                      </span>
+                    )}
                   </div>
+                  {/* Resumen hildegardiano */}
+                  {(() => {
+                    const ingredienteFull = ingredientes.find((i) => i.id === item.ingrediente_id);
+                    const resumen = resumenHildegardiano(ingredienteFull, item.nombre);
+                    return (
+                      <div className="mt-2 space-y-1.5">
+                        {/* Semáforo general */}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${resumen.estado.clases}`}
+                            title="Estado hildegardiano general"
+                          >
+                            {resumen.estado.icono} {resumen.estado.texto}
+                          </span>
+                          {/* Datos neutros */}
+                          {resumen.datos.map((d, idx) => (
+                            <span
+                              key={`${item.ingrediente_id}-${d.tipo}-${idx}`}
+                              className={`text-xs px-2 py-0.5 rounded-full font-medium ${d.clases}`}
+                              title={d.texto}
+                            >
+                              {d.icono} {d.texto}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Alertas */}
+                        {resumen.alertas.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {resumen.alertas.map((a, idx) => (
+                              <span
+                                key={`${item.ingrediente_id}-${a.tipo}-${idx}`}
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.clases}`}
+                                title={a.texto}
+                              >
+                                {a.icono} {a.texto}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Beneficios */}
+                        {resumen.beneficios.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {resumen.beneficios.map((b, idx) => (
+                              <span
+                                key={`${item.ingrediente_id}-${b.tipo}-${idx}`}
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${b.clases}`}
+                                title={b.texto}
+                              >
+                                {b.icono} {b.texto}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <button
                   type="button"
