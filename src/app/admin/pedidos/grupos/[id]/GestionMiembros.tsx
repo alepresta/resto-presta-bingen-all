@@ -28,6 +28,7 @@ export default function GestionMiembros({
 }: GestionMiembrosProps) {
   const router = useRouter();
   const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+  const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
@@ -35,6 +36,16 @@ export default function GestionMiembros({
   const clientesNoMiembros = clientesDisponibles.filter(
     (c) => !miembrosActuales.some((m) => m.cliente_id === c.id)
   );
+
+  // Filtrar por texto de búsqueda (nombre o email, sin acentos)
+  const normalizar = (v: string) =>
+    (v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const termino = normalizar(busqueda);
+  const clientesFiltrados = termino
+    ? clientesNoMiembros.filter(
+        (c) => normalizar(c.nombre).includes(termino) || normalizar(c.email).includes(termino)
+      )
+    : clientesNoMiembros;
 
   const agregarMiembro = async () => {
     if (!clienteSeleccionado) {
@@ -101,14 +112,28 @@ export default function GestionMiembros({
       {/* Agregar miembro */}
       <div className="mb-4">
         <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Agregar miembro</h3>
+        <input
+          type="text"
+          value={busqueda}
+          onChange={(e) => {
+            setBusqueda(e.target.value);
+            setClienteSeleccionado('');
+          }}
+          placeholder="🔍 Buscar cliente por nombre o email..."
+          className="w-full mb-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
+        />
         <div className="flex gap-2">
           <select
             value={clienteSeleccionado}
             onChange={(e) => setClienteSeleccionado(e.target.value)}
             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="">Seleccioná un cliente...</option>
-            {clientesNoMiembros.map((c) => (
+            <option value="">
+              {clientesFiltrados.length === 0
+                ? 'Sin resultados'
+                : `Seleccioná un cliente... (${clientesFiltrados.length})`}
+            </option>
+            {clientesFiltrados.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nombre} ({c.email})
               </option>

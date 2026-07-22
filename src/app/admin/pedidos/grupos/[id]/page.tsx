@@ -46,10 +46,22 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
     notFound();
   }
 
-  const { data: clientesDisponibles } = await supabase
+  const { data: clientesTodos } = await supabase
     .from('clientes')
     .select('id, nombre, email')
     .order('nombre');
+
+  // Solo clientes "reales": los que tienen una cuenta registrada (perfil en
+  // `profiles` con el mismo email). Los clientes sueltos/de prueba se excluyen.
+  const { data: perfiles } = await supabase.from('profiles').select('email');
+  const emailsRegistrados = new Set(
+    (perfiles || [])
+      .map((p: any) => (p.email || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const clientesDisponibles = (clientesTodos || []).filter((c: any) =>
+    emailsRegistrados.has((c.email || '').trim().toLowerCase())
+  );
 
   const miembrosConfirmados = grupo.miembros?.filter((m: any) => m.confirmado_general).length || 0;
   const totalMiembros = grupo.miembros?.length || 0;
