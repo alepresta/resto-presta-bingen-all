@@ -29,6 +29,14 @@ export default function PWAInstallPrompt() {
   useEffect(() => {
     if (standalone || dismissed) return;
 
+    const forceInstallHint = (() => {
+      try {
+        return new URLSearchParams(window.location.search).get('instalar') === '1';
+      } catch {
+        return false;
+      }
+    })();
+
     const onBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -43,7 +51,7 @@ export default function PWAInstallPrompt() {
     window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
     window.addEventListener('appinstalled', onInstalled);
 
-    if (ios) {
+    if (ios || forceInstallHint) {
       setVisible(true);
     }
 
@@ -74,6 +82,8 @@ export default function PWAInstallPrompt() {
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Instalá Hidelgarda en tu teléfono</p>
         {ios && !deferredPrompt ? (
           <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">En iPhone: tocá Compartir y luego Agregar a pantalla de inicio.</p>
+        ) : !deferredPrompt ? (
+          <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Si no aparece el botón de instalar, abrí el menú del navegador y elegí Agregar a pantalla de inicio.</p>
         ) : (
           <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Tocá instalar para tener acceso rápido desde la pantalla principal.</p>
         )}

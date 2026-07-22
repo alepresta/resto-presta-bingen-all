@@ -368,6 +368,28 @@ export default function CalendarioPedidos({
     }
   };
 
+  const compartir = async (texto: string, url: string, tipo: 'url' | 'codigo') => {
+    // En móviles, prioriza el panel nativo de compartir.
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: 'Invitación al grupo de pedidos',
+          text: texto,
+          url,
+        });
+        setCopiado(tipo);
+        setTimeout(() => setCopiado(null), 2000);
+        return;
+      } catch (err: any) {
+        // Si el usuario cancela el share, no forzamos copia.
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    // Fallback: copiar texto completo para pegar en WhatsApp, etc.
+    await copiar(texto, tipo);
+  };
+
   // Estados del buscador (dentro del modal)
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<number | null>(null);
@@ -1163,6 +1185,15 @@ export default function CalendarioPedidos({
       <div className="max-w-6xl mx-auto px-4 pt-4">
         {(() => {
           const creador = miembrosState.find((m) => m.rol === 'creador')?.cliente.nombre || 'Desconocido';
+          const shareUrlInstalable = (() => {
+            try {
+              const u = new URL(shareUrl);
+              u.searchParams.set('instalar', '1');
+              return u.toString();
+            } catch {
+              return shareUrl;
+            }
+          })();
           const rangoFechas =
             `${parseFechaLocal(fechaInicio).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}` +
             ` al ${parseFechaLocal(fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
@@ -1171,7 +1202,8 @@ export default function CalendarioPedidos({
             `👤 Creado por: ${creador}\n` +
             `📅 Plan: ${rangoFechas}\n\n` +
             `🔑 Código para unirse: ${palabraSecreta}\n\n` +
-            `🔗 O entrá directo con este enlace:\n${shareUrl}`;
+            `📲 Instalación rápida: al abrir el enlace, instalá la app desde el aviso o desde el navegador (Agregar a pantalla de inicio).\n\n` +
+            `🔗 O entrá directo con este enlace:\n${shareUrlInstalable}`;
 
           return (
             <details className="bg-white dark:bg-gray-800 rounded-xl shadow-md border-l-4 border-emerald-500 group">
@@ -1197,15 +1229,18 @@ export default function CalendarioPedidos({
                   <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Enlace</p>
                   <input
                     readOnly
-                    value={shareUrl}
+                    value={shareUrlInstalable}
                     onFocus={(e) => e.target.select()}
                     className="w-full text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200"
                   />
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                    Este enlace abre el grupo y sugiere instalar la app en el teléfono.
+                  </p>
                 </div>
               </div>
 
               <button
-                onClick={() => copiar(mensajeCompartir, 'url')}
+                onClick={() => compartir(mensajeCompartir, shareUrlInstalable, 'url')}
                 className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg"
               >
                 {copiado === 'url' ? '✅ Datos copiados' : '📤 Compartir (copiar datos)'}
