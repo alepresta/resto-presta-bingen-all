@@ -1305,29 +1305,34 @@ export default function CalendarioPedidos({
             )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {miembrosState.map((miembro) => (
+              (() => {
+                const confirmado = miembrosConfirmadosLista.some((m) => m.cliente_id === miembro.cliente_id);
+                return (
               <div
                 key={miembro.id}
                 className={`p-3 rounded-lg border-2 ${
-                  miembrosConfirmadosLista.some((m) => m.cliente_id === miembro.cliente_id)
-                    ? 'bg-green-50 border-green-500'
+                  confirmado
+                    ? 'bg-green-100 dark:bg-green-900/40 border-green-600 dark:border-green-400'
                     : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">
-                    {miembrosConfirmadosLista.some((m) => m.cliente_id === miembro.cliente_id) ? '✅' : '⏳'}
+                    {confirmado ? '✅' : '⏳'}
                   </span>
                   <div>
-                    <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
+                    <p className={`font-semibold text-sm ${confirmado ? 'text-green-950 dark:text-green-100' : 'text-gray-800 dark:text-gray-100'}`}>
                       {miembro.cliente.nombre}
                       {miembro.cliente_id === clienteActualId && ' (Vos)'}
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300">
+                    <p className={`text-xs ${confirmado ? 'text-green-800 dark:text-green-200' : 'text-gray-600 dark:text-gray-300'}`}>
                       {miembro.rol === 'creador' ? '👑 Creador' : '👤 Miembro'}
                     </p>
                   </div>
                 </div>
               </div>
+                );
+              })()
             ))}
           </div>
           </div>
