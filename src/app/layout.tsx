@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import SiteHeader from '@/components/SiteHeader';
@@ -8,6 +8,11 @@ import { getUsuarioConRol } from '@/lib/supabase/server';
 export const metadata: Metadata = {
   title: 'RESTO PRESTA BINGEN ALL - Comida es Medicina',
   description: 'Cocina hildegardiana. Pedidos anticipados con 10 días.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default async function RootLayout({
