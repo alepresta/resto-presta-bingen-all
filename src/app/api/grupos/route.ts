@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { getUsuarioConRol } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 // ============================================
@@ -37,6 +38,14 @@ export async function GET(request: NextRequest) {
 // ============================================
 export async function POST(request: NextRequest) {
   try {
+    const usuario = await getUsuarioConRol();
+    if (!usuario || usuario.rol !== 'admin') {
+      return NextResponse.json(
+        { error: 'Solo los administradores pueden crear grupos.' },
+        { status: 403 }
+      );
+    }
+
     const supabase = createServerSupabaseClient();
     const body = await request.json();
     

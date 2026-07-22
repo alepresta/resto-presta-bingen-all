@@ -135,7 +135,7 @@ export default function GestionMiembros({
             </option>
             {clientesFiltrados.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.nombre} ({c.email})
+                {c.nombre} ({c.email}) · ID: {c.id}
               </option>
             ))}
           </select>
@@ -158,6 +158,8 @@ export default function GestionMiembros({
               <div>
                 <p className="font-semibold text-gray-800 dark:text-gray-100">{miembro.cliente.nombre}</p>
                 <p className="text-xs text-gray-600 dark:text-gray-300">{miembro.cliente.email}</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 break-all">ID cliente: {miembro.cliente_id}</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 break-all">ID miembro: {miembro.id}</p>
               </div>
               <button
                 onClick={() => eliminarMiembro(miembro.id)}

@@ -1,30 +1,23 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 
-// GET /api/grupos/mis?cliente_id=...&email=...
-// Devuelve los grupos a los que pertenece el cliente (por id y/o email).
+// GET /api/grupos/mis?cliente_id=...&cliente_id_local=...
+// Devuelve los grupos a los que pertenece el cliente (por IDs).
 export async function GET(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient();
     const { searchParams } = new URL(request.url);
     const clienteId = searchParams.get('cliente_id');
-    const email = searchParams.get('email');
+    const clienteIdLocal = searchParams.get('cliente_id_local');
 
-    if (!clienteId && !email) {
+    if (!clienteId && !clienteIdLocal) {
       return NextResponse.json({ grupos: [] });
     }
 
-    // Reunir los ids de cliente: el id directo + los ids con el mismo email
+    // Reunir los ids de cliente válidos (auth + local, cuando difieran).
     const clienteIds = new Set<string>();
     if (clienteId) clienteIds.add(clienteId);
-
-    if (email) {
-      const { data: clientes } = await supabase
-        .from('clientes')
-        .select('id')
-        .eq('email', email);
-      (clientes || []).forEach((c: any) => clienteIds.add(c.id));
-    }
+    if (clienteIdLocal) clienteIds.add(clienteIdLocal);
 
     if (clienteIds.size === 0) {
       return NextResponse.json({ grupos: [] });

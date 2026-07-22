@@ -410,7 +410,27 @@ export default function CalendarioPedidos({
   useEffect(() => {
     // El id autoritativo es el del usuario autenticado (viene por prop desde el servidor).
     setClienteActualId(clienteActualIdProp);
-  }, [clienteActualIdProp]);
+
+    // Compatibilidad por ID: si este navegador tiene un cliente local que ya es
+    // miembro del grupo, usamos ese ID para evitar pedir "unirse" otra vez.
+    // No usamos email para evitar cruces incorrectos de identidad.
+    try {
+      const guardado = localStorage.getItem('cliente_actual');
+      if (!guardado) return;
+      const c = JSON.parse(guardado);
+      const idLocal = typeof c?.id === 'string' ? c.id : '';
+      if (!idLocal) return;
+
+      const authEsMiembro = miembrosState.some((m) => m.cliente_id === clienteActualIdProp);
+      const localEsMiembro = miembrosState.some((m) => m.cliente_id === idLocal);
+
+      if (!authEsMiembro && localEsMiembro) {
+        setClienteActualId(idLocal);
+      }
+    } catch {
+      /* noop */
+    }
+  }, [clienteActualIdProp, miembrosState]);
 
   // Limpiar filtros cuando se cierra el modal
   useEffect(() => {
@@ -483,6 +503,31 @@ export default function CalendarioPedidos({
   const getNombreCliente = (clienteId: string) => {
     const miembro = miembrosState.find((m) => m.cliente_id === clienteId);
     return miembro?.cliente.nombre || 'Desconocido';
+  };
+
+  const acuerdoIdsDeItem = (item: ItemPedido): Set<string> => {
+    const idsMiembros = new Set(miembrosState.map((m) => m.cliente_id));
+    const acuerdo = new Set<string>();
+    const votos: string[] = Array.isArray(item.votos) ? item.votos : [];
+    votos.forEach((v) => {
+      if (idsMiembros.has(v)) acuerdo.add(v);
+    });
+    if (item.seleccionado_por && idsMiembros.has(item.seleccionado_por)) {
+      acuerdo.add(item.seleccionado_por);
+    }
+    return acuerdo;
+  };
+
+  const clienteConfirmoDia = (fecha: string, clienteId: string) => {
+    const itemsDia = items.filter((it) => it.fecha === fecha);
+    if (itemsDia.length === 0) return false;
+    return itemsDia.every((it) => acuerdoIdsDeItem(it).has(clienteId));
+  };
+
+  const miembrosConfirmadosEnDia = (fecha: string) => {
+    const itemsDia = items.filter((it) => it.fecha === fecha);
+    if (itemsDia.length === 0) return 0;
+    return miembrosState.filter((m) => clienteConfirmoDia(fecha, m.cliente_id)).length;
   };
 
   // Análisis nutricional + hildegardiano de un plato (por porción)
@@ -833,7 +878,7 @@ export default function CalendarioPedidos({
     }
   };
 
-  const confirmarGeneral = async () => {
+  const confirmarDia = async (fecha: string) => {
     setCargando(true);
     setMensaje('');
 
@@ -842,8 +887,9 @@ export default function CalendarioPedidos({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          accion: 'confirmar',
+          accion: 'confirmar_dia',
           cliente_id: clienteActualId,
+          fecha,
         }),
       });
 
@@ -855,15 +901,10 @@ export default function CalendarioPedidos({
       const data = await response.json();
       setMensaje(data.mensaje);
 
-      setMiembrosState((prev) =>
-        prev.map((m) =>
-          m.cliente_id === clienteActualId ? { ...m, confirmado_general: true } : m
-        )
-      );
-
-      // Al confirmar, quedo "de acuerdo" con todos los platos propuestos
+      // Al confirmar un día, quedo "de acuerdo" con todos los platos de ese día.
       setItems((prev) =>
         prev.map((it) => {
+          if (it.fecha !== fecha) return it;
           const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
           return votos.includes(clienteActualId) ? it : { ...it, votos: [...votos, clienteActualId] };
         })
@@ -878,8 +919,7 @@ export default function CalendarioPedidos({
     }
   };
 
-  // Deshacer la confirmación para volver a habilitar el menú.
-  const desconfirmarGeneral = async () => {
+  const desconfirmarDia = async (fecha: string) => {
     setCargando(true);
     setMensaje('');
 
@@ -888,8 +928,9 @@ export default function CalendarioPedidos({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          accion: 'desconfirmar',
+          accion: 'desconfirmar_dia',
           cliente_id: clienteActualId,
+          fecha,
         }),
       });
 
@@ -901,15 +942,10 @@ export default function CalendarioPedidos({
       const data = await response.json();
       setMensaje(data.mensaje);
 
-      setMiembrosState((prev) =>
-        prev.map((m) =>
-          m.cliente_id === clienteActualId ? { ...m, confirmado_general: false } : m
-        )
-      );
-
-      // Al reactivar, retiro mi voto de todos los platos
+      // Al reabrir un día, retiro mi voto en los platos de ese día.
       setItems((prev) =>
         prev.map((it) => {
+          if (it.fecha !== fecha) return it;
           const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
           return votos.includes(clienteActualId) ? { ...it, votos: votos.filter((v) => v !== clienteActualId) } : it;
         })
@@ -929,14 +965,11 @@ export default function CalendarioPedidos({
     return sum + (plato?.precio || 0) * item.cantidad;
   }, 0);
 
-  const clienteActual = miembrosState.find((m) => m.cliente_id === clienteActualId);
-  const miembrosConfirmados = miembrosState.filter((m) => m.confirmado_general).length;
-  const miembrosConfirmadosLista = miembrosState.filter((m) => m.confirmado_general);
-  const miembrosPendientes = miembrosState.filter((m) => !m.confirmado_general);
-  const todosConfirmaron = miembrosConfirmados === miembrosState.length && miembrosState.length === 4;
-
-  // Una vez que el cliente confirmó su acuerdo, no puede seguir cambiando el menú.
-  const menuBloqueado = !!clienteActual?.confirmado_general;
+  const miembrosConfirmadosLista = miembrosState.filter((m) =>
+    items.length > 0 && items.every((it) => acuerdoIdsDeItem(it).has(m.cliente_id))
+  );
+  const miembrosPendientes = miembrosState.filter((m) => !miembrosConfirmadosLista.some((ok) => ok.cliente_id === m.cliente_id));
+  const todosConfirmaron = items.length > 0 && miembrosPendientes.length === 0;
 
   // ¿El usuario actual ya es miembro del grupo?
   const esMiembro = miembrosState.some((m) => m.cliente_id === clienteActualId);
@@ -971,6 +1004,7 @@ export default function CalendarioPedidos({
           confirmado_general: false,
         },
       ]);
+      window.dispatchEvent(new Event('cliente-actual-updated'));
       setMensaje('✅ Te uniste al grupo. Ya podés elegir tus platos.');
       setTimeout(() => setMensaje(''), 4000);
     } catch (err: any) {
@@ -1274,14 +1308,14 @@ export default function CalendarioPedidos({
               <div
                 key={miembro.id}
                 className={`p-3 rounded-lg border-2 ${
-                  miembro.confirmado_general
+                  miembrosConfirmadosLista.some((m) => m.cliente_id === miembro.cliente_id)
                     ? 'bg-green-50 border-green-500'
                     : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">
-                    {miembro.confirmado_general ? '✅' : '⏳'}
+                    {miembrosConfirmadosLista.some((m) => m.cliente_id === miembro.cliente_id) ? '✅' : '⏳'}
                   </span>
                   <div>
                     <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
@@ -1344,6 +1378,8 @@ export default function CalendarioPedidos({
             const diaInfo = DIAS_SEMANA.find((d) => d.id === diaSemana);
             const esPasado = fechaStr < formatFechaLocal(new Date());
             const enRango = fechaStr >= fechaInicio && fechaStr <= fechaFin;
+            const itemsDia = items.filter((it) => it.fecha === fechaStr);
+            const tienePlatosDia = itemsDia.length > 0;
 
             // Días fuera del rango del plan: solo relleno visual (lunes-domingo).
             if (!enRango) {
@@ -1400,6 +1436,34 @@ export default function CalendarioPedidos({
                       </p>
                     )}
                   </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      {miembrosConfirmadosEnDia(fechaStr)}/{miembrosState.length} confirmaciones
+                    </p>
+                    {esMiembro && (
+                      <button
+                        onClick={() =>
+                          clienteConfirmoDia(fechaStr, clienteActualId)
+                            ? desconfirmarDia(fechaStr)
+                            : confirmarDia(fechaStr)
+                        }
+                        disabled={cargando || (!clienteConfirmoDia(fechaStr, clienteActualId) && !tienePlatosDia)}
+                        className={`mt-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                          clienteConfirmoDia(fechaStr, clienteActualId)
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : tienePlatosDia
+                            ? 'bg-amber-600 text-white hover:bg-amber-700'
+                            : 'bg-gray-300 text-gray-700'
+                        } disabled:opacity-50`}
+                      >
+                        {clienteConfirmoDia(fechaStr, clienteActualId)
+                          ? '✅ Día confirmado'
+                          : tienePlatosDia
+                          ? '✅ Confirmar este día'
+                          : 'Sin platos para confirmar'}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
@@ -1416,10 +1480,9 @@ export default function CalendarioPedidos({
                     }
                     const cantAcuerdo = acuerdoIds.size;
                     const yaVote = acuerdoIds.has(clienteActualId);
-                    const puedeInteractuar = esMiembro && !menuBloqueado;
+                    const puedeInteractuar = esMiembro;
                     const platoFull = item ? platos.find((p) => p.id === item.plato_id) : undefined;
-                    // Una vez confirmado, mostrar la foto del plato como fondo (si tiene)
-                    const imagenFondo = menuBloqueado && item && platoFull?.imagen ? platoFull.imagen : null;
+                    const imagenFondo = item && platoFull?.imagen ? platoFull.imagen : null;
 
                     return (
                       <div
@@ -1430,8 +1493,6 @@ export default function CalendarioPedidos({
                             ? 'border-2 border-green-500 text-white min-h-[120px]'
                             : !esMiembro
                             ? 'bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 opacity-60'
-                            : menuBloqueado
-                            ? 'bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 opacity-60'
                             : item
                             ? 'bg-green-100 dark:bg-green-950/30 border-2 border-green-500 dark:border-green-700'
                             : 'bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-300 dark:border-gray-600'
@@ -1462,7 +1523,7 @@ export default function CalendarioPedidos({
                             </>
                           ) : (
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {!esMiembro ? 'Uníte para elegir' : menuBloqueado ? 'Sin selección' : 'Tocá para elegir'}
+                              {!esMiembro ? 'Uníte para elegir' : 'Tocá para elegir'}
                             </p>
                           )}
                         </button>
@@ -1812,7 +1873,7 @@ export default function CalendarioPedidos({
             <div>
               <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">💰 Resumen del Pedido</h2>
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                {items.length} platos seleccionados · {miembrosConfirmados}/4 confirmaciones
+                {items.length} platos seleccionados · {miembrosConfirmadosLista.length}/{miembrosState.length} miembros de acuerdo en todo el plan
               </p>
             </div>
             <p className="text-3xl font-bold text-amber-600">
@@ -1820,30 +1881,14 @@ export default function CalendarioPedidos({
             </p>
           </div>
 
-          <button
-            onClick={clienteActual?.confirmado_general ? desconfirmarGeneral : confirmarGeneral}
-            disabled={cargando}
-            className={`w-full py-4 rounded-lg font-bold text-lg transition-all ${
-              clienteActual?.confirmado_general
-                ? 'bg-green-500 text-white hover:bg-green-600'
-                : todosConfirmaron
-                ? 'bg-blue-500 text-white cursor-not-allowed'
-                : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:shadow-lg disabled:opacity-50'
-            }`}
-          >
-            {cargando
-              ? '⏳ Procesando...'
-              : clienteActual?.confirmado_general
-              ? '✅ Ya confirmaste — tocá para volver a cambiar tu menú'
-              : todosConfirmaron
-              ? '🎉 ¡Todos confirmaron! Pedido enviado'
-              : '✅ Confirmar que estoy de acuerdo con el menú'}
-          </button>
+          <p className="text-sm text-gray-700 dark:text-gray-200">
+            La confirmación ahora es por día. Confirmá cada jornada desde su tarjeta para cerrar tu acuerdo diario.
+          </p>
 
           {todosConfirmaron && (
             <div className="mt-4 bg-green-50 border border-green-200 p-4 rounded-lg">
               <p className="text-green-800 font-semibold">
-                🎉 ¡Excelente! Los 4 miembros confirmaron el pedido.
+                🎉 ¡Excelente! Todos los miembros están de acuerdo en todos los platos cargados.
               </p>
             </div>
           )}

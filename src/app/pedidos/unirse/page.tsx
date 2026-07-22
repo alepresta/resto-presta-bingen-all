@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function UnirseGrupoPage() {
   const router = useRouter();
@@ -11,6 +12,34 @@ export default function UnirseGrupoPage() {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [step, setStep] = useState(1);
+  const [authClienteId, setAuthClienteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) return;
+
+        setAuthClienteId(user.id);
+        if (user.email) setEmail((prev) => prev || user.email || '');
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('nombre, apellido')
+          .eq('id', user.id)
+          .single();
+
+        const nombrePerfil = [profile?.nombre, profile?.apellido].filter(Boolean).join(' ').trim();
+        if (nombrePerfil) setNombre((prev) => prev || nombrePerfil);
+      } catch {
+        // Si falla la lectura de sesión/perfil, se mantiene el flujo manual.
+      }
+    })();
+  }, []);
 
   const handleUnirse = async () => {
     setLoading(true);
@@ -25,13 +54,14 @@ export default function UnirseGrupoPage() {
         throw new Error('Ingresá una palabra secreta válida (mínimo 6 caracteres)');
       }
 
-      // Generar ID de cliente local
-      const clienteId = crypto.randomUUID();
+      // Si hay usuario autenticado, usamos su id real para que luego lo reconozca MiGrupo.
+      const clienteId = authClienteId || crypto.randomUUID();
 
       localStorage.setItem(
         'cliente_actual',
         JSON.stringify({ id: clienteId, nombre, email })
       );
+      window.dispatchEvent(new Event('cliente-actual-updated'));
 
       const response = await fetch('/api/grupos/unirse', {
         method: 'POST',
@@ -60,7 +90,7 @@ export default function UnirseGrupoPage() {
         throw new Error(data.error || 'Error al unirse');
       }
 
-      router.push(`/pedidos/grupo/${data.grupo_id}`);
+      router.push(`/pedidos/grupo/${data.grupo_id}?instalar=1`);
     } catch (err: any) {
       console.error('Error completo:', err);
       setError(err.message);

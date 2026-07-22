@@ -9,7 +9,98 @@ export async function PUT(
   try {
     const supabase = createServerSupabaseClient();
     const body = await request.json();
-    const { accion, cliente_id } = body;
+    const { accion, cliente_id, fecha } = body;
+
+    const recomputarEstadoGrupo = async () => {
+      const { data: miembrosActivos } = await supabase
+        .from('grupo_miembros')
+        .select('cliente_id')
+        .eq('grupo_id', params.id);
+
+      const idsMiembros = new Set((miembrosActivos || []).map((m: any) => m.cliente_id));
+
+      const { data: itemsGrupo } = await supabase
+        .from('grupo_items')
+        .select('id, seleccionado_por, votos')
+        .eq('grupo_id', params.id);
+
+      const totalMiembros = idsMiembros.size;
+      const hayItems = (itemsGrupo || []).length > 0;
+
+      const todosAcordaron =
+        hayItems &&
+        totalMiembros > 0 &&
+        (itemsGrupo || []).every((it: any) => {
+          const acuerdo = new Set<string>();
+          if (it.seleccionado_por && idsMiembros.has(it.seleccionado_por)) acuerdo.add(it.seleccionado_por);
+          const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
+          votos.forEach((v) => {
+            if (idsMiembros.has(v)) acuerdo.add(v);
+          });
+          return acuerdo.size === totalMiembros;
+        });
+
+      await supabase
+        .from('grupos_pedido')
+        .update({ estado: todosAcordaron ? 'confirmado' : 'armando' })
+        .eq('id', params.id);
+
+      return { todosAcordaron, totalMiembros };
+    };
+
+    if (accion === 'confirmar_dia') {
+      if (!cliente_id || !fecha) {
+        return NextResponse.json({ error: 'Faltan cliente o fecha' }, { status: 400 });
+      }
+
+      const { data: itemsDia } = await supabase
+        .from('grupo_items')
+        .select('id, votos')
+        .eq('grupo_id', params.id)
+        .eq('fecha', fecha);
+
+      for (const it of itemsDia || []) {
+        const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
+        if (!votos.includes(cliente_id)) {
+          await supabase
+            .from('grupo_items')
+            .update({ votos: [...votos, cliente_id] })
+            .eq('id', it.id);
+        }
+      }
+
+      const { todosAcordaron } = await recomputarEstadoGrupo();
+      return NextResponse.json({
+        mensaje: todosAcordaron
+          ? '🎉 ¡Todos acordaron todos los días cargados del plan!'
+          : '✅ Confirmaste este día. Quedaste de acuerdo con todos sus platos.',
+      });
+    }
+
+    if (accion === 'desconfirmar_dia') {
+      if (!cliente_id || !fecha) {
+        return NextResponse.json({ error: 'Faltan cliente o fecha' }, { status: 400 });
+      }
+
+      const { data: itemsDia } = await supabase
+        .from('grupo_items')
+        .select('id, votos')
+        .eq('grupo_id', params.id)
+        .eq('fecha', fecha);
+
+      for (const it of itemsDia || []) {
+        const votos: string[] = Array.isArray(it.votos) ? it.votos : [];
+        if (votos.includes(cliente_id)) {
+          await supabase
+            .from('grupo_items')
+            .update({ votos: votos.filter((v) => v !== cliente_id) })
+            .eq('id', it.id);
+        }
+      }
+
+      await recomputarEstadoGrupo();
+      return NextResponse.json({ mensaje: '✏️ Reabriste ese día para poder volver a cambiar platos.' });
+    }
 
     if (accion === 'confirmar') {
       if (!cliente_id) {

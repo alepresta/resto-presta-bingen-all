@@ -238,6 +238,8 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
                   <div>
                     <p className="font-bold text-gray-800 dark:text-gray-100">{miembro.cliente?.nombre}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">{miembro.cliente?.email}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 break-all">ID cliente: {miembro.cliente_id}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 break-all">ID miembro: {miembro.id}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Rol: {miembro.rol}{miembro.joined_at ? ` · Se unió: ${new Date(miembro.joined_at).toLocaleDateString('es-AR')}` : ''}
                     </p>

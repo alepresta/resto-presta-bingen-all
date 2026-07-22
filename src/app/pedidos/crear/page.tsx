@@ -9,6 +9,7 @@ export default function CrearGrupoPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [autorizado, setAutorizado] = useState<boolean | null>(null);
 
   // Datos del cliente
   const [nombre, setNombre] = useState('');
@@ -32,14 +33,25 @@ export default function CrearGrupoPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setAutorizado(false);
+        router.replace('/pedidos/unirse');
+        return;
+      }
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('nombre, telefono')
+        .select('nombre, telefono, rol')
         .eq('id', user.id)
         .single();
 
+      if ((profile?.rol || 'cliente') !== 'admin') {
+        setAutorizado(false);
+        router.replace('/pedidos/unirse');
+        return;
+      }
+
+      setAutorizado(true);
       setNombre(profile?.nombre || '');
       setEmail(user.email || '');
       setTelefono(profile?.telefono || '');
@@ -47,7 +59,19 @@ export default function CrearGrupoPage() {
       setLogueado(true);
       setStep(2); // saltar "Tus datos"
     })();
-  }, []);
+  }, [router]);
+
+  if (autorizado === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 flex items-center justify-center px-4">
+        <p className="text-sm font-semibold text-amber-800">Validando permisos...</p>
+      </div>
+    );
+  }
+
+  if (!autorizado) {
+    return null;
+  }
 
   // Fecha mínima: hoy + 10 días
   const fechaMinima = new Date();
@@ -86,6 +110,7 @@ export default function CrearGrupoPage() {
         email,
         telefono
       }));
+      window.dispatchEvent(new Event('cliente-actual-updated'));
       
       // Llamar a la API
       const response = await fetch('/api/grupos', {
