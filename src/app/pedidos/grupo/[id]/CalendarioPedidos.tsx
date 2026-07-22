@@ -315,14 +315,34 @@ export default function CalendarioPedidos({
       try {
         const textarea = document.createElement('textarea');
         textarea.value = texto;
+        textarea.contentEditable = 'true';
         textarea.setAttribute('readonly', '');
         textarea.style.position = 'fixed';
         textarea.style.top = '0';
         textarea.style.left = '0';
-        textarea.style.opacity = '0';
+        textarea.style.width = '1px';
+        textarea.style.height = '1px';
+        textarea.style.padding = '0';
+        textarea.style.border = 'none';
+        textarea.style.outline = 'none';
+        textarea.style.boxShadow = 'none';
+        textarea.style.background = 'transparent';
         document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
+
+        // iOS Safari requiere un Range + Selection explícito
+        const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (esIOS) {
+          const range = document.createRange();
+          range.selectNodeContents(textarea);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+          textarea.setSelectionRange(0, texto.length);
+        } else {
+          textarea.focus();
+          textarea.select();
+        }
+
         const ok = document.execCommand('copy');
         document.body.removeChild(textarea);
         return ok;
