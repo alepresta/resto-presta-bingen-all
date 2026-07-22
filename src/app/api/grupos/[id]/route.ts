@@ -102,6 +102,37 @@ export async function PUT(
       return NextResponse.json({ mensaje: '✏️ Reabriste ese día para poder volver a cambiar platos.' });
     }
 
+    if (accion === 'limpiar_dia') {
+      if (!cliente_id || !fecha) {
+        return NextResponse.json({ error: 'Faltan cliente o fecha' }, { status: 400 });
+      }
+
+      // Solo un miembro del grupo puede vaciar el día.
+      const { data: miembro } = await supabase
+        .from('grupo_miembros')
+        .select('id')
+        .eq('grupo_id', params.id)
+        .eq('cliente_id', cliente_id)
+        .maybeSingle();
+
+      if (!miembro) {
+        return NextResponse.json({ error: 'No pertenecés a este grupo.' }, { status: 403 });
+      }
+
+      const { error: errorDelete } = await supabase
+        .from('grupo_items')
+        .delete()
+        .eq('grupo_id', params.id)
+        .eq('fecha', fecha);
+
+      if (errorDelete) {
+        return NextResponse.json({ error: errorDelete.message }, { status: 500 });
+      }
+
+      await recomputarEstadoGrupo();
+      return NextResponse.json({ mensaje: '🧹 Se limpiaron todos los platos de ese día.' });
+    }
+
     if (accion === 'confirmar') {
       if (!cliente_id) {
         return NextResponse.json(

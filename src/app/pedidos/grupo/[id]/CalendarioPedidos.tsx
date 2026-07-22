@@ -282,6 +282,7 @@ export default function CalendarioPedidos({
   const router = useRouter();
   const [items, setItems] = useState<ItemPedido[]>(itemsIniciales);
   const [modalAbierto, setModalAbierto] = useState<{ fecha: string; tipo: string } | null>(null);
+  const [diaALimpiar, setDiaALimpiar] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [clienteActualId, setClienteActualId] = useState<string>(clienteActualIdProp);
@@ -444,13 +445,16 @@ export default function CalendarioPedidos({
   }, [modalAbierto]);
 
   useEffect(() => {
-    if (!modalAbierto) return;
+    if (!modalAbierto && !diaALimpiar) return;
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setModalAbierto(null);
+      if (e.key === 'Escape') {
+        setModalAbierto(null);
+        setDiaALimpiar(null);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
 
@@ -458,7 +462,7 @@ export default function CalendarioPedidos({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [modalAbierto]);
+  }, [modalAbierto, diaALimpiar]);
 
   const fechas = [];
   const inicio = parseFechaLocal(fechaInicio);
@@ -960,6 +964,41 @@ export default function CalendarioPedidos({
     }
   };
 
+  const limpiarDia = async (fecha: string) => {
+    setCargando(true);
+    setMensaje('');
+
+    try {
+      const response = await fetch(`/api/grupos/${grupoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accion: 'limpiar_dia',
+          cliente_id: clienteActualId,
+          fecha,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al limpiar el día');
+      }
+
+      const data = await response.json();
+      setMensaje(data.mensaje || '🧹 Día limpiado');
+      setItems((prev) => prev.filter((it) => it.fecha !== fecha));
+      setAnalisisVersion((v) => v + 1);
+      setDiaALimpiar(null);
+
+      setTimeout(() => setMensaje(''), 5000);
+    } catch (error: any) {
+      setMensaje(`❌ ${error.message}`);
+      setTimeout(() => setMensaje(''), 5000);
+    } finally {
+      setCargando(false);
+    }
+  };
+
   const total = items.reduce((sum, item) => {
     const plato = platos.find((p) => p.id === item.plato_id);
     return sum + (plato?.precio || 0) * item.cantidad;
@@ -1446,27 +1485,37 @@ export default function CalendarioPedidos({
                       {miembrosConfirmadosEnDia(fechaStr)}/{miembrosState.length} confirmaciones
                     </p>
                     {esMiembro && (
-                      <button
-                        onClick={() =>
-                          clienteConfirmoDia(fechaStr, clienteActualId)
-                            ? desconfirmarDia(fechaStr)
-                            : confirmarDia(fechaStr)
-                        }
-                        disabled={cargando || (!clienteConfirmoDia(fechaStr, clienteActualId) && !tienePlatosDia)}
-                        className={`mt-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                          clienteConfirmoDia(fechaStr, clienteActualId)
-                            ? 'bg-green-600 text-white hover:bg-green-700'
+                      <div className="mt-1 flex items-center justify-end gap-2">
+                        <button
+                          onClick={() =>
+                            clienteConfirmoDia(fechaStr, clienteActualId)
+                              ? desconfirmarDia(fechaStr)
+                              : confirmarDia(fechaStr)
+                          }
+                          disabled={cargando || (!clienteConfirmoDia(fechaStr, clienteActualId) && !tienePlatosDia)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                            clienteConfirmoDia(fechaStr, clienteActualId)
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : tienePlatosDia
+                              ? 'bg-amber-600 text-white hover:bg-amber-700'
+                              : 'bg-gray-300 text-gray-700'
+                          } disabled:opacity-50`}
+                        >
+                          {clienteConfirmoDia(fechaStr, clienteActualId)
+                            ? '✅ Día confirmado'
                             : tienePlatosDia
-                            ? 'bg-amber-600 text-white hover:bg-amber-700'
-                            : 'bg-gray-300 text-gray-700'
-                        } disabled:opacity-50`}
-                      >
-                        {clienteConfirmoDia(fechaStr, clienteActualId)
-                          ? '✅ Día confirmado'
-                          : tienePlatosDia
-                          ? '✅ Confirmar este día'
-                          : 'Sin platos para confirmar'}
-                      </button>
+                            ? '✅ Confirmar día'
+                            : 'Sin platos'}
+                        </button>
+
+                        <button
+                          onClick={() => setDiaALimpiar(fechaStr)}
+                          disabled={cargando || !tienePlatosDia}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          🧹 Limpiar día
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -2192,6 +2241,53 @@ export default function CalendarioPedidos({
               <ProduccionPorDia dias={produccionPorDia} />
             </div>
           </details>
+        </div>
+      )}
+
+      {/* MODAL: confirmación de limpiar día */}
+      {diaALimpiar && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-2 sm:p-4"
+          onClick={() => !cargando && setDiaALimpiar(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">🧹 Limpiar día completo</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                {parseFechaLocal(diaALimpiar).toLocaleDateString('es-AR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                })}
+              </p>
+            </div>
+
+            <div className="p-4 sm:p-5">
+              <p className="text-sm text-gray-700 dark:text-gray-200">
+                Se eliminarán todos los platos seleccionados de este día. Esta acción no se puede deshacer.
+              </p>
+
+              <div className="mt-4 flex gap-2 justify-end">
+                <button
+                  onClick={() => setDiaALimpiar(null)}
+                  disabled={cargando}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => limpiarDia(diaALimpiar)}
+                  disabled={cargando}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {cargando ? 'Limpiando...' : 'Sí, limpiar día'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
