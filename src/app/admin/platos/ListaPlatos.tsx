@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { AnalisisPlato } from '@/lib/analisis-plato';
@@ -142,6 +142,21 @@ function ModalEditarPlato({
   const [subiendo, setSubiendo] = useState(false);
   const [errorImagen, setErrorImagen] = useState<string | null>(null);
 
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCerrar();
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [onCerrar]);
+
   const subirImagen = async (file: File) => {
     setSubiendo(true);
     setErrorImagen(null);
@@ -165,11 +180,11 @@ function ModalEditarPlato({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-2 sm:p-4"
       onClick={onCerrar}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-0.5rem)] sm:max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -182,7 +197,7 @@ function ModalEditarPlato({
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-5">
           <p className="text-sm text-gray-500 dark:text-gray-400">{plato.nombre}</p>
 
           {/* Imagen */}
@@ -323,7 +338,7 @@ function ModalEditarPlato({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="sticky bottom-0 bg-white dark:bg-gray-800 flex justify-end gap-2 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onCerrar}
             disabled={guardando}

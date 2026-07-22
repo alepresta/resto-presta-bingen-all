@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DIAS_SEMANA, CATEGORIAS_COMIDA, TIPO_COMIDA_MAP } from '@/lib/pedidos';
 import {
   calcularFechaMinimaPedido,
@@ -45,6 +45,23 @@ export default function CalendarioPedidos({ restaurante, platos, categorias }: C
   const [itemsSeleccionados, setItemsSeleccionados] = useState<ItemSeleccionado[]>([]);
   const [diaActivo, setDiaActivo] = useState<string | null>(null);
   const [platoActivoModal, setPlatoActivoModal] = useState<{ fecha: string; tipo: string } | null>(null);
+
+  useEffect(() => {
+    if (!platoActivoModal) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPlatoActivoModal(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [platoActivoModal]);
 
   // Calcular fecha mínima (hoy + 10 días)
   const fechaMinima = useMemo(() => {
@@ -258,17 +275,17 @@ export default function CalendarioPedidos({ restaurante, platos, categorias }: C
       {/* Modal de selección de plato */}
       {platoActivoModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-2 sm:p-4"
           onClick={() => setPlatoActivoModal(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl max-w-2xl w-full max-h-[calc(100vh-0.5rem)] sm:max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-gradient-to-r from-amber-700 to-orange-600 text-white p-6 rounded-t-2xl">
+            <div className="sticky top-0 bg-gradient-to-r from-amber-700 to-orange-600 text-white p-4 sm:p-6 rounded-t-2xl">
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-xl sm:text-2xl font-bold">
                     Seleccioná {platoActivoModal.tipo}
                   </h2>
                   <p className="text-amber-100 mt-1">
@@ -288,7 +305,7 @@ export default function CalendarioPedidos({ restaurante, platos, categorias }: C
               </div>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="space-y-3">
                 {obtenerPlatosDisponibles(platoActivoModal.fecha, platoActivoModal.tipo).map((plato) => (
                   <button
@@ -315,6 +332,15 @@ export default function CalendarioPedidos({ restaurante, platos, categorias }: C
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3">
+              <button
+                onClick={() => setPlatoActivoModal(null)}
+                className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold py-2.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

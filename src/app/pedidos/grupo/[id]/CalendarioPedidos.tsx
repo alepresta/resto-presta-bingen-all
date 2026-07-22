@@ -401,6 +401,23 @@ export default function CalendarioPedidos({
     }
   }, [modalAbierto]);
 
+  useEffect(() => {
+    if (!modalAbierto) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setModalAbierto(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [modalAbierto]);
+
   const fechas = [];
   const inicio = parseFechaLocal(fechaInicio);
   const fin = parseFechaLocal(fechaFin);
@@ -1170,13 +1187,13 @@ export default function CalendarioPedidos({
               </p>
 
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <div>
+                <div className="w-full sm:w-auto">
                   <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Código para unirse</p>
-                  <span className="text-2xl font-bold tracking-widest text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg inline-block">
+                  <span className="text-xl sm:text-2xl font-bold tracking-widest text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg inline-block">
                     {palabraSecreta}
                   </span>
                 </div>
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 min-w-0 w-full sm:w-auto">
                   <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Enlace</p>
                   <input
                     readOnly
@@ -2096,18 +2113,18 @@ export default function CalendarioPedidos({
       {/* MODAL DE SELECCIÓN DE PLATOS CON BUSCADOR */}
       {modalAbierto && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-2 sm:p-4"
           onClick={() => setModalAbierto(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl max-w-2xl w-full max-h-[calc(100vh-0.5rem)] sm:max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header del modal */}
-            <div className="sticky top-0 bg-gradient-to-r from-amber-700 to-orange-600 text-white p-6 rounded-t-2xl z-10">
+            <div className="sticky top-0 bg-gradient-to-r from-amber-700 to-orange-600 text-white p-4 sm:p-6 rounded-t-2xl z-10">
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-xl sm:text-2xl font-bold">
                     Seleccioná {TIPOS_COMIDA.find((t) => t.id === modalAbierto.tipo)?.label}
                   </h2>
                   <p className="text-amber-100 mt-1">
@@ -2128,7 +2145,7 @@ export default function CalendarioPedidos({
             </div>
 
             {/* 🔍 BUSCADOR INTEGRADO */}
-            <div className="sticky top-[120px] bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900 p-4 z-10">
+            <div className="sticky top-[98px] sm:top-[120px] bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900 p-3 sm:p-4 z-10">
               {/* Barra de búsqueda */}
               <div className="flex gap-2 mb-3">
                 <div className="flex-1 relative">
@@ -2202,7 +2219,7 @@ export default function CalendarioPedidos({
             </div>
 
             {/* Lista de platos */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {getPlatosDisponibles(modalAbierto.fecha, modalAbierto.tipo).length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-500 dark:text-gray-400 text-lg">😕 No hay platos con estos filtros</p>
@@ -2569,6 +2586,15 @@ export default function CalendarioPedidos({
                   })}
                 </div>
               )}
+            </div>
+
+            <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3">
+              <button
+                onClick={() => setModalAbierto(null)}
+                className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold py-2.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

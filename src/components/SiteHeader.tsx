@@ -108,15 +108,15 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
 
   return (
     <header className="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 text-white shadow-lg">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         {/* Marca */}
-        <Link href="/menu/resto-presta-bingen-all" className="flex-shrink-0">
-          <span className="text-xl md:text-2xl font-bold font-serif">RESTO PRESTA BINGEN ALL</span>
+        <Link href="/menu/resto-presta-bingen-all" className="flex-shrink-0 w-full md:w-auto">
+          <span className="block text-lg sm:text-xl md:text-2xl font-bold font-serif leading-tight break-words">RESTO PRESTA BINGEN ALL</span>
           <span className="hidden md:block text-xs italic text-amber-100">Comida es Medicina</span>
         </Link>
 
         {/* Controles */}
-        <div className="flex items-center gap-2">
+        <div className="w-full md:w-auto flex flex-wrap items-center justify-start md:justify-end gap-2">
           {/* Modo día / noche */}
           <ToggleTema />
 
@@ -124,7 +124,7 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
           {misGrupos.length === 1 ? (
             <Link
               href={`/pedidos/grupo/${misGrupos[0].id}`}
-              className="bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
+              className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
             >
               🍽️ Mi pedido
             </Link>
@@ -132,7 +132,7 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
             <div className="relative" ref={menuGruposRef}>
               <button
                 onClick={() => setMenuGruposAbierto((v) => !v)}
-                className="bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20 flex items-center gap-1"
+                className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20 flex items-center gap-1"
               >
                 🍽️ Mis pedidos ({misGrupos.length})
                 <span className="text-xs">{menuGruposAbierto ? '▲' : '▼'}</span>
@@ -173,13 +173,13 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
             <>
               <Link
                 href="/auth/login"
-                className="bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
+                className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
               >
                 Iniciar sesión
               </Link>
               <Link
                 href="/auth/registro"
-                className="bg-white text-amber-700 font-semibold px-4 py-2 rounded-lg text-sm transition-colors hover:bg-amber-50"
+                className="bg-white text-amber-700 font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors hover:bg-amber-50"
               >
                 Registrarme
               </Link>
@@ -193,21 +193,21 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
               {puedeVerPanel && (
                 <Link
                   href="/admin"
-                  className="bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
+                  className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
                 >
                   ⚙️ Panel
                 </Link>
               )}
               <Link
                 href="/auth/perfil"
-                className="bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
+                className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
               >
                 👤 Perfil
               </Link>
               <button
                 onClick={handleLogout}
                 disabled={loading}
-                className="bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20 disabled:opacity-50"
+                className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20 disabled:opacity-50"
               >
                 {loading ? 'Saliendo...' : '🚪 Salir'}
               </button>

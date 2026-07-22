@@ -53,6 +53,29 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
   const [modalPass, setModalPass] = useState<null | { id: string; nombre: string }>(null);
   const [nuevaPass, setNuevaPass] = useState('');
 
+  useEffect(() => {
+    const hayModal = !!modal || !!modalPass;
+    if (!hayModal) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (modalPass) {
+        setModalPass(null);
+        return;
+      }
+      if (modal) setModal(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [modal, modalPass]);
+
   const aviso = (tipo: 'ok' | 'error', texto: string) => {
     setMensaje({ tipo, texto });
     setTimeout(() => setMensaje(null), 4000);
@@ -289,13 +312,13 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
 
       {/* Modal crear/editar */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setModal(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-2 sm:p-4" onClick={() => setModal(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-0.5rem)] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-indigo-700 to-blue-600 text-white px-5 py-4 flex justify-between items-center">
               <h3 className="text-lg font-bold">{modal.modo === 'crear' ? '➕ Nuevo usuario' : '✏️ Editar usuario'}</h3>
               <button onClick={() => setModal(null)} className="text-white text-2xl leading-none">✕</button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-4 sm:p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Username</label>
@@ -387,7 +410,7 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
                 </div>
               )}
             </div>
-            <div className="px-5 py-4 border-t flex justify-end gap-2">
+            <div className="sticky bottom-0 bg-white dark:bg-gray-800 px-5 py-4 border-t flex justify-end gap-2">
               <button onClick={() => setModal(null)} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600">
                 Cancelar
               </button>
@@ -405,13 +428,13 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
 
       {/* Modal cambiar contraseña */}
       {modalPass && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setModalPass(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-2 sm:p-4" onClick={() => setModalPass(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm max-h-[calc(100vh-0.5rem)] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-5 py-4 flex justify-between items-center">
               <h3 className="text-lg font-bold">🔑 Cambiar contraseña</h3>
               <button onClick={() => setModalPass(null)} className="text-white text-2xl leading-none">✕</button>
             </div>
-            <div className="p-5 space-y-3">
+            <div className="p-4 sm:p-5 space-y-3">
               <p className="text-sm text-gray-600 dark:text-gray-300">Usuario: <strong>{modalPass.nombre}</strong></p>
               <input
                 type="text"
@@ -426,7 +449,7 @@ export default function GestionUsuarios({ usuariosIniciales, miId }: Props) {
                   : 'La contraseña debe tener al menos 6 caracteres.'}
               </p>
             </div>
-            <div className="px-5 py-4 border-t flex justify-end gap-2">
+            <div className="sticky bottom-0 bg-white dark:bg-gray-800 px-5 py-4 border-t flex justify-end gap-2">
               <button onClick={() => setModalPass(null)} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600">
                 Cancelar
               </button>

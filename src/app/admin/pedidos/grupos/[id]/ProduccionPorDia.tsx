@@ -130,6 +130,23 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
   const [recetaModal, setRecetaModal] = useState<PlatoAgg | null>(null);
   const [porcionesModal, setPorcionesModal] = useState(1);
 
+  useEffect(() => {
+    if (!recetaModal) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setRecetaModal(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [recetaModal]);
+
   const abrirReceta = (p: PlatoAgg) => {
     setRecetaModal(p);
     setPorcionesModal(Math.max(1, p.platos || 1));
@@ -403,8 +420,8 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
       {recetaModal && (() => {
         const factor = porcionesModal / (recetaModal.porcionesBase || 1);
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setRecetaModal(null)}>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-2 sm:p-4" onClick={() => setRecetaModal(null)}>
+            <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-0.5rem)] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="sticky top-0 bg-gradient-to-r from-indigo-700 to-blue-600 text-white px-5 py-4 flex justify-between items-start gap-3 z-10">
                 <div>
                   <h3 className="text-lg font-bold">{recetaModal.nombre}</h3>
@@ -412,7 +429,7 @@ export default function ProduccionPorDia({ dias }: { dias: DiaResumen[] }) {
                 </div>
                 <button onClick={() => setRecetaModal(null)} className="text-white hover:text-indigo-200 text-2xl leading-none">✕</button>
               </div>
-              <div className="p-5 space-y-4">
+              <div className="p-4 sm:p-5 space-y-4">
                 <div className="flex items-center justify-between bg-indigo-50 dark:bg-indigo-950/30 rounded-lg px-4 py-3">
                   <span className="font-semibold text-gray-800 dark:text-gray-100">👥 Para</span>
                   <div className="flex items-center gap-3">
