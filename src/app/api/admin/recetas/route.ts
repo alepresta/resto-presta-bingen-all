@@ -109,6 +109,13 @@ export async function POST(request: NextRequest) {
     platoCreadoId = platoCreado.id;
   }
 
+  if (!platoIdFinal) {
+    return NextResponse.json(
+      { error: 'No se pudo determinar el plato para la receta' },
+      { status: 500 }
+    );
+  }
+
   let recetaId: string | null = null;
 
   try {
