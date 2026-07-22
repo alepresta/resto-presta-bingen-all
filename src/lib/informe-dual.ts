@@ -439,6 +439,22 @@ export function construirInformeDual(
     fibra_g: totales.fibra_g / objetivo,
   };
 
+  // 2b) Totales de la RECETA COMPLETA (a sus porciones base), invariantes a la
+  //     porción que se esté viendo. Así "receta completa" no se confunde con
+  //     el valor "por porción" cuando se mira para 1 comensal.
+  const totalesCompletos = {
+    calorias: porcion.calorias * porcionesBase,
+    proteinas_g: porcion.proteinas_g * porcionesBase,
+    carbohidratos_g: porcion.carbohidratos_g * porcionesBase,
+    grasas_g: porcion.grasas_g * porcionesBase,
+    fibra_g: porcion.fibra_g * porcionesBase,
+  };
+  const factorACompleto = objetivo > 0 ? porcionesBase / objetivo : 1;
+  const pesoCrudoCompleto = pesoCrudoTotal * factorACompleto;
+  const pesoCocidoCompleto = usaPesoCocidoEstimado
+    ? pesoCocidoTotal * factorACompleto
+    : pesoCocidoEstimado;
+
   // Micronutrientes destacados: los que superan 20% del VDR por porción.
   const micronutrientesDestacados: string[] = [];
   const nombreMicro: Record<string, string> = {
@@ -558,11 +574,11 @@ export function construirInformeDual(
     },
     cientifico: {
       totalesReceta: {
-        calorias: redondear(totales.calorias, 0),
-        proteinas_g: redondear(totales.proteinas_g),
-        carbohidratos_g: redondear(totales.carbohidratos_g),
-        grasas_g: redondear(totales.grasas_g),
-        fibra_g: redondear(totales.fibra_g),
+        calorias: redondear(totalesCompletos.calorias, 0),
+        proteinas_g: redondear(totalesCompletos.proteinas_g),
+        carbohidratos_g: redondear(totalesCompletos.carbohidratos_g),
+        grasas_g: redondear(totalesCompletos.grasas_g),
+        fibra_g: redondear(totalesCompletos.fibra_g),
       },
       porcion: {
         calorias: redondear(porcion.calorias, 0),
@@ -572,8 +588,8 @@ export function construirInformeDual(
         fibra_g: redondear(porcion.fibra_g),
       },
       micronutrientesDestacados,
-      pesoCrudoTotal_g: redondear(pesoCrudoTotal, 0),
-      pesoCocidoEstimado_g: redondear(pesoCocidoEstimado, 0),
+      pesoCrudoTotal_g: redondear(pesoCrudoCompleto, 0),
+      pesoCocidoEstimado_g: redondear(pesoCocidoCompleto, 0),
       factorRendimientoPromedio: redondear(factorRendimientoPromedio, 2),
     },
     hildegardiano: {

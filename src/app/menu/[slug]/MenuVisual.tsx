@@ -426,7 +426,9 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     : categoriasExtras;
 
   const seleccionarPlato = (plato: Plato) => {
-    setPorcionesModal(obtenerPorcionesBaseReceta(plato.receta));
+    // Siempre se muestra por defecto para 1 persona (calorías por comensal),
+    // sin importar para cuántas porciones se cargó la receta.
+    setPorcionesModal(1);
     setPlatoSeleccionado(plato);
   };
 
@@ -653,7 +655,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                   recetaId={platoSeleccionado.receta.id}
                   endpoint="/api/menu/receta"
                   mostrarExport={false}
-                  porcionesIniciales={porcionesBaseModal}
+                  porcionesIniciales={1}
                   onPorcionesChange={setPorcionesModal}
                 />
               ) : (

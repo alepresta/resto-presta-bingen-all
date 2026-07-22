@@ -336,7 +336,10 @@ export default function InformeDualView({
           <Acordeon titulo="Detalle científico" icono="🔬">
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Totales receta completa</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  Totales receta completa ({informe.resumen.porcionesBase}{' '}
+                  {informe.resumen.porcionesBase === 1 ? 'porción' : 'porciones'})
+                </h4>
                 <ul className="text-gray-700 dark:text-gray-200 space-y-0.5">
                   <li>Calorías: {informe.cientifico.totalesReceta.calorias} kcal</li>
                   <li>Proteínas: {informe.cientifico.totalesReceta.proteinas_g} g</li>
