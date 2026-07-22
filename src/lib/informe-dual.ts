@@ -19,6 +19,67 @@ import {
   type CategoriaEscalado,
 } from './escalado';
 
+// Factores de equivalencia de cada unidad culinaria a su unidad base (g o ml).
+// Mantiene el mismo criterio que el selector de ingredientes de recetas.
+const FACTORES_UNIDAD_BASE: Record<string, { factor: number; base: 'g' | 'ml' }> = {
+  kg: { factor: 1000, base: 'g' },
+  kilo: { factor: 1000, base: 'g' },
+  kilos: { factor: 1000, base: 'g' },
+  kilogramo: { factor: 1000, base: 'g' },
+  kilogramos: { factor: 1000, base: 'g' },
+  litro: { factor: 1000, base: 'ml' },
+  litros: { factor: 1000, base: 'ml' },
+  l: { factor: 1000, base: 'ml' },
+  unidad: { factor: 100, base: 'g' },
+  unidades: { factor: 100, base: 'g' },
+  cucharada: { factor: 15, base: 'g' },
+  cucharadas: { factor: 15, base: 'g' },
+  cda: { factor: 15, base: 'g' },
+  cucharada_liquida: { factor: 15, base: 'ml' },
+  cucharadas_liquida: { factor: 15, base: 'ml' },
+  cucharadas_liquidas: { factor: 15, base: 'ml' },
+  cucharadita: { factor: 5, base: 'g' },
+  cucharaditas: { factor: 5, base: 'g' },
+  cdta: { factor: 5, base: 'g' },
+  cucharadita_liquida: { factor: 5, base: 'ml' },
+  cucharaditas_liquida: { factor: 5, base: 'ml' },
+  taza: { factor: 240, base: 'ml' },
+  tazas: { factor: 240, base: 'ml' },
+  taza_peso: { factor: 200, base: 'g' },
+  tazas_peso: { factor: 200, base: 'g' },
+  punado: { factor: 30, base: 'g' },
+  punados: { factor: 30, base: 'g' },
+  punta_cuchillo: { factor: 0.5, base: 'g' },
+  punta_de_cuchillo: { factor: 0.5, base: 'g' },
+  pizca: { factor: 0.5, base: 'g' },
+  pizcas: { factor: 0.5, base: 'g' },
+  diente: { factor: 5, base: 'g' },
+  dientes: { factor: 5, base: 'g' },
+};
+
+/**
+ * Devuelve la equivalencia de una cantidad en su unidad base (g o ml),
+ * ej. "30 ml". Devuelve null si la unidad ya es base o no tiene conversión.
+ */
+function equivalenciaEnBase(cantidad: number, unidad: string): string | null {
+  const u = (unidad || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, '_');
+
+  // Unidades que ya son base: no se muestra equivalencia.
+  if (['g', 'gramo', 'gramos', 'ml', 'mililitro', 'mililitros', 'cc'].includes(u)) return null;
+
+  const conv = FACTORES_UNIDAD_BASE[u];
+  if (!conv) return null;
+
+  const base = Number.isFinite(cantidad) ? cantidad : 0;
+  const total = Math.round(base * conv.factor * 100) / 100;
+  return `${total} ${conv.base}`;
+}
+
 export type MetodoCoccion = 'hervido' | 'horneado' | 'salteado' | 'crudo' | 'vapor';
 export type SelloViriditas = 'maximo' | 'alto' | 'moderado' | 'bajo' | 'nulo';
 export type Recomendacion =
@@ -121,6 +182,8 @@ export interface InformeDual {
   detalleIngredientes: Array<{
     nombre: string;
     cantidadEscalada: string;
+    /** Equivalencia en la unidad base (g/ml), ej. "30 ml". null si ya es base. */
+    equivalenciaBase: string | null;
     temperamento: string;
     subtilitat: number;
     viriditas: string;
@@ -402,6 +465,7 @@ export function construirInformeDual(
     detalleIngredientes.push({
       nombre: ing.nombre,
       cantidadEscalada: esc.textoMostrado,
+      equivalenciaBase: equivalenciaEnBase(esc.cantidadMostrada, ri.unidad),
       temperamento: ing.temperamento || 'neutro',
       subtilitat: ing.nivel_subtilitat ?? 5,
       viriditas: (ing.viriditas_index as string) || 'moderado',

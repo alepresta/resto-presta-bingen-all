@@ -431,7 +431,14 @@ export default function InformeDualView({
                         {d.esBaseAlegria && '🌿 '}
                         {d.nombre}
                       </td>
-                      <td className="py-1 pr-2 whitespace-nowrap">{d.cantidadEscalada}</td>
+                      <td className="py-1 pr-2 whitespace-nowrap">
+                        {d.cantidadEscalada}
+                        {d.equivalenciaBase && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {' '}({d.equivalenciaBase})
+                          </span>
+                        )}
+                      </td>
                       <td className="py-1 pr-2">{d.temperamento}</td>
                       <td className="py-1 pr-2">{d.enTemporada ? '✅' : '—'}</td>
                       <td className="py-1 text-gray-700 dark:text-gray-200">
