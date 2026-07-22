@@ -79,10 +79,7 @@ export default function CrearGrupoPage() {
     }
   };
 
-  // Fecha mínima: mañana
-  const fechaMinima = new Date();
-  fechaMinima.setDate(fechaMinima.getDate() + 1);
-  const fechaMinimaStr = fechaMinima.toISOString().split('T')[0];
+  // Fecha de fin: se calcula automáticamente según la duración, pero es editable.
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -168,11 +165,10 @@ export default function CrearGrupoPage() {
                 <input
                   type="date"
                   value={fechaInicio}
-                  min={fechaMinimaStr}
                   onChange={(e) => handleFechaInicioChange(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo: mañana</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cualquier fecha, hasta con meses de anticipación</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
@@ -181,11 +177,11 @@ export default function CrearGrupoPage() {
                 <input
                   type="date"
                   value={fechaFin}
+                  min={fechaInicio || undefined}
                   onChange={(e) => setFechaFin(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  readOnly
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Se calcula automáticamente</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Se calcula sola, pero podés ajustarla</p>
               </div>
             </div>
           </div>
@@ -217,17 +213,21 @@ export default function CrearGrupoPage() {
           </div>
 
           {/* Preview */}
-          {fechaInicio && fechaFin && (
+          {fechaInicio && fechaFin && (() => {
+            const ms = new Date(fechaFin).getTime() - new Date(fechaInicio).getTime();
+            const diasReales = Number.isFinite(ms) ? Math.round(ms / 86400000) + 1 : 0;
+            return (
             <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 p-4 rounded">
               <h3 className="font-bold text-indigo-900 mb-2">📋 Resumen</h3>
               <div className="space-y-1 text-sm text-indigo-800">
                 <p><strong>Período:</strong> {new Date(fechaInicio).toLocaleDateString('es-AR')} al {new Date(fechaFin).toLocaleDateString('es-AR')}</p>
-                <p><strong>Duración:</strong> {duracion} días</p>
+                <p><strong>Duración:</strong> {diasReales > 0 ? `${diasReales} días` : 'Fechas inválidas'}</p>
                 <p><strong>Palabra secreta:</strong> <span className="font-mono font-bold">{palabraSecreta}</span></p>
                 <p><strong>Capacidad:</strong> sin límite de miembros</p>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* Botón */}
           <button

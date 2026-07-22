@@ -38,18 +38,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obtener el usuario admin actual (el creador)
+    // Obtener el usuario admin actual (el creador).
+    // `creado_por` es FK a `clientes` y admite NULL, así que solo lo seteamos
+    // si el cliente existe realmente (evita violar la foreign key).
     const cookieStore = await import('next/headers').then(m => m.cookies());
     const sessionCookie = cookieStore.get('admin_session');
-    
-    let creadoPor = '00000000-0000-0000-0000-000000000000'; // fallback
-    
+
+    let creadoPor: string | null = null;
+
     if (sessionCookie) {
       try {
         const session = JSON.parse(sessionCookie.value);
-        // Si el admin tiene un cliente asociado, usarlo
         if (session.cliente_id) {
-          creadoPor = session.cliente_id;
+          const { data: clienteExistente } = await supabase
+            .from('clientes')
+            .select('id')
+            .eq('id', session.cliente_id)
+            .single();
+          if (clienteExistente) {
+            creadoPor = session.cliente_id;
+          }
         }
       } catch (e) {
         console.error('Error parseando sesión:', e);
