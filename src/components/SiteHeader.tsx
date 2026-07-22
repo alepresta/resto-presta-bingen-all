@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import ToggleTema from '@/components/ToggleTema';
 
@@ -32,6 +32,7 @@ function fmtFechaCorta(s: string): string {
 
 export default function SiteHeader({ usuario }: SiteHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
 
   // Grupos a los que pertenece el usuario (para el botón "Mis pedidos")
@@ -41,13 +42,13 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
 
   useEffect(() => {
     let cancelado = false;
+    const supabase = createSupabaseBrowserClient();
 
     const cargarMisGrupos = async () => {
       try {
         const params = new URLSearchParams();
 
         // 1) Usuario logueado (Supabase auth)
-        const supabase = createSupabaseBrowserClient();
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -68,9 +69,12 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
           /* noop */
         }
 
-        if (!params.get('cliente_id') && !params.get('email')) return;
+        if (!params.get('cliente_id') && !params.get('email')) {
+          if (!cancelado) setMisGrupos([]);
+          return;
+        }
 
-        const res = await fetch(`/api/grupos/mis?${params.toString()}`);
+        const res = await fetch(`/api/grupos/mis?${params.toString()}`, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelado) setMisGrupos(data.grupos || []);
@@ -80,10 +84,18 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
     };
 
     cargarMisGrupos();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      cargarMisGrupos();
+    });
+
     return () => {
       cancelado = true;
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [pathname]);
 
   // Cerrar el menú al hacer clic fuera
   useEffect(() => {
@@ -117,18 +129,24 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
 
         {/* Controles */}
         <div className="w-full md:w-auto flex flex-wrap items-center justify-start md:justify-end gap-2">
+          <Link
+            href="/menu/resto-presta-bingen-all"
+            className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
+          >
+            🏠 Inicio
+          </Link>
+          <Link
+            href="/pedidos"
+            className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
+          >
+            📋 Pedidos
+          </Link>
+
           {/* Modo día / noche */}
           <ToggleTema />
 
           {/* Mis pedidos (grupos a los que pertenezco) */}
-          {misGrupos.length === 1 ? (
-            <Link
-              href={`/pedidos/grupo/${misGrupos[0].id}`}
-              className="bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors backdrop-blur-sm border border-white/20"
-            >
-              🍽️ Mi pedido
-            </Link>
-          ) : misGrupos.length > 1 ? (
+          {misGrupos.length > 0 ? (
             <div className="relative" ref={menuGruposRef}>
               <button
                 onClick={() => setMenuGruposAbierto((v) => !v)}
