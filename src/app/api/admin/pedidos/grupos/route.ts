@@ -64,6 +64,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Restaurante por defecto (el primero), para que el grupo tenga platos.
+    const { data: restaurante } = await supabase
+      .from('restaurantes')
+      .select('id')
+      .limit(1)
+      .single();
+
     // Crear el grupo
     const { data: grupo, error } = await supabase
       .from('grupos_pedido')
@@ -73,6 +80,7 @@ export async function POST(request: NextRequest) {
         palabra_secreta,
         estado: 'armando',
         creado_por: creadoPor,
+        restaurante_id: restaurante?.id ?? null,
       })
       .select()
       .single();

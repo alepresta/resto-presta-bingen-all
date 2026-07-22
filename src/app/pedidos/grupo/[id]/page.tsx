@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import CalendarioPedidos from './CalendarioPedidos';
+import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
 interface PageProps {
   params: {
@@ -38,8 +39,20 @@ export default async function GrupoPage({ params }: PageProps) {
     `)
     .eq('grupo_id', params.id);
 
-  // 3. Obtener todos los platos del restaurante CON recetas e ingredientes
-  const { data: platos } = await supabase
+  // 3. Obtener todos los platos del restaurante CON recetas e ingredientes.
+  //    Si el grupo no tiene restaurante_id (grupos viejos), se usa el
+  //    restaurante por defecto para no quedarnos sin platos.
+  let restauranteId = grupo.restaurante_id;
+  if (!restauranteId) {
+    const { data: restaurante } = await supabase
+      .from('restaurantes')
+      .select('id')
+      .limit(1)
+      .single();
+    restauranteId = restaurante?.id ?? null;
+  }
+
+  let platosQuery = supabase
     .from('platos')
     .select(`
       *,
@@ -58,8 +71,34 @@ export default async function GrupoPage({ params }: PageProps) {
         )
       )
     `)
-    .eq('restaurante_id', grupo.restaurante_id)
     .eq('disponible', true);
+
+  if (restauranteId) {
+    platosQuery = platosQuery.eq('restaurante_id', restauranteId);
+  }
+
+  const { data: platos } = await platosQuery;
+
+  // 3b. Días asignados a cada plato (tabla plato_dias). Se usa para mostrar en
+  //     cada fecha solo los platos realmente asignados a ese día de la semana.
+  const platoIdsCatalogo = (platos || []).map((p: any) => p.id);
+  const { data: platosDiasData } = await supabase
+    .from('plato_dias')
+    .select('plato_id, dia_semana_id')
+    .in('plato_id', platoIdsCatalogo.length ? platoIdsCatalogo : ['00000000-0000-0000-0000-000000000000']);
+
+  const diasPorPlato = new Map<string, number[]>();
+  (platosDiasData || []).forEach((row: any) => {
+    const lista = diasPorPlato.get(row.plato_id) || [];
+    lista.push(row.dia_semana_id);
+    diasPorPlato.set(row.plato_id, lista);
+  });
+
+  const platosConDias = (platos || []).map((p: any) => ({
+    ...p,
+    dias_semana:
+      diasPorPlato.get(p.id) || diasSemanaDesdeLegado(p.dia_semana_id, p.disponible_todos_dias),
+  }));
 
   // 4. Cliente actual: usuario autenticado (sesión). Si no hay, cae al creador.
   const authClient = createSupabaseServerClient();
@@ -89,7 +128,7 @@ export default async function GrupoPage({ params }: PageProps) {
       fechaFin={grupo.fecha_fin}
       miembros={grupo.miembros || []}
       items={items || []}
-      platos={platos || []}
+      platos={platosConDias}
       clienteActualId={clienteActualId}
       clienteNombre={clienteNombre}
       clienteEmail={clienteEmail}

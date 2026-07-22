@@ -136,6 +136,7 @@ interface Plato {
   categoria_id: number;
   dia_semana_id: number | null;
   disponible_todos_dias: boolean;
+  dias_semana?: number[];
   alergenos: string[];
   tags: string[];
   receta?: {
@@ -326,6 +327,8 @@ export default function CalendarioPedidos({
   // Informe del plan completo (rango del grupo) desplegable
   const [informeAbierto, setInformeAbierto] = useState(true);
   const [informeTab, setInformeTab] = useState<'cientifico' | 'hildegardiano' | null>(null);
+  // Paginación del calendario: se muestra una semana (7 días) por página.
+  const [semanaActual, setSemanaActual] = useState(0);
 
   useEffect(() => {
     // El id autoritativo es el del usuario autenticado (viene por prop desde el servidor).
@@ -351,6 +354,33 @@ export default function CalendarioPedidos({
     fechas.push(new Date(actual));
     actual.setDate(actual.getDate() + 1);
   }
+
+  // Paginación por semana calendario COMPLETA (lunes → domingo). Se rellenan los
+  // días fuera del plan para que cada semana empiece en lunes y termine en
+  // domingo; esos días se muestran grisados y no seleccionables.
+  const claveLunes = (d: Date): string => {
+    const dt = new Date(d);
+    const dow = dt.getDay() === 0 ? 7 : dt.getDay(); // 1=lun … 7=dom
+    dt.setDate(dt.getDate() - (dow - 1));
+    return formatFechaLocal(dt);
+  };
+  const lunesInicio = parseFechaLocal(claveLunes(inicio));
+  const domingoFin = parseFechaLocal(claveLunes(fin));
+  domingoFin.setDate(domingoFin.getDate() + 6);
+
+  const semanas: Date[][] = [];
+  const cursorSemana = new Date(lunesInicio);
+  while (cursorSemana <= domingoFin) {
+    const semana: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      semana.push(new Date(cursorSemana));
+      cursorSemana.setDate(cursorSemana.getDate() + 1);
+    }
+    semanas.push(semana);
+  }
+  const totalPaginas = Math.max(1, semanas.length);
+  const paginaSegura = Math.min(Math.max(0, semanaActual), totalPaginas - 1);
+  const fechasPagina = semanas[paginaSegura] || [];
 
   const getItem = (fecha: string, tipo: string) => {
     return items.find((item) => item.fecha === fecha && item.tipo_comida === tipo);
@@ -607,9 +637,16 @@ export default function CalendarioPedidos({
     return platos.filter((plato) => {
       // Filtro base: categoría y día
       if (plato.categoria_id !== tipoInfo.categoriaId) return false;
-      if (!plato.disponible_todos_dias && plato.dia_semana_id !== null && plato.dia_semana_id !== diaSemana) {
-        return false;
-      }
+      // Solo se muestran los platos asignados a este día de la semana.
+      const diasDelPlato =
+        plato.dias_semana && plato.dias_semana.length > 0
+          ? plato.dias_semana
+          : plato.disponible_todos_dias
+          ? [1, 2, 3, 4, 5, 6, 7]
+          : plato.dia_semana_id !== null
+          ? [plato.dia_semana_id]
+          : [];
+      if (!diasDelPlato.includes(diaSemana)) return false;
 
       // Filtro por texto (nombre, descripción o ingrediente)
       if (textoBusqueda) {
@@ -899,7 +936,10 @@ export default function CalendarioPedidos({
         .map((p: any) => textoDePaso(p))
         .filter((s: string) => s && s.trim() !== '');
 
-    const fechasStr = [...new Set(items.map((i) => i.fecha))].sort();
+    // Se excluyen los días anteriores a HOY: sus pedidos ya no deben sumarse a
+    // la lista de compras.
+    const hoyStr = formatFechaLocal(new Date());
+    const fechasStr = [...new Set(items.map((i) => i.fecha))].filter((f) => f >= hoyStr).sort();
 
     return fechasStr.map((fecha) => {
       const itemsDia = items.filter((i) => i.fecha === fecha);
@@ -1162,29 +1202,96 @@ export default function CalendarioPedidos({
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-4">
+        {/* Paginación semanal */}
+        {totalPaginas > 1 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-md p-3">
+            <button
+              onClick={() => setSemanaActual((s) => Math.max(0, s - 1))}
+              disabled={paginaSegura === 0}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              ← Semana anterior
+            </button>
+            <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 text-center">
+              Semana {paginaSegura + 1} de {totalPaginas}
+              {fechasPagina.length > 0 && (
+                <span className="block text-xs font-normal text-gray-500 dark:text-gray-400">
+                  {fechasPagina[0].toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })} –{' '}
+                  {fechasPagina[fechasPagina.length - 1].toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setSemanaActual((s) => Math.min(totalPaginas - 1, s + 1))}
+              disabled={paginaSegura >= totalPaginas - 1}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Semana siguiente →
+            </button>
+          </div>
+        )}
         <div className="space-y-4">
-          {fechas.map((fecha) => {
+          {fechasPagina.map((fecha) => {
             const fechaStr = formatFechaLocal(fecha);
             const diaSemana = fecha.getDay() === 0 ? 7 : fecha.getDay();
             const diaInfo = DIAS_SEMANA.find((d) => d.id === diaSemana);
+            const esPasado = fechaStr < formatFechaLocal(new Date());
+            const enRango = fechaStr >= fechaInicio && fechaStr <= fechaFin;
+
+            // Días fuera del rango del plan: solo relleno visual (lunes-domingo).
+            if (!enRango) {
+              return (
+                <div
+                  key={fechaStr}
+                  className="bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-4 opacity-60"
+                >
+                  <h3 className="font-bold text-lg text-gray-400 dark:text-gray-500 line-through">
+                    {diaInfo?.icono} {diaInfo?.nombre}
+                  </h3>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 line-through">
+                    {fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold mt-1">
+                    Fuera del plan
+                  </p>
+                </div>
+              );
+            }
 
             return (
-              <div key={fechaStr} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+              <div
+                key={fechaStr}
+                className={`bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 ${
+                  esPasado ? 'opacity-60 grayscale' : ''
+                }`}
+              >
                 <div className="flex items-center justify-between mb-3 pb-3 border-b">
                   <div>
-                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg">
+                    <h3
+                      className={`font-bold text-lg ${
+                        esPasado
+                          ? 'text-gray-400 dark:text-gray-500 line-through'
+                          : 'text-gray-800 dark:text-gray-100'
+                      }`}
+                    >
                       {diaInfo?.icono} {diaInfo?.nombre}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                    <p className={`text-sm ${esPasado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-600 dark:text-gray-300'}`}>
                       {fecha.toLocaleDateString('es-AR', {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long',
                       })}
                     </p>
-                    <p className="text-xs text-amber-700 font-semibold mt-1">
-                      Tema: {diaInfo?.tematica}
-                    </p>
+                    {esPasado ? (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
+                        ⏳ Día pasado — no se suma a la lista de compras
+                      </p>
+                    ) : (
+                      <p className="text-xs text-amber-700 font-semibold mt-1">
+                        Tema: {diaInfo?.tematica}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1562,6 +1669,34 @@ export default function CalendarioPedidos({
             );
           })}
         </div>
+        {/* Paginación semanal (inferior) */}
+        {totalPaginas > 1 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-4 bg-white dark:bg-gray-800 rounded-xl shadow-md p-3">
+            <button
+              onClick={() => {
+                setSemanaActual((s) => Math.max(0, s - 1));
+                if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={paginaSegura === 0}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              ← Semana anterior
+            </button>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+              Semana {paginaSegura + 1} de {totalPaginas}
+            </span>
+            <button
+              onClick={() => {
+                setSemanaActual((s) => Math.min(totalPaginas - 1, s + 1));
+                if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={paginaSegura >= totalPaginas - 1}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Semana siguiente →
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6">
