@@ -35,14 +35,12 @@ export function createSupabaseServerClient() {
 }
 
 // Devuelve el usuario autenticado y su rol (desde la tabla profiles), o null.
-// Usa getSession() (lectura de cookie, sin llamada de red) para el header público.
+// Usa getUser() para evitar estados inconsistentes justo después del login.
 export async function getUsuarioConRol() {
   const supabase = createSupabaseServerClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const user = session?.user;
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data: profile } = await supabase

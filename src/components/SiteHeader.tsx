@@ -142,8 +142,26 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
-    router.push('/menu/resto-presta-bingen-all');
+
+    try {
+      localStorage.removeItem('cliente_actual');
+      window.dispatchEvent(new Event('cliente-actual-updated'));
+    } catch {
+      /* noop */
+    }
+
+    setMisGrupos([]);
+    setAccionesAbierto(false);
+
+    router.replace('/auth/login');
     router.refresh();
+
+    // Fallback para casos donde el router no refleja el logout de inmediato.
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/auth/login') {
+        window.location.assign('/auth/login');
+      }
+    }, 350);
   };
 
   const puedeVerPanel = usuario?.rol === 'admin';

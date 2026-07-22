@@ -8,7 +8,14 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/menu/resto-presta-bingen-all';
+  const redirectRaw = searchParams.get('redirect') || '/menu/resto-presta-bingen-all';
+  const redirectTo = (() => {
+    const limpio = redirectRaw.trim();
+    // Solo permitimos rutas internas y tomamos el primer token por si llega
+    // un valor con texto extra (ej: "/admin panel").
+    const primero = limpio.split(/\s+/)[0] || '/menu/resto-presta-bingen-all';
+    return primero.startsWith('/') ? primero : '/menu/resto-presta-bingen-all';
+  })();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,9 +40,16 @@ function LoginForm() {
       return;
     }
 
-    // Navegación de cliente (rápida); refresh para que el servidor lea la sesión
-    router.push(redirectTo);
+    // Navegación de cliente + refresh para que el servidor lea la sesión.
+    // Agregamos fallback por navegación directa para evitar requerir F5.
+    router.replace(redirectTo);
     router.refresh();
+
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && window.location.pathname !== redirectTo) {
+        window.location.assign(redirectTo);
+      }
+    }, 350);
   };
 
   return (
