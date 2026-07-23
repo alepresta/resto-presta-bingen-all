@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation';
 import CalendarioPedidos from './CalendarioPedidos';
 import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface PageProps {
   params: {
     id: string;
