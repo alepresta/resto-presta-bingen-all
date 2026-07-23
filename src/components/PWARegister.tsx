@@ -28,15 +28,52 @@ export default function PWARegister() {
       return;
     }
 
+    let refrescando = false;
+
+    const onControllerChange = () => {
+      if (refrescando) return;
+      refrescando = true;
+      window.location.reload();
+    };
+
     const register = async () => {
       try {
-        await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        const reg = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+          updateViaCache: 'none',
+        });
+
+        // Fuerza chequeo de versión del SW al abrir la app.
+        await reg.update();
+
+        // Si hay un SW esperando, activarlo de inmediato.
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        // Cuando se detecta uno nuevo, pedir activación inmediata.
+        reg.addEventListener('updatefound', () => {
+          const nuevo = reg.installing;
+          if (!nuevo) return;
+
+          nuevo.addEventListener('statechange', () => {
+            if (nuevo.state === 'installed' && navigator.serviceWorker.controller) {
+              nuevo.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
       } catch {
         // noop: si falla el registro, la web sigue funcionando normal
       }
     };
 
     register();
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+    };
   }, []);
 
   return null;
