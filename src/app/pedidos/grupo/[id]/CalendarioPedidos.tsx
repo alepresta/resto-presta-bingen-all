@@ -308,6 +308,50 @@ export default function CalendarioPedidos({
   }, []);
 
   useEffect(() => {
+    let activo = true;
+
+    const refrescarGrupo = async () => {
+      try {
+        const res = await fetch(`/api/grupos/${grupoId}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!activo) return;
+
+        if (Array.isArray(data?.miembros)) {
+          setMiembrosState(data.miembros);
+        }
+        if (Array.isArray(data?.items)) {
+          setItems(data.items);
+        }
+      } catch {
+        // noop
+      }
+    };
+
+    const onFocus = () => {
+      refrescarGrupo();
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refrescarGrupo();
+      }
+    };
+
+    refrescarGrupo();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    const timer = window.setInterval(refrescarGrupo, 15000);
+
+    return () => {
+      activo = false;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.clearInterval(timer);
+    };
+  }, [grupoId]);
+
+  useEffect(() => {
     setHidratado(true);
   }, []);
 

@@ -1,6 +1,64 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+// GET /api/grupos/[id] - obtener estado actual del grupo (miembros/items)
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = createServerSupabaseClient();
+
+    const { data: grupo, error } = await supabase
+      .from('grupos_pedido')
+      .select(`
+        id,
+        estado,
+        fecha_inicio,
+        fecha_fin,
+        palabra_secreta,
+        miembros:grupo_miembros(
+          id,
+          cliente_id,
+          rol,
+          confirmado_general,
+          cliente:clientes(id, nombre, email)
+        )
+      `)
+      .eq('id', params.id)
+      .single();
+
+    if (error || !grupo) {
+      return NextResponse.json({ error: 'Grupo no encontrado' }, { status: 404 });
+    }
+
+    const { data: items } = await supabase
+      .from('grupo_items')
+      .select('*')
+      .eq('grupo_id', params.id);
+
+    return NextResponse.json(
+      {
+        grupo,
+        miembros: grupo.miembros || [],
+        items: items || [],
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}
+
 // PUT /api/grupos/[id] - acciones del cliente sobre el grupo (confirmar acuerdo)
 export async function PUT(
   request: NextRequest,
