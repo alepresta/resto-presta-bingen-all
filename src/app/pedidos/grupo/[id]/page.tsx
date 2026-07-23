@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient, getUsuarioConRol } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import CalendarioPedidos from './CalendarioPedidos';
 import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
@@ -12,6 +12,8 @@ interface PageProps {
 
 export default async function GrupoPage({ params }: PageProps) {
   const supabase = createServerSupabaseClient();
+  const usuarioConRol = await getUsuarioConRol();
+  const esAdminViewer = usuarioConRol?.rol === 'admin';
 
   // 1. Obtener el grupo
   const { data: grupo, error: errorGrupo } = await supabase
@@ -132,6 +134,7 @@ export default async function GrupoPage({ params }: PageProps) {
       clienteActualId={clienteActualId}
       clienteNombre={clienteNombre}
       clienteEmail={clienteEmail}
+      esAdminViewer={esAdminViewer}
     />
   );
 }

@@ -31,6 +31,7 @@ export default function GestionMiembros({
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
+  const [miembroAEliminar, setMiembroAEliminar] = useState<Miembro | null>(null);
 
   // Filtrar clientes que ya son miembros
   const clientesNoMiembros = clientesDisponibles.filter(
@@ -78,8 +79,6 @@ export default function GestionMiembros({
   };
 
   const eliminarMiembro = async (miembroId: string) => {
-    if (!confirm('¿Eliminar este miembro del grupo?')) return;
-
     setCargando(true);
     try {
       const res = await fetch(`/api/admin/pedidos/grupos/${grupoId}/miembros/${miembroId}`, {
@@ -92,6 +91,7 @@ export default function GestionMiembros({
       }
 
       setMensaje('🗑️ Miembro eliminado');
+      setMiembroAEliminar(null);
       setTimeout(() => router.refresh(), 1000);
     } catch (error: any) {
       setMensaje(`❌ ${error.message}`);
@@ -162,7 +162,7 @@ export default function GestionMiembros({
                 <p className="text-[11px] text-gray-500 dark:text-gray-400 break-all">ID miembro: {miembro.id}</p>
               </div>
               <button
-                onClick={() => eliminarMiembro(miembro.id)}
+                onClick={() => setMiembroAEliminar(miembro)}
                 disabled={cargando}
                 className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm disabled:opacity-50"
               >
@@ -172,6 +172,41 @@ export default function GestionMiembros({
           ))}
         </div>
       </div>
+
+      {miembroAEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Cerrar modal"
+            onClick={() => !cargando && setMiembroAEliminar(null)}
+            className="absolute inset-0 bg-black/50"
+          />
+          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 p-5">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Eliminar miembro</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">
+              Vas a quitar a <strong>{miembroAEliminar.cliente.nombre}</strong> del grupo. Esta persona dejará de participar y sus confirmaciones no contarán para el estado del pedido.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setMiembroAEliminar(null)}
+                disabled={cargando}
+                className="px-3 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                onClick={() => eliminarMiembro(miembroAEliminar.id)}
+                disabled={cargando}
+                className="px-3 py-2 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+              >
+                {cargando ? 'Eliminando...' : 'Sí, eliminar miembro'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

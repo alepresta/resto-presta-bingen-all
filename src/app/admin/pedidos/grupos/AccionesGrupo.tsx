@@ -7,104 +7,58 @@ interface AccionesGrupoProps {
   estado: string;
 }
 
+type AccionModal = {
+  key: 'confirmar' | 'desconfirmar' | 'cancelar' | 'eliminar';
+  titulo: string;
+  descripcion: string;
+  confirmarLabel: string;
+  estilo: 'green' | 'yellow' | 'orange' | 'red';
+};
+
 export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
+  const [accionPendiente, setAccionPendiente] = useState<AccionModal | null>(null);
 
-  const confirmarGrupo = async () => {
-    if (!confirm('✅ ¿Confirmar este grupo?\n\nEsto marcará el pedido como confirmado y listo para preparar.')) return;
-    
-    setCargando(true);
-    try {
-      const res = await fetch(`/api/admin/pedidos/grupos/${grupoId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accion: 'confirmar' }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error al confirmar');
-      }
-
-      setMensaje('✅ Grupo confirmado');
-      setTimeout(() => window.location.reload(), 1000);
-    } catch (error: any) {
-      setMensaje(`❌ ${error.message}`);
-    } finally {
-      setCargando(false);
-      setTimeout(() => setMensaje(''), 3000);
-    }
+  const estiloConfirmar = {
+    green: 'bg-green-600 hover:bg-green-700 text-white',
+    yellow: 'bg-yellow-500 hover:bg-yellow-600 text-gray-900',
+    orange: 'bg-orange-600 hover:bg-orange-700 text-white',
+    red: 'bg-red-600 hover:bg-red-700 text-white',
   };
 
-  const desconfirmarGrupo = async () => {
-    if (!confirm('⚠️ ¿Desconfirmar este grupo?\n\nEl grupo volverá al estado "armando" y podrá ser modificado.')) return;
-    
+  const ejecutarAccion = async (accion: 'confirmar' | 'desconfirmar' | 'cancelar' | 'eliminar') => {
     setCargando(true);
     try {
-      const res = await fetch(`/api/admin/pedidos/grupos/${grupoId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accion: 'desconfirmar' }),
-      });
+      if (accion === 'eliminar') {
+        const res = await fetch(`/api/admin/pedidos/grupos/${grupoId}`, {
+          method: 'DELETE',
+        });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error al desconfirmar');
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al eliminar');
+        }
+
+        setMensaje('🗑️ Grupo eliminado');
+      } else {
+        const res = await fetch(`/api/admin/pedidos/grupos/${grupoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accion }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al actualizar el estado del grupo');
+        }
+
+        if (accion === 'confirmar') setMensaje('✅ Grupo confirmado');
+        if (accion === 'desconfirmar') setMensaje('↩️ Grupo desconfirmado');
+        if (accion === 'cancelar') setMensaje('❌ Grupo cancelado');
       }
 
-      setMensaje('↩️ Grupo desconfirmado');
-      setTimeout(() => window.location.reload(), 1000);
-    } catch (error: any) {
-      setMensaje(`❌ ${error.message}`);
-    } finally {
-      setCargando(false);
-      setTimeout(() => setMensaje(''), 3000);
-    }
-  };
-
-  const eliminarGrupo = async () => {
-    if (!confirm('⚠️ ¿Eliminar este grupo?\n\nEsta acción NO se puede deshacer.')) return;
-    if (!confirm('❌ ¿Estás 100% seguro?\n\nSe perderán todos los datos del grupo.')) return;
-    
-    setCargando(true);
-    try {
-      const res = await fetch(`/api/admin/pedidos/grupos/${grupoId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error al eliminar');
-      }
-
-      setMensaje('🗑️ Grupo eliminado');
-      setTimeout(() => window.location.reload(), 1000);
-    } catch (error: any) {
-      setMensaje(`❌ ${error.message}`);
-    } finally {
-      setCargando(false);
-      setTimeout(() => setMensaje(''), 3000);
-    }
-  };
-
-  const cancelarGrupo = async () => {
-    if (!confirm('❌ ¿Cancelar este grupo?\n\nEl grupo quedará cancelado y no se podrá usar.')) return;
-    
-    setCargando(true);
-    try {
-      const res = await fetch(`/api/admin/pedidos/grupos/${grupoId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accion: 'cancelar' }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error al cancelar');
-      }
-
-      setMensaje('❌ Grupo cancelado');
+      setAccionPendiente(null);
       setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       setMensaje(`❌ ${error.message}`);
@@ -128,7 +82,16 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
           <>
             <button
               type="button"
-              onClick={confirmarGrupo}
+              onClick={() =>
+                setAccionPendiente({
+                  key: 'confirmar',
+                  titulo: 'Confirmar grupo',
+                  descripcion:
+                    'Marca el grupo como confirmado y listo para producción. El equipo verá este pedido como cerrado para preparar.',
+                  confirmarLabel: 'Sí, confirmar grupo',
+                  estilo: 'green',
+                })
+              }
               disabled={cargando}
               className="bg-green-500 dark:bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-600 dark:hover:bg-green-500 font-semibold text-sm disabled:opacity-50"
               title="Confirmar grupo"
@@ -137,7 +100,16 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
             </button>
             <button
               type="button"
-              onClick={cancelarGrupo}
+              onClick={() =>
+                setAccionPendiente({
+                  key: 'cancelar',
+                  titulo: 'Cancelar grupo',
+                  descripcion:
+                    'Cambia el estado a cancelado. El grupo ya no debe usarse para seguir armando el pedido.',
+                  confirmarLabel: 'Sí, cancelar grupo',
+                  estilo: 'orange',
+                })
+              }
               disabled={cargando}
               className="bg-orange-500 dark:bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 font-semibold text-sm disabled:opacity-50"
               title="Cancelar grupo"
@@ -151,7 +123,16 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
         {estado === 'confirmado' && (
           <button
             type="button"
-            onClick={desconfirmarGrupo}
+            onClick={() =>
+              setAccionPendiente({
+                key: 'desconfirmar',
+                titulo: 'Desconfirmar grupo',
+                descripcion:
+                  'Vuelve el grupo a estado armando para permitir cambios de menú, miembros o fechas antes de cerrar nuevamente.',
+                confirmarLabel: 'Sí, desconfirmar grupo',
+                estilo: 'yellow',
+              })
+            }
             disabled={cargando}
             className="bg-yellow-500 dark:bg-yellow-600 text-white dark:text-gray-900 px-3 py-2 rounded-lg hover:bg-yellow-600 dark:hover:bg-yellow-500 font-semibold text-sm disabled:opacity-50"
             title="Desconfirmar grupo (volver a armando)"
@@ -163,7 +144,16 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
         {/* Botón eliminar siempre visible */}
         <button
           type="button"
-          onClick={eliminarGrupo}
+          onClick={() =>
+            setAccionPendiente({
+              key: 'eliminar',
+              titulo: 'Eliminar grupo',
+              descripcion:
+                'Borra el grupo y todos sus datos asociados (miembros e ítems). Esta acción es permanente y no se puede deshacer.',
+              confirmarLabel: 'Sí, eliminar definitivamente',
+              estilo: 'red',
+            })
+          }
           disabled={cargando}
           className="bg-red-500 dark:bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-500 font-semibold text-sm disabled:opacity-50"
           title="Eliminar grupo"
@@ -171,6 +161,52 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
           🗑️ Eliminar
         </button>
       </div>
+
+      <div className="mt-3 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+        {estado === 'armando' && (
+          <p>✅ Confirmar: cierra el grupo para producción.</p>
+        )}
+        {estado === 'confirmado' && (
+          <p>↩️ Desconfirmar: reabre el grupo para poder editarlo.</p>
+        )}
+        {estado === 'armando' && (
+          <p>❌ Cancelar: marca el grupo como cancelado.</p>
+        )}
+        <p>🗑️ Eliminar: borra definitivamente grupo, miembros e ítems.</p>
+      </div>
+
+      {accionPendiente && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Cerrar modal"
+            onClick={() => !cargando && setAccionPendiente(null)}
+            className="absolute inset-0 bg-black/50"
+          />
+          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 p-5">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">{accionPendiente.titulo}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">{accionPendiente.descripcion}</p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAccionPendiente(null)}
+                disabled={cargando}
+                className="px-3 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                onClick={() => ejecutarAccion(accionPendiente.key)}
+                disabled={cargando}
+                className={`px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ${estiloConfirmar[accionPendiente.estilo]}`}
+              >
+                {cargando ? 'Procesando...' : accionPendiente.confirmarLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

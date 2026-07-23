@@ -1,11 +1,23 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { getUsuarioConRol } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
+async function requireAdmin() {
+  const usuario = await getUsuarioConRol();
+  if (!usuario || usuario.rol !== 'admin') return null;
+  return usuario;
+}
 
 // GET: Obtener detalle de un grupo
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+
   const supabase = createServerSupabaseClient();
 
   const { data: grupo, error } = await supabase
@@ -36,6 +48,11 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+
   const supabase = createServerSupabaseClient();
   const body = await request.json();
   const { accion } = body;
@@ -117,6 +134,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+
   const supabase = createServerSupabaseClient();
 
   try {

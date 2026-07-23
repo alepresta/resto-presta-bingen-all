@@ -4,6 +4,8 @@ import Link from 'next/link';
 import GestionMiembros from './GestionMiembros';
 import AccionesGrupo from '../AccionesGrupo';
 import ProduccionPorDia from './ProduccionPorDia';
+import AjusteDuracionGrupo from './AjusteDuracionGrupo';
+import PedidosPorPersona from './PedidosPorPersona';
 import { normalizarAGramos } from '@/lib/analisis-plato';
 
 export const dynamic = 'force-dynamic';
@@ -63,13 +65,55 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
     emailsRegistrados.has((c.email || '').trim().toLowerCase())
   );
 
-  const miembrosConfirmados = grupo.miembros?.filter((m: any) => m.confirmado_general).length || 0;
-  const totalMiembros = grupo.miembros?.length || 0;
+  const miembrosGrupo = grupo.miembros || [];
+  const miembrosIdsLista = miembrosGrupo.map((m: any) => m.cliente_id).filter(Boolean);
+  const { data: perfilesMiembros } = await supabase
+    .from('profiles')
+    .select('id, nombre, apellido, email')
+    .in('id', miembrosIdsLista.length ? miembrosIdsLista : ['00000000-0000-0000-0000-000000000000']);
+
+  const perfilPorId = new Map<string, any>();
+  (perfilesMiembros || []).forEach((p: any) => {
+    perfilPorId.set(p.id, p);
+  });
+
+  const miembrosEnriquecidos = miembrosGrupo.map((m: any) => {
+    const perfil = perfilPorId.get(m.cliente_id);
+    const nombrePerfil = [perfil?.nombre, perfil?.apellido].filter(Boolean).join(' ').trim();
+    const nombreFinal = m.cliente?.nombre || nombrePerfil || 'Sin nombre';
+    const emailFinal = m.cliente?.email || perfil?.email || 'Sin email';
+    return {
+      ...m,
+      cliente: {
+        id: m.cliente?.id || m.cliente_id,
+        nombre: nombreFinal,
+        email: emailFinal,
+      },
+    };
+  });
+
+  const miembrosConfirmados = miembrosEnriquecidos.filter((m: any) => m.confirmado_general).length || 0;
+  const totalMiembros = miembrosEnriquecidos.length || 0;
 
   // Ids de miembros actuales (para contar cuántos quieren cada plato)
-  const miembrosIds = new Set<string>((grupo.miembros || []).map((m: any) => m.cliente_id));
+  const miembrosIds = new Set<string>(miembrosEnriquecidos.map((m: any) => m.cliente_id));
 
   const items = grupo.items || [];
+  const fechasConItems: string[] = Array.from(
+    new Set<string>(
+      items
+        .map((i: any) => (typeof i.fecha === 'string' ? i.fecha : null))
+        .filter((f: string | null): f is string => !!f)
+    )
+  ).sort((a, b) => a.localeCompare(b));
+  const tiposComidaOrden = ['desayuno', 'almuerzo', 'guarnicion', 'postre', 'bebida'];
+  const tipoComidaLabel: Record<string, string> = {
+    desayuno: 'Desayuno',
+    almuerzo: 'Almuerzo',
+    guarnicion: 'Guarnición',
+    postre: 'Postre',
+    bebida: 'Bebida',
+  };
 
   // Recetas + ingredientes de los platos elegidos (para la lista de compras por día)
   const platoIds = [...new Set(items.map((i: any) => i.plato_id).filter(Boolean))];
@@ -171,12 +215,15 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
       <header className="bg-gradient-to-r from-indigo-700 to-blue-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">🔐 Grupo {grupo.palabra_secreta}</h1>
+            <h1 className="text-2xl font-bold">🔐 Grupo: {grupo.palabra_secreta}</h1>
             <p className="text-indigo-100 text-sm">
               {new Date(grupo.fecha_inicio).toLocaleDateString('es-AR')} - {new Date(grupo.fecha_fin).toLocaleDateString('es-AR')}
             </p>
           </div>
           <div className="flex gap-2">
+            <Link href={`/admin/pedidos/grupos/${grupo.id}/editar`} className="bg-amber-500 hover:bg-amber-600 px-4 py-2 rounded-lg text-sm font-semibold text-white">
+              🗓️ Extender días
+            </Link>
             <Link href="/admin/pedidos/grupos" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-semibold">
               ← Volver
             </Link>
@@ -218,6 +265,26 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
           </div>
         </div>
 
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Nombre / Clave del grupo</p>
+            <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 mt-1">{grupo.palabra_secreta}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Período del grupo</p>
+            <p className="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">
+              Inicio: {new Date(grupo.fecha_inicio).toLocaleDateString('es-AR')} · Fin: {new Date(grupo.fecha_fin).toLocaleDateString('es-AR')}
+            </p>
+          </div>
+        </div>
+
+        <AjusteDuracionGrupo
+          grupoId={grupo.id}
+          palabraSecreta={grupo.palabra_secreta}
+          fechaInicio={grupo.fecha_inicio}
+          fechaFin={grupo.fecha_fin}
+        />
+
         {/* Acciones del grupo (confirmar / desconfirmar / cancelar / eliminar) */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -232,7 +299,7 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">👥 Miembros del Grupo ({totalMiembros})</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            {grupo.miembros?.map((miembro: any) => (
+            {miembrosEnriquecidos.map((miembro: any) => (
               <div key={miembro.id} className={`p-4 rounded-lg border-2 ${miembro.confirmado_general ? 'bg-green-50 border-green-500' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'}`}>
                 <div className="flex justify-between items-start">
                   <div>
@@ -257,10 +324,18 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
 
           <GestionMiembros
             grupoId={grupo.id}
-            miembrosActuales={grupo.miembros || []}
+            miembrosActuales={miembrosEnriquecidos}
             clientesDisponibles={clientesDisponibles || []}
           />
         </div>
+
+        <PedidosPorPersona
+          fechasConItems={fechasConItems}
+          miembros={miembrosEnriquecidos}
+          items={items}
+          tiposComidaOrden={tiposComidaOrden}
+          tipoComidaLabel={tipoComidaLabel}
+        />
 
         {/* Platos a preparar por día + ingredientes + lista de compras consolidada */}
         <ProduccionPorDia dias={resumenPorDia} />

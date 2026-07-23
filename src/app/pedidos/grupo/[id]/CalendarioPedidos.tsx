@@ -191,6 +191,7 @@ interface CalendarioPedidosProps {
   clienteActualId: string;
   clienteNombre?: string;
   clienteEmail?: string;
+  esAdminViewer?: boolean;
 }
 
 const TIPOS_COMIDA = [
@@ -278,6 +279,7 @@ export default function CalendarioPedidos({
   clienteActualId: clienteActualIdProp,
   clienteNombre = '',
   clienteEmail = '',
+  esAdminViewer = false,
 }: CalendarioPedidosProps) {
   const router = useRouter();
   const [items, setItems] = useState<ItemPedido[]>(itemsIniciales);
@@ -1012,6 +1014,7 @@ export default function CalendarioPedidos({
 
   // ¿El usuario actual ya es miembro del grupo?
   const esMiembro = miembrosState.some((m) => m.cliente_id === clienteActualId);
+  const puedeVerSinUnirse = esAdminViewer;
 
   // Unirse al grupo con el código (palabra secreta)
   const unirseAlGrupo = async (e: React.FormEvent) => {
@@ -1177,8 +1180,8 @@ export default function CalendarioPedidos({
     });
   }, [items, platos, miembrosState]);
 
-  // Si el usuario NO es miembro, sólo puede ver la tarjeta para unirse con el código.
-  if (!esMiembro) {
+  // Si no es miembro y tampoco es admin en modo visualización, se muestra unión por código.
+  if (!esMiembro && !puedeVerSinUnirse) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
@@ -1238,7 +1241,7 @@ export default function CalendarioPedidos({
             <strong>
               {parseFechaLocal(fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
             </strong>{' '}
-            · {fechas.length} días · {miembrosState.length}/4 miembros
+            · {fechas.length} días · {miembrosState.length} miembros
           </p>
           <p className="text-teal-100 mt-1 text-sm">
             {miembrosConfirmadosLista.length > 0 && (
@@ -1577,7 +1580,7 @@ export default function CalendarioPedidos({
                             </>
                           ) : (
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {!esMiembro ? 'Uníte para elegir' : 'Tocá para elegir'}
+                              {!esMiembro && esAdminViewer ? 'Modo solo lectura (admin)' : !esMiembro ? 'Uníte para elegir' : 'Tocá para elegir'}
                             </p>
                           )}
                         </button>
