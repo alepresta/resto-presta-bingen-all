@@ -298,30 +298,6 @@ export default async function DetalleGrupoPage({ params }: { params: { id: strin
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">👥 Miembros del Grupo ({totalMiembros})</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            {miembrosEnriquecidos.map((miembro: any) => (
-              <div key={miembro.id} className={`p-4 rounded-lg border-2 ${miembro.confirmado_general ? 'bg-green-50 border-green-500' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'}`}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-bold text-gray-800 dark:text-gray-100">{miembro.cliente?.nombre}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{miembro.cliente?.email}</p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 break-all">ID cliente: {miembro.cliente_id}</p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 break-all">ID miembro: {miembro.id}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Rol: {miembro.rol}{miembro.joined_at ? ` · Se unió: ${new Date(miembro.joined_at).toLocaleDateString('es-AR')}` : ''}
-                    </p>
-                  </div>
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${miembro.confirmado_general ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                    {miembro.confirmado_general ? '✅ Confirmado' : '⏳ Pendiente'}
-                  </span>
-                </div>
-              </div>
-            ))}
-            {totalMiembros === 0 && (
-              <p className="text-gray-500 dark:text-gray-400">Este grupo todavía no tiene miembros.</p>
-            )}
-          </div>
-
           <GestionMiembros
             grupoId={grupo.id}
             miembrosActuales={miembrosEnriquecidos}

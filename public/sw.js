@@ -23,6 +23,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // No cachear rutas dinámicas de Next o APIs para evitar contenido viejo.
+  if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/api/')) return;
+
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)

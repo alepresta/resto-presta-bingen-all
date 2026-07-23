@@ -2,6 +2,19 @@
 
 import { useMemo, useState } from 'react';
 
+function parseFechaLocal(fechaStr: string): Date {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+function fmtFechaLarga(fechaStr: string): string {
+  return parseFechaLocal(fechaStr).toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 interface MiembroSimple {
   id: string;
   cliente_id: string;
@@ -99,7 +112,7 @@ export default function PedidosPorPersona({
             >
               <summary className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer list-none flex items-center justify-between [&::-webkit-details-marker]:hidden">
                 <p className="font-bold text-gray-800 dark:text-gray-100">
-                  {new Date(fecha).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  {fmtFechaLarga(fecha)}
                 </p>
                 <span className="text-xs text-gray-500 dark:text-gray-400">Colapsar / expandir</span>
               </summary>

@@ -39,6 +39,11 @@ interface CalendarioPedidosProps {
   categorias: Categoria[];
 }
 
+function parseFechaLocal(fechaStr: string): Date {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
 export default function CalendarioPedidos({ restaurante, platos, categorias }: CalendarioPedidosProps) {
   const [fechaInicio, setFechaInicio] = useState<string>('');
   const [fechaFin, setFechaFin] = useState<string>('');
@@ -289,7 +294,7 @@ export default function CalendarioPedidos({ restaurante, platos, categorias }: C
                     Seleccioná {platoActivoModal.tipo}
                   </h2>
                   <p className="text-amber-100 mt-1">
-                    {new Date(platoActivoModal.fecha).toLocaleDateString('es-AR', {
+                    {parseFechaLocal(platoActivoModal.fecha).toLocaleDateString('es-AR', {
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',

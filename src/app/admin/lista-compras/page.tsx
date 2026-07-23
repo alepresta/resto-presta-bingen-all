@@ -2,6 +2,15 @@
 
 import { useState, useEffect } from 'react';
 
+function parseFechaLocal(fechaStr: string): Date {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+function fmtFechaSimple(fechaStr: string): string {
+  return parseFechaLocal(fechaStr).toLocaleDateString('es-AR');
+}
+
 interface IngredienteLista {
   id: string;
   nombre: string;
@@ -189,7 +198,7 @@ export default function ListaComprasPage() {
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-800 dark:text-gray-100 font-mono">{g.palabra_secreta}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {g.estado} · {new Date(g.fecha_inicio).toLocaleDateString('es-AR')} a {new Date(g.fecha_fin).toLocaleDateString('es-AR')}
+                        {g.estado} · {fmtFechaSimple(g.fecha_inicio)} a {fmtFechaSimple(g.fecha_fin)}
                         {nMiembros ? ` · ${nMiembros} miembro${nMiembros !== 1 ? 's' : ''}` : ''}
                       </p>
                     </div>

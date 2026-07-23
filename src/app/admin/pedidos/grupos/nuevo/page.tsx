@@ -12,6 +12,18 @@ function generarPalabraSecreta(): string {
   return resultado;
 }
 
+function parseFechaLocal(fechaStr: string): Date {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+function formatFechaLocal(fecha: Date): string {
+  const y = fecha.getFullYear();
+  const m = String(fecha.getMonth() + 1).padStart(2, '0');
+  const d = String(fecha.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export default function CrearGrupoPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -26,20 +38,20 @@ export default function CrearGrupoPage() {
   const handleDuracionChange = (dias: number) => {
     setDuracion(dias);
     if (fechaInicio) {
-      const inicio = new Date(fechaInicio);
+      const inicio = parseFechaLocal(fechaInicio);
       const fin = new Date(inicio);
       fin.setDate(fin.getDate() + dias - 1);
-      setFechaFin(fin.toISOString().split('T')[0]);
+      setFechaFin(formatFechaLocal(fin));
     }
   };
 
   const handleFechaInicioChange = (fecha: string) => {
     setFechaInicio(fecha);
     if (fecha) {
-      const inicio = new Date(fecha);
+      const inicio = parseFechaLocal(fecha);
       const fin = new Date(inicio);
       fin.setDate(fin.getDate() + duracion - 1);
-      setFechaFin(fin.toISOString().split('T')[0]);
+      setFechaFin(formatFechaLocal(fin));
     }
   };
 
@@ -53,7 +65,7 @@ export default function CrearGrupoPage() {
         throw new Error('Seleccioná las fechas');
       }
 
-      if (new Date(fechaInicio) > new Date(fechaFin)) {
+      if (fechaInicio > fechaFin) {
         throw new Error('La fecha de inicio debe ser anterior a la fecha de fin');
       }
 

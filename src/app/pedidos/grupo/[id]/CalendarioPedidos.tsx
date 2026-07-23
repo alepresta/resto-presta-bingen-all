@@ -289,6 +289,7 @@ export default function CalendarioPedidos({
   const [mensaje, setMensaje] = useState('');
   const [clienteActualId, setClienteActualId] = useState<string>(clienteActualIdProp);
   const [miembrosState, setMiembrosState] = useState<Miembro[]>(miembros);
+  const [hidratado, setHidratado] = useState(false);
 
   // Unirse al grupo con el código (si el usuario aún no es miembro)
   const [codigoUnirse, setCodigoUnirse] = useState('');
@@ -304,6 +305,10 @@ export default function CalendarioPedidos({
     if (typeof window !== 'undefined') {
       setShareUrl(window.location.href);
     }
+  }, []);
+
+  useEffect(() => {
+    setHidratado(true);
   }, []);
 
   const copiar = async (texto: string, tipo: 'url' | 'codigo') => {
@@ -874,7 +879,7 @@ export default function CalendarioPedidos({
       setAnalisisVersion((v) => v + 1);
 
       setModalAbierto(null);
-      setMensaje(`✅ ${plato.nombre} seleccionado para ${new Date(fecha).toLocaleDateString('es-AR')}`);
+      setMensaje(`✅ ${plato.nombre} seleccionado para ${parseFechaLocal(fecha).toLocaleDateString('es-AR')}`);
       setTimeout(() => setMensaje(''), 3000);
     } catch (error: any) {
       setMensaje(`❌ ${error.message}`);
@@ -1015,6 +1020,9 @@ export default function CalendarioPedidos({
   // ¿El usuario actual ya es miembro del grupo?
   const esMiembro = miembrosState.some((m) => m.cliente_id === clienteActualId);
   const puedeVerSinUnirse = esAdminViewer;
+  // Primer render estable: SSR y primera hidratación usan solo props del servidor.
+  const puedeVerInicial = miembros.some((m) => m.cliente_id === clienteActualIdProp) || esAdminViewer;
+  const puedeVer = hidratado ? (esMiembro || puedeVerSinUnirse) : puedeVerInicial;
 
   // Unirse al grupo con el código (palabra secreta)
   const unirseAlGrupo = async (e: React.FormEvent) => {
@@ -1181,7 +1189,7 @@ export default function CalendarioPedidos({
   }, [items, platos, miembrosState]);
 
   // Si no es miembro y tampoco es admin en modo visualización, se muestra unión por código.
-  if (!esMiembro && !puedeVerSinUnirse) {
+  if (!puedeVer) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
@@ -2312,7 +2320,7 @@ export default function CalendarioPedidos({
                     Seleccioná {TIPOS_COMIDA.find((t) => t.id === modalAbierto.tipo)?.label}
                   </h2>
                   <p className="text-amber-100 mt-1">
-                    {new Date(modalAbierto.fecha).toLocaleDateString('es-AR', {
+                    {parseFechaLocal(modalAbierto.fecha).toLocaleDateString('es-AR', {
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',

@@ -8,11 +8,11 @@ interface AccionesGrupoProps {
 }
 
 type AccionModal = {
-  key: 'confirmar' | 'desconfirmar' | 'cancelar' | 'eliminar';
+  key: 'cancelar' | 'eliminar';
   titulo: string;
   descripcion: string;
   confirmarLabel: string;
-  estilo: 'green' | 'yellow' | 'orange' | 'red';
+  estilo: 'orange' | 'red';
 };
 
 export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
@@ -21,13 +21,11 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
   const [accionPendiente, setAccionPendiente] = useState<AccionModal | null>(null);
 
   const estiloConfirmar = {
-    green: 'bg-green-600 hover:bg-green-700 text-white',
-    yellow: 'bg-yellow-500 hover:bg-yellow-600 text-gray-900',
     orange: 'bg-orange-600 hover:bg-orange-700 text-white',
     red: 'bg-red-600 hover:bg-red-700 text-white',
   };
 
-  const ejecutarAccion = async (accion: 'confirmar' | 'desconfirmar' | 'cancelar' | 'eliminar') => {
+  const ejecutarAccion = async (accion: 'cancelar' | 'eliminar') => {
     setCargando(true);
     try {
       if (accion === 'eliminar') {
@@ -53,8 +51,6 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
           throw new Error(data.error || 'Error al actualizar el estado del grupo');
         }
 
-        if (accion === 'confirmar') setMensaje('✅ Grupo confirmado');
-        if (accion === 'desconfirmar') setMensaje('↩️ Grupo desconfirmado');
         if (accion === 'cancelar') setMensaje('❌ Grupo cancelado');
       }
 
@@ -77,27 +73,9 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
       )}
       
       <div className="flex gap-2">
-        {/* Si está armando: mostrar confirmar y cancelar */}
+        {/* Si está armando: mostrar cancelar */}
         {estado === 'armando' && (
           <>
-            <button
-              type="button"
-              onClick={() =>
-                setAccionPendiente({
-                  key: 'confirmar',
-                  titulo: 'Confirmar grupo',
-                  descripcion:
-                    'Marca el grupo como confirmado y listo para producción. El equipo verá este pedido como cerrado para preparar.',
-                  confirmarLabel: 'Sí, confirmar grupo',
-                  estilo: 'green',
-                })
-              }
-              disabled={cargando}
-              className="bg-green-500 dark:bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-600 dark:hover:bg-green-500 font-semibold text-sm disabled:opacity-50"
-              title="Confirmar grupo"
-            >
-              ✅ Confirmar
-            </button>
             <button
               type="button"
               onClick={() =>
@@ -117,28 +95,6 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
               ❌ Cancelar
             </button>
           </>
-        )}
-
-        {/* Si está confirmado: mostrar desconfirmar */}
-        {estado === 'confirmado' && (
-          <button
-            type="button"
-            onClick={() =>
-              setAccionPendiente({
-                key: 'desconfirmar',
-                titulo: 'Desconfirmar grupo',
-                descripcion:
-                  'Vuelve el grupo a estado armando para permitir cambios de menú, miembros o fechas antes de cerrar nuevamente.',
-                confirmarLabel: 'Sí, desconfirmar grupo',
-                estilo: 'yellow',
-              })
-            }
-            disabled={cargando}
-            className="bg-yellow-500 dark:bg-yellow-600 text-white dark:text-gray-900 px-3 py-2 rounded-lg hover:bg-yellow-600 dark:hover:bg-yellow-500 font-semibold text-sm disabled:opacity-50"
-            title="Desconfirmar grupo (volver a armando)"
-          >
-            ↩️ Desconfirmar
-          </button>
         )}
 
         {/* Botón eliminar siempre visible */}
@@ -163,12 +119,6 @@ export default function AccionesGrupo({ grupoId, estado }: AccionesGrupoProps) {
       </div>
 
       <div className="mt-3 text-xs text-gray-600 dark:text-gray-300 space-y-1">
-        {estado === 'armando' && (
-          <p>✅ Confirmar: cierra el grupo para producción.</p>
-        )}
-        {estado === 'confirmado' && (
-          <p>↩️ Desconfirmar: reabre el grupo para poder editarlo.</p>
-        )}
         {estado === 'armando' && (
           <p>❌ Cancelar: marca el grupo como cancelado.</p>
         )}

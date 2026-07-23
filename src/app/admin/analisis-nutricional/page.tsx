@@ -2,6 +2,19 @@
 
 import { useEffect, useState } from 'react';
 
+function parseFechaLocal(fechaStr: string): Date {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+function fmtFechaCorta(fechaStr: string): string {
+  return parseFechaLocal(fechaStr).toLocaleDateString('es-AR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
 const TEMPERAMENTOS_INFO: Record<string, { nombre: string; icono: string; color: string; descripcion: string }> = {
   calido: { nombre: 'Cálido', icono: '🌡️', color: 'bg-orange-500', descripcion: 'Balanceado, moderado' },
   calido_seco: { nombre: 'Cálido-Seco', icono: '🔥', color: 'bg-red-500', descripcion: 'Energizante, estimulante' },
@@ -385,7 +398,7 @@ export default function AnalisisNutricionalPage() {
                           .map(([fecha, data]: [string, any]) => (
                             <tr key={fecha} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                               <td className="px-4 py-3 font-semibold text-gray-800 dark:text-gray-100">
-                                {new Date(fecha).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                {fmtFechaCorta(fecha)}
                               </td>
                               <td className="px-4 py-3 text-right">{data.platos}</td>
                               <td className="px-4 py-3 text-right font-semibold text-amber-600">{data.calorias.toFixed(0)}</td>
