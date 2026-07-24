@@ -38,6 +38,7 @@ function aplicarNoStore(response: NextResponse): NextResponse {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const esInvitacionGrupo = pathname.startsWith('/pedidos/grupo/') && request.nextUrl.searchParams.get('instalar') === '1';
 
   // La raíz lleva al menú público (vista inicial de clientes)
   if (pathname === '/') {
@@ -47,6 +48,12 @@ export async function middleware(request: NextRequest) {
   const esAdmin = requiereSesion(pathname);
   // Todo el flujo de pedidos requiere estar logueado o registrado
   const esPedidos = pathname.startsWith('/pedidos');
+
+  // Los enlaces de invitación/instalación a grupos deben abrir sin fricción,
+  // incluso en navegadores in-app donde la sesión/cookies pueden no estar disponibles.
+  if (esInvitacionGrupo) {
+    return aplicarNoStore(NextResponse.next());
+  }
 
   // Rutas totalmente públicas: no requieren sesión.
   if (!esAdmin && !esPedidos) {
