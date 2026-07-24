@@ -165,7 +165,10 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
 
   const navegarConRecarga = (href: string) => {
     if (typeof window !== 'undefined') {
-      window.location.assign(href);
+      const base = window.location.origin;
+      const url = href.startsWith('http') ? new URL(href) : new URL(href, base);
+      url.searchParams.set('_r', String(Date.now()));
+      window.location.assign(url.toString());
       return;
     }
     router.push(href);
