@@ -831,15 +831,24 @@ export default function CalendarioPedidos({
     return platos.filter((plato) => {
       // Filtro base: categoría y día
       if (plato.categoria_id !== tipoInfo.categoriaId) return false;
+
       // Solo se muestran los platos asignados a este día de la semana.
+      // Se normalizan días para tolerar datos legacy (strings, nulls, etc.).
+      const diasNormalizados = Array.isArray(plato.dias_semana)
+        ? plato.dias_semana
+            .map((d: any) => Number(d))
+            .filter((d: number) => Number.isInteger(d) && d >= 1 && d <= 7)
+        : [];
+
       const diasDelPlato =
-        plato.dias_semana && plato.dias_semana.length > 0
-          ? plato.dias_semana
-          : plato.disponible_todos_dias
+        plato.disponible_todos_dias
           ? [1, 2, 3, 4, 5, 6, 7]
+          : diasNormalizados.length > 0
+          ? diasNormalizados
           : plato.dia_semana_id !== null
-          ? [plato.dia_semana_id]
+          ? [Number(plato.dia_semana_id)]
           : [];
+
       if (!diasDelPlato.includes(diaSemana)) return false;
 
       // Filtro por texto (nombre, descripción o ingrediente)
