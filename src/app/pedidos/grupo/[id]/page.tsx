@@ -6,6 +6,7 @@ import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+const RESTAURANTE_SLUG_FALLBACK = 'resto-presta-bingen-all';
 
 interface PageProps {
   params: {
@@ -49,11 +50,25 @@ export default async function GrupoPage({ params }: PageProps) {
   //    restaurante por defecto para no quedarnos sin platos.
   let restauranteId = grupo.restaurante_id;
   if (!restauranteId) {
+    // 1) Intentar inferir desde items existentes del grupo.
+    const { data: itemConPlato } = await supabase
+      .from('grupo_items')
+      .select('plato:platos(restaurante_id)')
+      .eq('grupo_id', params.id)
+      .limit(1)
+      .maybeSingle();
+
+    const restauranteDesdeItems = (itemConPlato as any)?.plato?.restaurante_id as string | undefined;
+    restauranteId = restauranteDesdeItems ?? null;
+  }
+
+  if (!restauranteId) {
+    // 2) Fallback estable por slug del proyecto (evita "primer restaurante" arbitrario).
     const { data: restaurante } = await supabase
       .from('restaurantes')
       .select('id')
-      .limit(1)
-      .single();
+      .eq('slug', RESTAURANTE_SLUG_FALLBACK)
+      .maybeSingle();
     restauranteId = restaurante?.id ?? null;
   }
 

@@ -2,6 +2,8 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
+const RESTAURANTE_SLUG_FALLBACK = 'resto-presta-bingen-all';
+
 // GET /api/grupos/[id] - obtener estado actual del grupo (miembros/items/platos)
 export async function GET(
   _request: NextRequest,
@@ -42,11 +44,25 @@ export async function GET(
     // Catálogo de platos actualizado para autocorregir clientes móviles con estado viejo.
     let restauranteId = (grupo as any)?.restaurante_id ?? null;
     if (!restauranteId) {
+      // 1) Intentar inferir desde items existentes del grupo.
+      const { data: itemConPlato } = await supabase
+        .from('grupo_items')
+        .select('plato:platos(restaurante_id)')
+        .eq('grupo_id', params.id)
+        .limit(1)
+        .maybeSingle();
+
+      const restauranteDesdeItems = (itemConPlato as any)?.plato?.restaurante_id as string | undefined;
+      restauranteId = restauranteDesdeItems ?? null;
+    }
+
+    if (!restauranteId) {
+      // 2) Fallback estable por slug del proyecto (evita "primer restaurante" arbitrario).
       const { data: restaurante } = await supabase
         .from('restaurantes')
         .select('id')
-        .limit(1)
-        .single();
+        .eq('slug', RESTAURANTE_SLUG_FALLBACK)
+        .maybeSingle();
       restauranteId = restaurante?.id ?? null;
     }
 
