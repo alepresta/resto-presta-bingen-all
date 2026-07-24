@@ -314,7 +314,14 @@ export default function CalendarioPedidos({
 
     const refrescarGrupo = async () => {
       try {
-        const res = await fetch(`/api/grupos/${grupoId}`, { cache: 'no-store' });
+        const cv = Date.now();
+        const res = await fetch(`/api/grupos/${grupoId}?cv=${cv}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        });
         if (!res.ok) return;
         const data = await res.json();
         if (!activo) return;
