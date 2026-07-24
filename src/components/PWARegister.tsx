@@ -7,8 +7,9 @@ export default function PWARegister() {
     if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator)) return;
 
-    // Modo emergencia: desactivar PWA caching en todos los entornos.
-    // Esto evita que una app instalada quede pegada a datos o bundles viejos.
+    const isProd = process.env.NODE_ENV === 'production';
+
+    // En desarrollo: sin SW para evitar problemas de caché durante iteración.
     const cleanup = async () => {
       try {
         const regs = await navigator.serviceWorker.getRegistrations();
@@ -22,7 +23,25 @@ export default function PWARegister() {
       }
     };
 
-    cleanup();
+    if (!isProd) {
+      cleanup();
+      return;
+    }
+
+    // En producción registramos el kill switch (/sw.js) para limpiar SWs viejos.
+    const registerKillSwitch = async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+          updateViaCache: 'none',
+        });
+        await reg.update();
+      } catch {
+        // noop
+      }
+    };
+
+    registerKillSwitch();
   }, []);
 
   return null;
