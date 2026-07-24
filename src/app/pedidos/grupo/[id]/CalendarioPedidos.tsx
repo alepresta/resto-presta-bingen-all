@@ -193,6 +193,7 @@ interface CalendarioPedidosProps {
   clienteEmail?: string;
   esAdminViewer?: boolean;
   esAutenticado?: boolean;
+  hoyServidor: string;
 }
 
 const TIPOS_COMIDA = [
@@ -282,6 +283,7 @@ export default function CalendarioPedidos({
   clienteEmail = '',
   esAdminViewer = false,
   esAutenticado = false,
+  hoyServidor,
 }: CalendarioPedidosProps) {
   const router = useRouter();
   const [items, setItems] = useState<ItemPedido[]>(itemsIniciales);
@@ -1224,8 +1226,7 @@ export default function CalendarioPedidos({
 
     // Se excluyen los días anteriores a HOY: sus pedidos ya no deben sumarse a
     // la lista de compras.
-    const hoyStr = formatFechaLocal(new Date());
-    const fechasStr = [...new Set(items.map((i) => i.fecha))].filter((f) => f >= hoyStr).sort();
+    const fechasStr = [...new Set(items.map((i) => i.fecha))].filter((f) => f >= hoyServidor).sort();
 
     return fechasStr.map((fecha) => {
       const itemsDia = items.filter((i) => i.fecha === fecha);
@@ -1584,7 +1585,7 @@ export default function CalendarioPedidos({
             const fechaStr = formatFechaLocal(fecha);
             const diaSemana = fecha.getDay() === 0 ? 7 : fecha.getDay();
             const diaInfo = DIAS_SEMANA.find((d) => d.id === diaSemana);
-            const esPasado = fechaStr < formatFechaLocal(new Date());
+            const esPasado = fechaStr < hoyServidor;
             const enRango = fechaStr >= fechaInicio && fechaStr <= fechaFin;
             const itemsDia = items.filter((it) => it.fecha === fechaStr);
             const tienePlatosDia = itemsDia.length > 0;

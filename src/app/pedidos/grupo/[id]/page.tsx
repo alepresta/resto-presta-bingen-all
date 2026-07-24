@@ -4,6 +4,13 @@ import { notFound } from 'next/navigation';
 import CalendarioPedidos from './CalendarioPedidos';
 import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
+function formatFechaLocal(fecha: Date): string {
+  const y = fecha.getFullYear();
+  const m = String(fecha.getMonth() + 1).padStart(2, '0');
+  const d = String(fecha.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 const RESTAURANTE_SLUG_FALLBACK = 'resto-presta-bingen-all';
@@ -130,6 +137,7 @@ export default async function GrupoPage({ params }: PageProps) {
   let clienteNombre = '';
   let clienteEmail = '';
   let esAutenticado = false;
+  const hoyServidor = formatFechaLocal(new Date());
   if (user) {
     esAutenticado = true;
     clienteActualId = user.id;
@@ -156,6 +164,7 @@ export default async function GrupoPage({ params }: PageProps) {
       clienteEmail={clienteEmail}
       esAdminViewer={esAdminViewer}
       esAutenticado={esAutenticado}
+      hoyServidor={hoyServidor}
     />
   );
 }
