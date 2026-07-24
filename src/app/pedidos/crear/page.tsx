@@ -35,7 +35,7 @@ export default function CrearGrupoPage() {
       } = await supabase.auth.getUser();
       if (!user) {
         setAutorizado(false);
-        router.replace('/pedidos/unirse');
+        router.replace('/auth/login?redirect=/pedidos/crear');
         return;
       }
 
@@ -47,7 +47,7 @@ export default function CrearGrupoPage() {
 
       if ((profile?.rol || 'cliente') !== 'admin') {
         setAutorizado(false);
-        router.replace('/pedidos/unirse');
+        router.replace('/menu/resto-presta-bingen-all');
         return;
       }
 

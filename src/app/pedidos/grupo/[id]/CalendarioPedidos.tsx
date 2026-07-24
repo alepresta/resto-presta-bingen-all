@@ -1500,7 +1500,7 @@ export default function CalendarioPedidos({
             )}
             {miembrosConfirmadosLista.length > 0 && miembrosPendientes.length > 0 && ' · '}
             {miembrosPendientes.length > 0 ? (
-              <>⏳ Falta confirmar: {miembrosPendientes.map((m) => m.cliente.nombre).join(', ')}</>
+              <>⏳ Tienen días sin confirmar todavía: {miembrosPendientes.map((m) => m.cliente.nombre).join(', ')}</>
             ) : (
               miembrosConfirmadosLista.length > 0 && ' · 🎉 ¡Todos confirmaron!'
             )}

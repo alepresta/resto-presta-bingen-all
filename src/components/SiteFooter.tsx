@@ -10,9 +10,6 @@ export default function SiteFooter() {
           <Link href="/menu/resto-presta-bingen-all" className="hover:underline">
             Menú
           </Link>
-          <Link href="/inicio" className="hover:underline">
-            Pedidos grupales
-          </Link>
         </div>
         <p className="text-xs mt-4 opacity-75">
           Basado en las revelaciones de Santa Hildegarda de Bingen (1098-1179)
