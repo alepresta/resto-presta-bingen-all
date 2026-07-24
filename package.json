@@ -10,6 +10,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "clean": "rm -rf .next",
+    "refresh": "npm run clean && npm ci && npm run build",
+    "refresh:dev": "npm run clean && npm ci && npm run dev",
     "test": "tsx --test tests/*.test.ts",
     "seed": "tsx scripts/seed.ts",
     "qr": "tsx scripts/generate-qr.ts"
