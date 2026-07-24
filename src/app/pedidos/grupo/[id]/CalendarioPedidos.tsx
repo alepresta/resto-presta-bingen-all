@@ -828,10 +828,7 @@ export default function CalendarioPedidos({
     const tipoInfo = TIPOS_COMIDA.find((t) => t.id === tipo);
     if (!tipoInfo) return [];
 
-    return platos.filter((plato) => {
-      // Filtro base: categoría y día
-      if (plato.categoria_id !== tipoInfo.categoriaId) return false;
-
+    const cumpleDia = (plato: any) => {
       // Solo se muestran los platos asignados a este día de la semana.
       // Se normalizan días para tolerar datos legacy (strings, nulls, etc.).
       const diasNormalizados = Array.isArray(plato.dias_semana)
@@ -849,14 +846,17 @@ export default function CalendarioPedidos({
           ? [Number(plato.dia_semana_id)]
           : [];
 
-      if (!diasDelPlato.includes(diaSemana)) return false;
+      return diasDelPlato.includes(diaSemana);
+    };
+
+    const cumpleFiltrosExtra = (plato: any) => {
 
       // Filtro por texto (nombre, descripción o ingrediente)
       if (textoBusqueda) {
         const texto = textoBusqueda.toLowerCase();
         const coincideNombre = plato.nombre.toLowerCase().includes(texto);
         const coincideDesc = plato.descripcion?.toLowerCase().includes(texto) || false;
-        const coincideIngrediente = plato.receta?.ingredientes?.some(ri =>
+        const coincideIngrediente = plato.receta?.ingredientes?.some((ri: any) =>
           ri.ingrediente.nombre.toLowerCase().includes(texto)
         ) || false;
         if (!coincideNombre && !coincideDesc && !coincideIngrediente) return false;
@@ -867,7 +867,7 @@ export default function CalendarioPedidos({
 
       // Filtro por temperamento
       if (temperamentoFiltro && plato.receta?.ingredientes) {
-        const tieneTemperamento = plato.receta.ingredientes.some(ri =>
+        const tieneTemperamento = plato.receta.ingredientes.some((ri: any) =>
           ri.ingrediente.temperamento === temperamentoFiltro
         );
         if (!tieneTemperamento) return false;
@@ -875,14 +875,32 @@ export default function CalendarioPedidos({
 
       // Filtro sin venenos
       if (soloSinVenenos && plato.receta?.ingredientes) {
-        const tieneVeneno = plato.receta.ingredientes.some(ri =>
+        const tieneVeneno = plato.receta.ingredientes.some((ri: any) =>
           ri.ingrediente.es_veneno_hildegardiano
         );
         if (tieneVeneno) return false;
       }
 
       return true;
+    };
+
+    // 1) Preferencia: categoría esperada + día + filtros extra.
+    const estrictos = platos.filter((plato) => {
+      if (plato.categoria_id !== tipoInfo.categoriaId) return false;
+      if (!cumpleDia(plato)) return false;
+      return cumpleFiltrosExtra(plato);
     });
+
+    // 2) Fallback: si llega 0/1 opciones (caso reportado en móviles), abrir a
+    // cualquier categoría del mismo día para no ocultar platos válidos.
+    if (estrictos.length > 1) return estrictos;
+
+    const ampliados = platos.filter((plato) => {
+      if (!cumpleDia(plato)) return false;
+      return cumpleFiltrosExtra(plato);
+    });
+
+    return ampliados.length > 0 ? ampliados : estrictos;
   };
 
   const seleccionarPlato = async (fecha: string, tipo: string, platoId: string) => {
