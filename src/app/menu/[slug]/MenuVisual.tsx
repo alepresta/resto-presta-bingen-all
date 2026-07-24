@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import type { AnalisisPlato, ResumenLinea } from '@/lib/analisis-plato';
 import InformeDualView from '@/app/admin/recetas/[id]/InformeDualView';
 import { escalarIngrediente } from '@/lib/escalado';
-import { esTodosLosDias } from '@/lib/plato-dias';
 
 // Convierte un paso de receta (string u objeto {descripcion/texto/paso/...}) en texto legible
 function textoDePaso(p: any): string {
@@ -383,7 +382,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
   const [platoSeleccionado, setPlatoSeleccionado] = useState<Plato | null>(null);
   const [porcionesModal, setPorcionesModal] = useState(1);
-  const [diaActivo, setDiaActivo] = useState<number>(diaInfo.id);
+  const [diaActivo, setDiaActivo] = useState<number>(0);
   const [categoriaActiva, setCategoriaActiva] = useState<number | null>(null);
   const [vistaActiva, setVistaActiva] = useState<'principales' | 'extras'>('principales');
 
@@ -412,11 +411,11 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     window.sessionStorage.setItem(clave, String(diaActivo));
   }, [diaActivo, restaurante.id]);
 
-  // Filtro de platos principales al estilo del admin:
-  // - diaActivo === 0 => "Todos los días" (solo los que no tienen día asignado)
-  // - diaActivo 1..7   => solo los platos exclusivos de ese día
+  // Filtro cliente:
+  // - diaActivo === 0 => mostrar todos los platos principales
+  // - diaActivo 1..7   => filtrar por día
   const platosPrincipales = todosLosPrincipales.filter((plato) => {
-    if (diaActivo === 0) return esTodosLosDias(plato.dias_semana);
+    if (diaActivo === 0) return true;
     return plato.dias_semana.includes(diaActivo);
   });
 
@@ -508,7 +507,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                 }`}
               >
-                🗓️ Disponibles todos los días
+                🗂️ Todos los platos
               </button>
               <div className="grid grid-cols-7 gap-2">
                 {dias.map((dia) => (
@@ -535,7 +534,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
             <div className="mb-6 text-center">
               <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                 {diaActivo === 0
-                  ? '🗓️ Platos disponibles todos los días'
+                  ? '🗂️ Todos los platos principales'
                   : `🍽️ Platos del ${dias.find(d => d.id === diaActivo)?.nombre}`}
               </h2>
               <p className="text-sm text-amber-700 mt-2 font-semibold">
