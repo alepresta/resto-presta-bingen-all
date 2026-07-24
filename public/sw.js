@@ -1,26 +1,12 @@
-// Kill switch del Service Worker:
-// limpia cualquier caché vieja, se desregistra y fuerza recarga de clientes.
+// Service Worker estable y minimalista.
+// No cachea assets ni respuestas: deja la red al navegador.
+// Solo toma control de clientes para evitar ciclos de registro/desregistro.
 self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    (async () => {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((k) => caches.delete(k)));
-      await self.registration.unregister();
-
-      const clients = await self.clients.matchAll({
-        type: 'window',
-        includeUncontrolled: true,
-      });
-
-      clients.forEach((client) => {
-        client.navigate(client.url);
-      });
-    })()
-  );
+  event.waitUntil(self.clients.claim());
 });
 
-// Sin estrategias de fetch: la red queda a cargo del navegador.
+// Sin estrategias de fetch: comportamiento online-first del navegador.

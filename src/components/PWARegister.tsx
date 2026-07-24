@@ -28,8 +28,8 @@ export default function PWARegister() {
       return;
     }
 
-    // En producción registramos el kill switch (/sw.js) para limpiar SWs viejos.
-    const registerKillSwitch = async () => {
+    // En producción registramos un SW estable y minimalista.
+    const registerServiceWorker = async () => {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',
@@ -41,7 +41,7 @@ export default function PWARegister() {
       }
     };
 
-    registerKillSwitch();
+    registerServiceWorker();
   }, []);
 
   return null;
