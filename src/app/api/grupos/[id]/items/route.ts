@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { formatFechaLocal, esFechaAnterior } from '@/lib/fechas';
 
 export async function POST(
   request: NextRequest,
@@ -18,12 +19,20 @@ export async function POST(
       plato_id, 
       cantidad = 1 
     } = body;
+    const hoyServidor = formatFechaLocal(new Date());
     
     // Validaciones
     if (!cliente_id || !fecha || !tipo_comida || !plato_id) {
       console.error('❌ Faltan campos obligatorios');
       return NextResponse.json(
         { error: 'Faltan campos obligatorios' },
+        { status: 400 }
+      );
+    }
+
+    if (esFechaAnterior(fecha, hoyServidor)) {
+      return NextResponse.json(
+        { error: 'No se pueden guardar platos en días anteriores a hoy' },
         { status: 400 }
       );
     }

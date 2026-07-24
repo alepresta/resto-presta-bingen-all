@@ -1610,6 +1610,25 @@ export default function CalendarioPedidos({
               );
             }
 
+            if (esPasado) {
+              return (
+                <div
+                  key={fechaStr}
+                  className="bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-4 opacity-60"
+                >
+                  <h3 className="font-bold text-lg text-gray-400 dark:text-gray-500 line-through">
+                    {diaInfo?.icono} {diaInfo?.nombre}
+                  </h3>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 line-through">
+                    {fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold mt-1">
+                    Fuera del plan
+                  </p>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={fechaStr}

@@ -226,6 +226,7 @@ export default async function MenuPage({ params }: PageProps) {
       diaInfo={diaInfo}
       categorias={categoriasConPlatos}
       todosLosPlatos={todosLosPlatos}
+      diaActivoInicial={diaSemana}
     />
   );
 }

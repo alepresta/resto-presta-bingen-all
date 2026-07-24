@@ -3,13 +3,7 @@ import { createSupabaseServerClient, getUsuarioConRol } from '@/lib/supabase/ser
 import { notFound } from 'next/navigation';
 import CalendarioPedidos from './CalendarioPedidos';
 import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
-
-function formatFechaLocal(fecha: Date): string {
-  const y = fecha.getFullYear();
-  const m = String(fecha.getMonth() + 1).padStart(2, '0');
-  const d = String(fecha.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+import { formatFechaLocal, esFechaAnterior } from '@/lib/fechas';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -44,13 +38,16 @@ export default async function GrupoPage({ params }: PageProps) {
   }
 
   // 2. Obtener items del pedido
-  const { data: items } = await supabase
+  const hoyServidor = formatFechaLocal(new Date());
+  const { data: itemsRaw } = await supabase
     .from('grupo_items')
     .select(`
       *,
       plato:platos(id, nombre, descripcion, precio, categoria_id, dia_semana_id, disponible_todos_dias, alergenos, tags)
     `)
     .eq('grupo_id', params.id);
+
+  const items = (itemsRaw || []).filter((item: any) => !esFechaAnterior(item.fecha, hoyServidor));
 
   // 3. Obtener todos los platos del restaurante CON recetas e ingredientes.
   //    Si el grupo no tiene restaurante_id (grupos viejos), se usa el
@@ -137,7 +134,6 @@ export default async function GrupoPage({ params }: PageProps) {
   let clienteNombre = '';
   let clienteEmail = '';
   let esAutenticado = false;
-  const hoyServidor = formatFechaLocal(new Date());
   if (user) {
     esAutenticado = true;
     clienteActualId = user.id;

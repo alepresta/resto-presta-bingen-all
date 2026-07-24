@@ -72,6 +72,7 @@ interface MenuVisualProps {
   diaInfo: DiaInfo;
   categorias: Categoria[];
   todosLosPlatos: Plato[];
+  diaActivoInicial: number;
 }
 
 const TONO_CLASE: Record<ResumenLinea['tono'], string> = {
@@ -375,7 +376,7 @@ function TarjetaPlato({ plato, onSelect }: { plato: Plato; onSelect: (p: Plato) 
   );
 }
 
-export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosPlatos }: MenuVisualProps) {
+export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosPlatos, diaActivoInicial }: MenuVisualProps) {
   // Separar categorías: ID 2 = Platos Principales, el resto = Extras
   const categoriaPrincipales = categorias.find(cat => cat.id === 2);
   const categoriasExtras = categorias.filter(cat => cat.id !== 2);
@@ -383,7 +384,7 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
   const [platoSeleccionado, setPlatoSeleccionado] = useState<Plato | null>(null);
   const [porcionesModal, setPorcionesModal] = useState(1);
-  const [diaActivo, setDiaActivo] = useState<number>(0);
+  const [diaActivo, setDiaActivo] = useState<number>(diaActivoInicial);
   const [categoriaActiva, setCategoriaActiva] = useState<number | null>(null);
   const [vistaActiva, setVistaActiva] = useState<'principales' | 'extras'>('principales');
 
@@ -396,21 +397,6 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
     { id: 6, nombre: 'Sáb', icono: '🍕', tematica: 'Libre' },
     { id: 7, nombre: 'Dom', icono: '🍝', tematica: 'Pastas' },
   ];
-
-  useEffect(() => {
-    const clave = `menu-dia-activo:${restaurante.id}`;
-    const valor = window.sessionStorage.getItem(clave);
-    if (valor === null) return;
-    const diaGuardado = Number(valor);
-    if (Number.isInteger(diaGuardado) && diaGuardado >= 0 && diaGuardado <= 7) {
-      setDiaActivo(diaGuardado);
-    }
-  }, [restaurante.id]);
-
-  useEffect(() => {
-    const clave = `menu-dia-activo:${restaurante.id}`;
-    window.sessionStorage.setItem(clave, String(diaActivo));
-  }, [diaActivo, restaurante.id]);
 
   // Filtro cliente:
   // - diaActivo === 0 => mostrar todos los platos principales
@@ -502,9 +488,6 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
           {/* Selector de Días */}
           <div className="bg-amber-50 dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm">
             <div className="max-w-6xl mx-auto px-4 py-4">
-              <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-3 text-center">
-                📅 Seleccioná el día de la semana
-              </h2>
               <button
                 onClick={() => setDiaActivo(0)}
                 className={`w-full mb-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${

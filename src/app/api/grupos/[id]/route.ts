@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
+import { formatFechaLocal, esFechaAnterior } from '@/lib/fechas';
 
 const RESTAURANTE_SLUG_FALLBACK = 'resto-presta-bingen-all';
 
@@ -36,10 +37,14 @@ export async function GET(
       return NextResponse.json({ error: 'Grupo no encontrado' }, { status: 404 });
     }
 
-    const { data: items } = await supabase
+    const hoyServidor = formatFechaLocal(new Date());
+
+    const { data: itemsRaw } = await supabase
       .from('grupo_items')
       .select('*')
       .eq('grupo_id', params.id);
+
+    const items = (itemsRaw || []).filter((item: any) => !esFechaAnterior(item.fecha, hoyServidor));
 
     // Catálogo de platos actualizado para autocorregir clientes móviles con estado viejo.
     let restauranteId = (grupo as any)?.restaurante_id ?? null;
@@ -144,6 +149,11 @@ export async function PUT(
     const supabase = createServerSupabaseClient();
     const body = await request.json();
     const { accion, cliente_id, fecha } = body;
+    const hoyServidor = formatFechaLocal(new Date());
+
+    if (fecha && esFechaAnterior(fecha, hoyServidor) && ['confirmar_dia', 'desconfirmar_dia', 'limpiar_dia', 'confirmar', 'desconfirmar'].includes(accion)) {
+      return NextResponse.json({ error: 'No se pueden modificar días anteriores a hoy' }, { status: 400 });
+    }
 
     const recomputarEstadoGrupo = async () => {
       const { data: miembrosActivos } = await supabase
