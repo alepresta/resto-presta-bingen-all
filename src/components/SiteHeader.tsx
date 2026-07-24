@@ -33,6 +33,7 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
+  const HOME_HREF = '/';
 
   // Grupos a los que pertenece el usuario (para el botón "Mis pedidos")
   const [misGrupos, setMisGrupos] = useState<MiGrupo[]>([]);
@@ -176,29 +177,34 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
 
   const puedeVerPanel = usuario?.rol === 'admin';
   const btnBase =
-    'bg-white/15 hover:bg-white/25 text-white font-semibold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm transition-colors backdrop-blur-sm border border-white/20';
+    'bg-white/15 hover:bg-white/25 text-white font-semibold px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors backdrop-blur-sm border border-white/20 text-center justify-center';
   const miGrupoHrefCliente = misGrupos.length > 0 ? `/pedidos/grupo/${misGrupos[0].id}` : '/pedidos/unirse';
 
   return (
     <header className="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 text-white shadow-lg">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2 sm:py-3 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 sm:gap-3">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         {/* Marca */}
-        <a
-          href="/menu/resto-presta-bingen-all"
-          onClick={(e) => {
-            e.preventDefault();
-            navegarConRecarga('/menu/resto-presta-bingen-all');
-          }}
-          className="flex-shrink-0 w-full md:w-auto"
+        <button
+          type="button"
+          onClick={() => navegarConRecarga(HOME_HREF)}
+          className="w-full lg:w-auto flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-3 py-3 text-left backdrop-blur-sm transition-colors hover:bg-white/20"
+          aria-label="Ir a la home"
         >
-          <span className="block text-base sm:text-lg md:text-2xl font-bold font-serif leading-tight break-words">RESTO PRESTA BINGEN ALL</span>
-          <span className="hidden md:block text-xs italic text-amber-100">Comida es Medicina</span>
-        </a>
+          <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-white/15 text-xl sm:text-2xl shrink-0">
+            🌿
+          </span>
+          <span className="min-w-0">
+            <span className="block text-base sm:text-lg md:text-2xl font-bold font-serif leading-tight break-words">RESTO PRESTA BINGEN ALL</span>
+            <span className="block text-[11px] sm:text-xs text-amber-100/90">
+              Ir a la home · Comida es Medicina
+            </span>
+          </span>
+        </button>
 
         {/* Controles */}
-        <div className="w-full md:w-auto flex flex-wrap items-center justify-start md:justify-end gap-1.5 sm:gap-2">
+        <div className="w-full lg:w-auto flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-2">
           {!usuario ? (
-            <>
+            <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
               <a
                 href="/auth/login"
                 onClick={(e) => {
@@ -215,55 +221,59 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
                   e.preventDefault();
                   navegarConRecarga('/auth/registro');
                 }}
-                className="bg-white text-amber-700 font-semibold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm transition-colors hover:bg-amber-50"
+                className="bg-white text-amber-700 font-semibold px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors hover:bg-amber-50 text-center"
               >
                 Registrarme
               </a>
-            </>
+            </div>
           ) : (
             <>
-              <span className="text-white/95 text-xs sm:text-sm font-semibold px-2 py-1">
-                Hola {usuario.nombre}
-              </span>
-              {puedeVerPanel ? (
-                <>
+              <div className="flex items-center justify-between sm:justify-end gap-2">
+                <span className="text-white/95 text-xs sm:text-sm font-semibold px-2 py-1 rounded-full bg-black/10 border border-white/10 truncate max-w-[220px] sm:max-w-none">
+                  Hola {usuario.nombre}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+                {puedeVerPanel ? (
+                  <>
+                    <a
+                      href="/admin"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navegarConRecarga('/admin');
+                      }}
+                      className={`${btnBase} flex items-center`}
+                    >
+                      ⚙️ Panel
+                    </a>
+                    <a
+                      href="/admin/pedidos"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navegarConRecarga('/admin/pedidos');
+                      }}
+                      className={`${btnBase} flex items-center`}
+                    >
+                      🍽️ MiGrupo
+                    </a>
+                  </>
+                ) : (
                   <a
-                    href="/admin"
+                    href={miGrupoHrefCliente}
                     onClick={(e) => {
                       e.preventDefault();
-                      navegarConRecarga('/admin');
+                      navegarConRecarga(miGrupoHrefCliente);
                     }}
-                    className={btnBase}
-                  >
-                    ⚙️ Panel
-                  </a>
-                  <a
-                    href="/admin/pedidos"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navegarConRecarga('/admin/pedidos');
-                    }}
-                    className={btnBase}
+                    className={`${btnBase} col-span-2 sm:col-span-1 flex items-center`}
                   >
                     🍽️ MiGrupo
                   </a>
-                </>
-              ) : (
-                <a
-                  href={miGrupoHrefCliente}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navegarConRecarga(miGrupoHrefCliente);
-                  }}
-                  className={btnBase}
-                >
-                  🍽️ MiGrupo
-                </a>
-              )}
+                )}
+              </div>
               <div className="relative" ref={accionesRef}>
                 <button
                   onClick={() => setAccionesAbierto((v) => !v)}
-                  className={`${btnBase} flex items-center gap-1`}
+                  className={`${btnBase} w-full sm:w-auto flex items-center gap-1`}
                 >
                   ⚡ Acciones
                   <span className="text-xs">{accionesAbierto ? '▲' : '▼'}</span>
