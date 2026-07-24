@@ -4,7 +4,6 @@ import { updateSession } from './lib/supabase/middleware';
 
 // Vista inicial pública para clientes
 const MENU_INICIAL = '/menu/resto-presta-bingen-all';
-const CLIENT_CACHE_VERSION = '2026-07-24-2';
 
 // Construye una URL absoluta respetando el host público (proxy de Codespaces, etc.)
 function construirUrl(request: NextRequest, pathname: string): URL {
@@ -34,23 +33,11 @@ function aplicarNoStore(response: NextResponse): NextResponse {
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   response.headers.set('Pragma', 'no-cache');
   response.headers.set('Expires', '0');
-  // Pide limpiar cache HTTP del navegador para evitar respuestas viejas en PWA instalada.
-  response.headers.set('Clear-Site-Data', '"cache"');
   return response;
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Cache-buster de emergencia para vistas cliente: obliga URL versionada.
-  if (esVistaCliente(pathname) && request.method === 'GET') {
-    const versionActual = request.nextUrl.searchParams.get('cv');
-    if (versionActual !== CLIENT_CACHE_VERSION) {
-      const nextUrl = request.nextUrl.clone();
-      nextUrl.searchParams.set('cv', CLIENT_CACHE_VERSION);
-      return NextResponse.redirect(nextUrl);
-    }
-  }
 
   // La raíz lleva al menú público (vista inicial de clientes)
   if (pathname === '/') {
