@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import ToggleTema from '@/components/ToggleTema';
@@ -164,6 +163,14 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
     }, 350);
   };
 
+  const navegarConRecarga = (href: string) => {
+    if (typeof window !== 'undefined') {
+      window.location.assign(href);
+      return;
+    }
+    router.push(href);
+  };
+
   const puedeVerPanel = usuario?.rol === 'admin';
   const btnBase =
     'bg-white/15 hover:bg-white/25 text-white font-semibold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm transition-colors backdrop-blur-sm border border-white/20';
@@ -173,27 +180,42 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
     <header className="bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 text-white shadow-lg">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2 sm:py-3 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 sm:gap-3">
         {/* Marca */}
-        <Link href="/menu/resto-presta-bingen-all" className="flex-shrink-0 w-full md:w-auto">
+        <a
+          href="/menu/resto-presta-bingen-all"
+          onClick={(e) => {
+            e.preventDefault();
+            navegarConRecarga('/menu/resto-presta-bingen-all');
+          }}
+          className="flex-shrink-0 w-full md:w-auto"
+        >
           <span className="block text-base sm:text-lg md:text-2xl font-bold font-serif leading-tight break-words">RESTO PRESTA BINGEN ALL</span>
           <span className="hidden md:block text-xs italic text-amber-100">Comida es Medicina</span>
-        </Link>
+        </a>
 
         {/* Controles */}
         <div className="w-full md:w-auto flex flex-wrap items-center justify-start md:justify-end gap-1.5 sm:gap-2">
           {!usuario ? (
             <>
-              <Link
+              <a
                 href="/auth/login"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navegarConRecarga('/auth/login');
+                }}
                 className={btnBase}
               >
                 Iniciar sesión
-              </Link>
-              <Link
+              </a>
+              <a
                 href="/auth/registro"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navegarConRecarga('/auth/registro');
+                }}
                 className="bg-white text-amber-700 font-semibold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm transition-colors hover:bg-amber-50"
               >
                 Registrarme
-              </Link>
+              </a>
             </>
           ) : (
             <>
@@ -202,13 +224,38 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
               </span>
               {puedeVerPanel ? (
                 <>
-                  <Link href="/admin" className={btnBase}>⚙️ Panel</Link>
-                  <Link href="/admin/pedidos" className={btnBase}>🍽️ MiGrupo</Link>
+                  <a
+                    href="/admin"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navegarConRecarga('/admin');
+                    }}
+                    className={btnBase}
+                  >
+                    ⚙️ Panel
+                  </a>
+                  <a
+                    href="/admin/pedidos"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navegarConRecarga('/admin/pedidos');
+                    }}
+                    className={btnBase}
+                  >
+                    🍽️ MiGrupo
+                  </a>
                 </>
               ) : (
-                <Link href={miGrupoHrefCliente} className={btnBase}>
+                <a
+                  href={miGrupoHrefCliente}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navegarConRecarga(miGrupoHrefCliente);
+                  }}
+                  className={btnBase}
+                >
                   🍽️ MiGrupo
-                </Link>
+                </a>
               )}
               <div className="relative" ref={accionesRef}>
                 <button
@@ -224,13 +271,17 @@ export default function SiteHeader({ usuario }: SiteHeaderProps) {
                       <p className="text-xs text-gray-500 dark:text-gray-400">{usuario.nombre}</p>
                       <p className="text-xs font-semibold text-amber-700">{usuario.rol}</p>
                     </div>
-                    <Link
+                    <a
                       href="/auth/perfil"
-                      onClick={() => setAccionesAbierto(false)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setAccionesAbierto(false);
+                        navegarConRecarga('/auth/perfil');
+                      }}
                       className="block px-4 py-2 hover:bg-amber-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm"
                     >
                       👤 Perfil
-                    </Link>
+                    </a>
                     <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
                       <div className="flex items-center justify-between text-gray-700 dark:text-gray-200 text-sm">
                         <span>🌓 Modo</span>
