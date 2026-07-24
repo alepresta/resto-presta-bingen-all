@@ -38,7 +38,10 @@ export default function PWARegister() {
 
     const register = async () => {
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js', {
+        // Cambiar esta versión fuerza a pedir un script URL distinto, evitando
+        // que un SW viejo entregue su propia copia cacheada de /sw.js.
+        const SW_VERSION = '2026-07-24-1';
+        const reg = await navigator.serviceWorker.register(`/sw.js?v=${SW_VERSION}`, {
           scope: '/',
           updateViaCache: 'none',
         });

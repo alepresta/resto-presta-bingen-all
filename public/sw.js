@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hidelgarda-v1';
+const CACHE_NAME = 'hidelgarda-v2';
 const ASSETS = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
 
 function esAssetEstatico(pathname) {
