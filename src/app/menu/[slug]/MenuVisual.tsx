@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { AnalisisPlato, ResumenLinea } from '@/lib/analisis-plato';
 import InformeDualView from '@/app/admin/recetas/[id]/InformeDualView';
 import { escalarIngrediente } from '@/lib/escalado';
+import { esTodosLosDias } from '@/lib/plato-dias';
 
 // Convierte un paso de receta (string u objeto {descripcion/texto/paso/...}) en texto legible
 function textoDePaso(p: any): string {
@@ -413,10 +414,15 @@ export default function MenuVisual({ restaurante, diaInfo, categorias, todosLosP
 
   // Filtro cliente:
   // - diaActivo === 0 => mostrar todos los platos principales
-  // - diaActivo 1..7   => filtrar por día
+  // - diaActivo 1..7   => mostrar platos del día + los marcados "todos los días"
+  //   (robusto ante clientes con datos legacy en dias_semana).
   const platosPrincipales = todosLosPrincipales.filter((plato) => {
     if (diaActivo === 0) return true;
-    return plato.dias_semana.includes(diaActivo);
+    return (
+      plato.disponible_todos_dias ||
+      esTodosLosDias(plato.dias_semana) ||
+      plato.dias_semana.includes(diaActivo)
+    );
   });
 
   // Filtrar extras por categoría si está activa
