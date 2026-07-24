@@ -531,14 +531,17 @@ export default function CalendarioPedidos({
     };
   }, [modalAbierto, diaALimpiar]);
 
-  const fechas = [];
-  const inicio = parseFechaLocal(fechaInicio);
-  const fin = parseFechaLocal(fechaFin);
-  const actual = new Date(inicio);
-  while (actual <= fin) {
-    fechas.push(new Date(actual));
-    actual.setDate(actual.getDate() + 1);
-  }
+  const inicio = useMemo(() => parseFechaLocal(fechaInicio), [fechaInicio]);
+  const fin = useMemo(() => parseFechaLocal(fechaFin), [fechaFin]);
+  const fechas = useMemo(() => {
+    const lista: Date[] = [];
+    const actual = new Date(inicio);
+    while (actual <= fin) {
+      lista.push(new Date(actual));
+      actual.setDate(actual.getDate() + 1);
+    }
+    return lista;
+  }, [fin, inicio]);
 
   // Paginación por semana calendario COMPLETA (lunes → domingo). Se rellenan los
   // días fuera del plan para que cada semana empiece en lunes y termine en
@@ -549,23 +552,65 @@ export default function CalendarioPedidos({
     dt.setDate(dt.getDate() - (dow - 1));
     return formatFechaLocal(dt);
   };
-  const lunesInicio = parseFechaLocal(claveLunes(inicio));
-  const domingoFin = parseFechaLocal(claveLunes(fin));
-  domingoFin.setDate(domingoFin.getDate() + 6);
+  const semanas = useMemo(() => {
+    const lunesInicio = parseFechaLocal(claveLunes(inicio));
+    const domingoFin = parseFechaLocal(claveLunes(fin));
+    domingoFin.setDate(domingoFin.getDate() + 6);
 
-  const semanas: Date[][] = [];
-  const cursorSemana = new Date(lunesInicio);
-  while (cursorSemana <= domingoFin) {
-    const semana: Date[] = [];
-    for (let i = 0; i < 7; i++) {
-      semana.push(new Date(cursorSemana));
-      cursorSemana.setDate(cursorSemana.getDate() + 1);
+    const lista: Date[][] = [];
+    const cursorSemana = new Date(lunesInicio);
+    while (cursorSemana <= domingoFin) {
+      const semana: Date[] = [];
+      for (let i = 0; i < 7; i++) {
+        semana.push(new Date(cursorSemana));
+        cursorSemana.setDate(cursorSemana.getDate() + 1);
+      }
+      lista.push(semana);
     }
-    semanas.push(semana);
-  }
+    return lista;
+  }, [fin, inicio]);
   const totalPaginas = Math.max(1, semanas.length);
   const paginaSegura = Math.min(Math.max(0, semanaActual), totalPaginas - 1);
   const fechasPagina = semanas[paginaSegura] || [];
+  const fechasExpandibles = useMemo(
+    () =>
+      fechas
+        .map((fecha) => formatFechaLocal(fecha))
+        .filter((fecha) => fecha >= fechaInicio && fecha <= fechaFin && fecha >= hoyServidor),
+    [fechas, fechaFin, fechaInicio, hoyServidor]
+  );
+  const [diasAbiertos, setDiasAbiertos] = useState<Set<string>>(() => new Set(fechasExpandibles));
+
+  useEffect(() => {
+    setDiasAbiertos((prev) => {
+      const next = new Set(prev);
+      fechasExpandibles.forEach((fecha) => {
+        if (!next.has(fecha)) next.add(fecha);
+      });
+      return next;
+    });
+  }, [fechasExpandibles]);
+
+  const fechasPaginaExpandibles = useMemo(
+    () =>
+      fechasPagina
+        .map((fecha) => formatFechaLocal(fecha))
+        .filter((fecha) => fecha >= fechaInicio && fecha <= fechaFin && fecha >= hoyServidor),
+    [fechasPagina, fechaFin, fechaInicio, hoyServidor]
+  );
+  const semanaExpandida = fechasPaginaExpandibles.length > 0 && fechasPaginaExpandibles.every((fecha) => diasAbiertos.has(fecha));
+
+  const toggleSemanaVisible = () => {
+    setDiasAbiertos((prev) => {
+      const next = new Set(prev);
+      if (semanaExpandida) {
+        fechasPaginaExpandibles.forEach((fecha) => next.delete(fecha));
+      } else {
+        fechasPaginaExpandibles.forEach((fecha) => next.add(fecha));
+      }
+      return next;
+    });
+  };
 
   const getItem = (fecha: string, tipo: string) => {
     return items.find((item) => item.fecha === fecha && item.tipo_comida === tipo);
@@ -1113,6 +1158,50 @@ export default function CalendarioPedidos({
     return sum + (plato?.precio || 0) * item.cantidad;
   }, 0);
 
+  const resumenPedidoDetallado = useMemo(() => {
+    const porFecha = new Map<string, Array<{
+      tipoId: string;
+      tipoLabel: string;
+      tipoIcono: string;
+      platoNombre: string;
+      cantidad: number;
+      precioUnitario: number;
+      subtotal: number;
+    }>>();
+
+    items.forEach((item) => {
+      const tipo = TIPOS_COMIDA.find((t) => t.id === item.tipo_comida);
+      const plato = platos.find((p) => p.id === item.plato_id) || item.plato;
+      if (!tipo || !plato) return;
+
+      const detalle = {
+        tipoId: tipo.id,
+        tipoLabel: tipo.label,
+        tipoIcono: tipo.icono,
+        platoNombre: plato.nombre,
+        cantidad: item.cantidad || 1,
+        precioUnitario: plato.precio || 0,
+        subtotal: (plato.precio || 0) * (item.cantidad || 1),
+      };
+
+      const lista = porFecha.get(item.fecha) || [];
+      lista.push(detalle);
+      porFecha.set(item.fecha, lista);
+    });
+
+    return Array.from(porFecha.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([fecha, detalles]) => ({
+        fecha,
+        detalles: detalles.sort((a, b) => {
+          const idxA = TIPOS_COMIDA.findIndex((t) => t.id === a.tipoId);
+          const idxB = TIPOS_COMIDA.findIndex((t) => t.id === b.tipoId);
+          return idxA - idxB;
+        }),
+        subtotal: detalles.reduce((sum, detalle) => sum + detalle.subtotal, 0),
+      }));
+  }, [items, platos]);
+
   const miembrosConfirmadosLista = miembrosState.filter((m) =>
     items.length > 0 && items.every((it) => acuerdoIdsDeItem(it).has(m.cliente_id))
   );
@@ -1578,6 +1667,13 @@ export default function CalendarioPedidos({
             >
               Semana siguiente →
             </button>
+            <button
+              onClick={toggleSemanaVisible}
+              disabled={fechasPaginaExpandibles.length === 0}
+              className="w-full sm:w-auto px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {semanaExpandida ? '🔼 Colapsar semana' : '🔽 Expandir semana'}
+            </button>
           </div>
         )}
         <div className="space-y-4">
@@ -1630,79 +1726,97 @@ export default function CalendarioPedidos({
             }
 
             return (
-              <div
+              <details
                 key={fechaStr}
-                className={`bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 ${
+                open={diasAbiertos.has(fechaStr)}
+                onToggle={(e) => {
+                  const abierto = (e.currentTarget as HTMLDetailsElement).open;
+                  setDiasAbiertos((prev) => {
+                    const next = new Set(prev);
+                    if (abierto) next.add(fechaStr);
+                    else next.delete(fechaStr);
+                    return next;
+                  });
+                }}
+                className={`bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 group ${
                   esPasado ? 'opacity-60 grayscale' : ''
                 }`}
               >
-                <div className="flex items-center justify-between mb-3 pb-3 border-b">
+                <summary className="cursor-pointer list-none flex items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
                   <div>
-                    <h3
-                      className={`font-bold text-lg ${
-                        esPasado
-                          ? 'text-gray-400 dark:text-gray-500 line-through'
-                          : 'text-gray-800 dark:text-gray-100'
-                      }`}
-                    >
+                    <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">
                       {diaInfo?.icono} {diaInfo?.nombre}
                     </h3>
-                    <p className={`text-sm ${esPasado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-600 dark:text-gray-300'}`}>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       {fecha.toLocaleDateString('es-AR', {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long',
                       })}
                     </p>
-                    {esPasado ? (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">
-                        ⏳ Día pasado — no se suma a la lista de compras
-                      </p>
-                    ) : (
-                      <p className="text-xs text-amber-700 font-semibold mt-1">
-                        Tema: {diaInfo?.tematica}
-                      </p>
-                    )}
+                    <p className="text-xs text-amber-700 font-semibold mt-1">
+                      Tema: {diaInfo?.tematica}
+                    </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">
                       {miembrosConfirmadosEnDia(fechaStr)}/{miembrosState.length} confirmaciones
                     </p>
                     {esMiembro && (
-                      <div className="mt-1 flex items-center justify-end gap-2">
-                        <button
-                          onClick={() =>
-                            clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
-                              ? desconfirmarDia(fechaStr)
-                              : confirmarDia(fechaStr)
-                          }
-                          disabled={cargando || (!clienteConfirmoDia(fechaStr, clienteActualIdSeguro) && !tienePlatosDia)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                            clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
-                              ? 'bg-green-600 text-white hover:bg-green-700'
-                              : tienePlatosDia
-                              ? 'bg-amber-600 text-white hover:bg-amber-700'
-                              : 'bg-gray-300 text-gray-700'
-                          } disabled:opacity-50`}
-                        >
-                          {clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
-                            ? '✅ Día confirmado'
-                            : tienePlatosDia
-                            ? '✅ Confirmar día'
-                            : 'Sin platos'}
-                        </button>
-
-                        <button
-                          onClick={() => setDiaALimpiar(fechaStr)}
-                          disabled={cargando || !tienePlatosDia}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          🧹 Limpiar día
-                        </button>
-                      </div>
+                      <p
+                        className={`mt-1 text-xs font-semibold ${
+                          clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
+                            ? 'text-green-700 dark:text-green-300'
+                            : 'text-amber-700 dark:text-amber-300'
+                        }`}
+                      >
+                        {clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
+                          ? '✅ Confirmaste este día'
+                          : '⏳ No confirmaste este día'}
+                      </p>
                     )}
+                    <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-200">
+                      <span className="sm:hidden text-sm leading-none transition-transform group-open:rotate-180">▼</span>
+                      <span className="hidden sm:inline">Colapsar</span>
+                      <span className="hidden sm:inline text-sm leading-none transition-transform group-open:rotate-180">▼</span>
+                    </span>
                   </div>
-                </div>
+                </summary>
+
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  {esMiembro && (
+                    <div className="mb-3 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() =>
+                          clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
+                            ? desconfirmarDia(fechaStr)
+                            : confirmarDia(fechaStr)
+                        }
+                        disabled={cargando || (!clienteConfirmoDia(fechaStr, clienteActualIdSeguro) && !tienePlatosDia)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                          clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : tienePlatosDia
+                            ? 'bg-amber-600 text-white hover:bg-amber-700'
+                            : 'bg-gray-300 text-gray-700'
+                        } disabled:opacity-50`}
+                      >
+                        {clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
+                          ? '✅ Confirmaste este día'
+                          : tienePlatosDia
+                          ? '⏳ No confirmaste este día'
+                          : 'Sin platos'}
+                      </button>
+
+                      <button
+                        onClick={() => setDiaALimpiar(fechaStr)}
+                        disabled={cargando || !tienePlatosDia}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        🧹 Limpiar día
+                      </button>
+                    </div>
+                  )}
 
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   {TIPOS_COMIDA.map((tipo) => {
@@ -2071,7 +2185,8 @@ export default function CalendarioPedidos({
                     </div>
                   );
                 })()}
-              </div>
+                </div>
+              </details>
             );
           })}
         </div>
@@ -2106,31 +2221,97 @@ export default function CalendarioPedidos({
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">💰 Resumen del Pedido</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                {items.length} platos seleccionados · {miembrosConfirmadosLista.length}/{miembrosState.length} miembros de acuerdo en todo el plan
+        <details className="bg-slate-900 dark:bg-slate-950 rounded-xl shadow-md overflow-hidden group">
+          <summary className="cursor-pointer list-none flex items-center justify-between gap-3 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-white">💰 Total del pedido</h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                Tocá para ver el detalle
               </p>
             </div>
-            <p className="text-3xl font-bold text-amber-600">
-              ${total.toLocaleString('es-AR')}
+            <div className="flex items-center gap-3 shrink-0">
+              <p className="text-2xl sm:text-3xl font-bold text-amber-300">
+                ${total.toLocaleString('es-AR')}
+              </p>
+              <span className="text-slate-300 text-sm transition-transform group-open:rotate-180">▼</span>
+            </div>
+          </summary>
+
+          <div className="bg-white dark:bg-gray-800 p-6 border-t border-slate-700/30 dark:border-gray-700">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">💰 Resumen del Pedido</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  {items.length} platos seleccionados · {miembrosConfirmadosLista.length}/{miembrosState.length} miembros de acuerdo en todo el plan
+                </p>
+              </div>
+              <p className="text-3xl font-bold text-slate-700 dark:text-slate-200">
+                ${total.toLocaleString('es-AR')}
+              </p>
+            </div>
+
+            <p className="text-sm text-gray-700 dark:text-gray-200">
+              La confirmación ahora es por día. Confirmá cada jornada desde su tarjeta para cerrar tu acuerdo diario.
             </p>
+
+            {resumenPedidoDetallado.length > 0 && (
+              <div className="mt-4 space-y-4">
+                {resumenPedidoDetallado.map((dia) => (
+                  <div key={dia.fecha} className="rounded-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
+                    <div className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-gray-900 px-4 py-3">
+                      <div>
+                        <h4 className="font-bold text-gray-800 dark:text-gray-100">
+                          {parseFechaLocal(dia.fecha).toLocaleDateString('es-AR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                          })}
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {dia.detalles.length} {dia.detalles.length === 1 ? 'selección' : 'selecciones'} cargadas
+                        </p>
+                      </div>
+                      <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
+                        ${dia.subtotal.toLocaleString('es-AR')}
+                      </p>
+                    </div>
+
+                    <div className="divide-y divide-slate-100 dark:divide-gray-700">
+                      {dia.detalles.map((detalle, index) => (
+                        <div key={`${dia.fecha}-${detalle.tipoId}-${index}`} className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                              {detalle.tipoIcono} {detalle.tipoLabel}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              {detalle.platoNombre}
+                            </p>
+                          </div>
+                          <div className="text-sm text-right text-gray-700 dark:text-gray-200">
+                            <p>
+                              {detalle.cantidad} × ${detalle.precioUnitario.toLocaleString('es-AR')}
+                            </p>
+                            <p className="font-bold text-slate-700 dark:text-slate-200">
+                              ${detalle.subtotal.toLocaleString('es-AR')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {todosConfirmaron && (
+              <div className="mt-4 bg-green-50 border border-green-200 p-4 rounded-lg">
+                <p className="text-green-800 font-semibold">
+                  🎉 ¡Excelente! Todos los miembros están de acuerdo en todos los platos cargados.
+                </p>
+              </div>
+            )}
           </div>
-
-          <p className="text-sm text-gray-700 dark:text-gray-200">
-            La confirmación ahora es por día. Confirmá cada jornada desde su tarjeta para cerrar tu acuerdo diario.
-          </p>
-
-          {todosConfirmaron && (
-            <div className="mt-4 bg-green-50 border border-green-200 p-4 rounded-lg">
-              <p className="text-green-800 font-semibold">
-                🎉 ¡Excelente! Todos los miembros están de acuerdo en todos los platos cargados.
-              </p>
-            </div>
-          )}
-        </div>
+        </details>
       </div>
 
       {/* Informe del plan completo (todo el rango del grupo, misma lógica que por día) */}
