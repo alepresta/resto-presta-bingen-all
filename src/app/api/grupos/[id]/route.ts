@@ -1,7 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { diasSemanaDesdeLegado } from '@/lib/plato-dias';
 
-// GET /api/grupos/[id] - obtener estado actual del grupo (miembros/items)
+// GET /api/grupos/[id] - obtener estado actual del grupo (miembros/items/platos)
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
@@ -14,6 +15,7 @@ export async function GET(
       .select(`
         id,
         estado,
+        restaurante_id,
         fecha_inicio,
         fecha_fin,
         palabra_secreta,
@@ -37,11 +39,69 @@ export async function GET(
       .select('*')
       .eq('grupo_id', params.id);
 
+    // Catálogo de platos actualizado para autocorregir clientes móviles con estado viejo.
+    let restauranteId = (grupo as any)?.restaurante_id ?? null;
+    if (!restauranteId) {
+      const { data: restaurante } = await supabase
+        .from('restaurantes')
+        .select('id')
+        .limit(1)
+        .single();
+      restauranteId = restaurante?.id ?? null;
+    }
+
+    let platosQuery = supabase
+      .from('platos')
+      .select(`
+        *,
+        receta:recetas(
+          id, pasos, tiempo_min, porciones, dificultad, notas_hildegardianas, interpretacion_hildegardiana,
+          ingredientes:receta_ingredientes(
+            cantidad, unidad,
+            ingrediente:ingredientes(
+              id, nombre, temperamento, es_veneno_hildegardiano,
+              es_base_alegria, nivel_subtilitat, requiere_coccion,
+              calorias, proteinas_g, carbohidratos_g, grasas_g, grasas_saturadas_g, fibra_g, azucar_g,
+              sodio_mg, calcio_mg, hierro_mg, magnesio_mg, potasio_mg, zinc_mg, fosforo_mg,
+              vitamina_a_mcg, vitamina_c_mg, vitamina_d_mcg, vitamina_e_mg, vitamina_k_mcg,
+              vitamina_b1_mg, vitamina_b2_mg, vitamina_b3_mg, vitamina_b5_mg, vitamina_b6_mg, vitamina_b9_mcg, vitamina_b12_mcg
+            )
+          )
+        )
+      `)
+      .eq('disponible', true);
+
+    if (restauranteId) {
+      platosQuery = platosQuery.eq('restaurante_id', restauranteId);
+    }
+
+    const { data: platos } = await platosQuery;
+
+    const platoIdsCatalogo = (platos || []).map((p: any) => p.id);
+    const { data: platosDiasData } = await supabase
+      .from('plato_dias')
+      .select('plato_id, dia_semana_id')
+      .in('plato_id', platoIdsCatalogo.length ? platoIdsCatalogo : ['00000000-0000-0000-0000-000000000000']);
+
+    const diasPorPlato = new Map<string, number[]>();
+    (platosDiasData || []).forEach((row: any) => {
+      const lista = diasPorPlato.get(row.plato_id) || [];
+      lista.push(row.dia_semana_id);
+      diasPorPlato.set(row.plato_id, lista);
+    });
+
+    const platosConDias = (platos || []).map((p: any) => ({
+      ...p,
+      dias_semana:
+        diasPorPlato.get(p.id) || diasSemanaDesdeLegado(p.dia_semana_id, p.disponible_todos_dias),
+    }));
+
     return NextResponse.json(
       {
         grupo,
         miembros: grupo.miembros || [],
         items: items || [],
+        platos: platosConDias,
       },
       {
         headers: {

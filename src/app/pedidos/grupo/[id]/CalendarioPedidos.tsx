@@ -275,7 +275,7 @@ export default function CalendarioPedidos({
   fechaFin,
   miembros,
   items: itemsIniciales,
-  platos,
+  platos: platosIniciales,
   clienteActualId: clienteActualIdProp,
   clienteNombre = '',
   clienteEmail = '',
@@ -283,6 +283,7 @@ export default function CalendarioPedidos({
 }: CalendarioPedidosProps) {
   const router = useRouter();
   const [items, setItems] = useState<ItemPedido[]>(itemsIniciales);
+  const [platosState, setPlatosState] = useState<Plato[]>(platosIniciales);
   const [modalAbierto, setModalAbierto] = useState<{ fecha: string; tipo: string } | null>(null);
   const [diaALimpiar, setDiaALimpiar] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -300,6 +301,7 @@ export default function CalendarioPedidos({
   const [copiado, setCopiado] = useState<'url' | 'codigo' | null>(null);
   // Refresca el análisis nutricional cuando cambian las selecciones
   const [analisisVersion, setAnalisisVersion] = useState(0);
+  const platos = platosState;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -322,6 +324,9 @@ export default function CalendarioPedidos({
         }
         if (Array.isArray(data?.items)) {
           setItems(data.items);
+        }
+        if (Array.isArray(data?.platos)) {
+          setPlatosState(data.platos);
         }
       } catch {
         // noop
