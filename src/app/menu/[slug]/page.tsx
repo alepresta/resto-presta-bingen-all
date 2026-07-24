@@ -10,6 +10,8 @@ interface PageProps {
   };
 }
 
+const RESTAURANTE_SLUG_FALLBACK = 'resto-presta-bingen-all';
+
 // Mapa de categorías de ingredientes destacables → tag mostrado en la tarjeta.
 // Solo se usa como respaldo cuando el plato no tiene tags curados.
 const MAPA_CATEGORIA_TAG: Record<string, string> = {
@@ -29,11 +31,35 @@ export default async function MenuPage({ params }: PageProps) {
   const supabase = createServerSupabaseClient();
 
   // 1. Obtener el restaurante
-  const { data: restaurante } = await supabase
+  const { data: restauranteEncontrado } = await supabase
     .from('restaurantes')
     .select('*')
     .eq('slug', params.slug)
-    .single();
+    .maybeSingle();
+
+  let restaurante = restauranteEncontrado;
+  if (!restaurante) {
+    const { data: restauranteFallback } = await supabase
+      .from('restaurantes')
+      .select('*')
+      .eq('slug', RESTAURANTE_SLUG_FALLBACK)
+      .maybeSingle();
+
+    if (restauranteFallback) {
+      restaurante = restauranteFallback;
+    }
+  }
+
+  if (!restaurante) {
+    const { data: primerRestaurante } = await supabase
+      .from('restaurantes')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    restaurante = primerRestaurante;
+  }
 
   if (!restaurante) {
     notFound();

@@ -188,10 +188,11 @@ interface CalendarioPedidosProps {
   miembros: Miembro[];
   items: ItemPedido[];
   platos: Plato[];
-  clienteActualId: string;
+  clienteActualId: string | null;
   clienteNombre?: string;
   clienteEmail?: string;
   esAdminViewer?: boolean;
+  esAutenticado?: boolean;
 }
 
 const TIPOS_COMIDA = [
@@ -280,6 +281,7 @@ export default function CalendarioPedidos({
   clienteNombre = '',
   clienteEmail = '',
   esAdminViewer = false,
+  esAutenticado = false,
 }: CalendarioPedidosProps) {
   const router = useRouter();
   const [items, setItems] = useState<ItemPedido[]>(itemsIniciales);
@@ -288,7 +290,7 @@ export default function CalendarioPedidos({
   const [diaALimpiar, setDiaALimpiar] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
-  const [clienteActualId, setClienteActualId] = useState<string>(clienteActualIdProp);
+  const [clienteActualId, setClienteActualId] = useState<string | null>(clienteActualIdProp);
   const [miembrosState, setMiembrosState] = useState<Miembro[]>(miembros);
   const [hidratado, setHidratado] = useState(false);
 
@@ -485,16 +487,16 @@ export default function CalendarioPedidos({
       const idLocal = typeof c?.id === 'string' ? c.id : '';
       if (!idLocal) return;
 
-      const authEsMiembro = miembrosState.some((m) => m.cliente_id === clienteActualIdProp);
+      const authEsMiembro = clienteActualIdProp ? miembrosState.some((m) => m.cliente_id === clienteActualIdProp) : false;
       const localEsMiembro = miembrosState.some((m) => m.cliente_id === idLocal);
 
-      if (!authEsMiembro && localEsMiembro) {
+      if ((esAutenticado || esAdminViewer) && !authEsMiembro && localEsMiembro) {
         setClienteActualId(idLocal);
       }
     } catch {
       /* noop */
     }
-  }, [clienteActualIdProp, miembrosState]);
+  }, [clienteActualIdProp, esAdminViewer, esAutenticado, miembrosState]);
 
   // Limpiar filtros cuando se cierra el modal
   useEffect(() => {
@@ -973,6 +975,11 @@ export default function CalendarioPedidos({
   };
 
   const confirmarDia = async (fecha: string) => {
+    if (!clienteActualId) {
+      setMensaje('❌ Iniciá sesión o registrate para confirmar el día.');
+      setTimeout(() => setMensaje(''), 5000);
+      return;
+    }
     setCargando(true);
     setMensaje('');
 
@@ -1014,6 +1021,11 @@ export default function CalendarioPedidos({
   };
 
   const desconfirmarDia = async (fecha: string) => {
+    if (!clienteActualId) {
+      setMensaje('❌ Iniciá sesión o registrate para reactivar el día.');
+      setTimeout(() => setMensaje(''), 5000);
+      return;
+    }
     setCargando(true);
     setMensaje('');
 
@@ -1055,6 +1067,11 @@ export default function CalendarioPedidos({
   };
 
   const limpiarDia = async (fecha: string) => {
+    if (!clienteActualId) {
+      setMensaje('❌ Iniciá sesión o registrate para limpiar el día.');
+      setTimeout(() => setMensaje(''), 5000);
+      return;
+    }
     setCargando(true);
     setMensaje('');
 
@@ -1099,17 +1116,25 @@ export default function CalendarioPedidos({
   );
   const miembrosPendientes = miembrosState.filter((m) => !miembrosConfirmadosLista.some((ok) => ok.cliente_id === m.cliente_id));
   const todosConfirmaron = items.length > 0 && miembrosPendientes.length === 0;
+  const clienteActualIdSeguro = clienteActualId ?? '';
 
   // ¿El usuario actual ya es miembro del grupo?
-  const esMiembro = miembrosState.some((m) => m.cliente_id === clienteActualId);
+  const esMiembro = clienteActualId ? miembrosState.some((m) => m.cliente_id === clienteActualId) : false;
   const puedeVerSinUnirse = esAdminViewer;
   // Primer render estable: SSR y primera hidratación usan solo props del servidor.
-  const puedeVerInicial = miembros.some((m) => m.cliente_id === clienteActualIdProp) || esAdminViewer;
+  const puedeVerInicial = (clienteActualIdProp ? miembros.some((m) => m.cliente_id === clienteActualIdProp) : false) || esAdminViewer;
   const puedeVer = hidratado ? (esMiembro || puedeVerSinUnirse) : puedeVerInicial;
+
+  const puedeUnirse = esAutenticado && !esAdminViewer;
 
   // Unirse al grupo con el código (palabra secreta)
   const unirseAlGrupo = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!clienteActualId) {
+      setMensaje('❌ Iniciá sesión o registrate para unirte al grupo.');
+      setTimeout(() => setMensaje(''), 5000);
+      return;
+    }
     setUniendo(true);
     setMensaje('');
     try {
@@ -1273,6 +1298,51 @@ export default function CalendarioPedidos({
 
   // Si no es miembro y tampoco es admin en modo visualización, se muestra unión por código.
   if (!puedeVer) {
+    if (!puedeUnirse) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+          <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
+            <div className="max-w-6xl mx-auto px-4 py-6">
+              <p className="text-teal-100 text-xs font-semibold uppercase tracking-wide">🔑 Grupo de pedido</p>
+              <h1 className="text-2xl font-bold font-serif">Iniciá sesión para participar</h1>
+            </div>
+          </header>
+
+          {mensaje && (
+            <div className="max-w-6xl mx-auto px-4 py-2">
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-200 px-4 py-3 rounded-lg">{mensaje}</div>
+            </div>
+          )}
+
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border-l-4 border-amber-500 p-5 space-y-4">
+              <div>
+                <h2 className="font-bold text-gray-800 dark:text-gray-100 text-lg mb-1">🔒 Para unirte, primero autenticáte</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Iniciá sesión o creá tu cuenta. Después vas a ver el formulario para ingresar el código del grupo.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href={`/auth/login?redirect=/pedidos/grupo/${grupoId}`}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg"
+                >
+                  Iniciar sesión
+                </a>
+                <a
+                  href="/auth/registro"
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-3 rounded-lg"
+                >
+                  Registrarme
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <header className="bg-gradient-to-r from-teal-700 via-emerald-600 to-green-600 text-white shadow-lg">
@@ -1582,20 +1652,20 @@ export default function CalendarioPedidos({
                       <div className="mt-1 flex items-center justify-end gap-2">
                         <button
                           onClick={() =>
-                            clienteConfirmoDia(fechaStr, clienteActualId)
+                            clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
                               ? desconfirmarDia(fechaStr)
                               : confirmarDia(fechaStr)
                           }
-                          disabled={cargando || (!clienteConfirmoDia(fechaStr, clienteActualId) && !tienePlatosDia)}
+                          disabled={cargando || (!clienteConfirmoDia(fechaStr, clienteActualIdSeguro) && !tienePlatosDia)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                            clienteConfirmoDia(fechaStr, clienteActualId)
+                            clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
                               ? 'bg-green-600 text-white hover:bg-green-700'
                               : tienePlatosDia
                               ? 'bg-amber-600 text-white hover:bg-amber-700'
                               : 'bg-gray-300 text-gray-700'
                           } disabled:opacity-50`}
                         >
-                          {clienteConfirmoDia(fechaStr, clienteActualId)
+                          {clienteConfirmoDia(fechaStr, clienteActualIdSeguro)
                             ? '✅ Día confirmado'
                             : tienePlatosDia
                             ? '✅ Confirmar día'
@@ -1627,7 +1697,7 @@ export default function CalendarioPedidos({
                       acuerdoIds.add(item.seleccionado_por);
                     }
                     const cantAcuerdo = acuerdoIds.size;
-                    const yaVote = acuerdoIds.has(clienteActualId);
+                    const yaVote = acuerdoIds.has(clienteActualIdSeguro);
                     const puedeInteractuar = esMiembro;
                     const platoFull = item ? platos.find((p) => p.id === item.plato_id) : undefined;
                     const imagenFondo = item && platoFull?.imagen ? platoFull.imagen : null;

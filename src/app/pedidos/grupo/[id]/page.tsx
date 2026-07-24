@@ -129,7 +129,9 @@ export default async function GrupoPage({ params }: PageProps) {
   let clienteActualId = grupo.creado_por;
   let clienteNombre = '';
   let clienteEmail = '';
+  let esAutenticado = false;
   if (user) {
+    esAutenticado = true;
     clienteActualId = user.id;
     clienteEmail = user.email ?? '';
     const { data: perfil } = await authClient
@@ -153,6 +155,7 @@ export default async function GrupoPage({ params }: PageProps) {
       clienteNombre={clienteNombre}
       clienteEmail={clienteEmail}
       esAdminViewer={esAdminViewer}
+      esAutenticado={esAutenticado}
     />
   );
 }
