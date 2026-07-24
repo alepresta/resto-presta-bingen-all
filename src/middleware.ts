@@ -25,6 +25,17 @@ function requiereSesion(pathname: string): boolean {
   return pathname.startsWith('/admin') || (pathname.startsWith('/api/admin') && !pathname.startsWith('/api/admin/recetas'));
 }
 
+function esVistaCliente(pathname: string): boolean {
+  return pathname.startsWith('/menu') || pathname.startsWith('/pedidos');
+}
+
+function aplicarNoStore(response: NextResponse): NextResponse {
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -39,6 +50,9 @@ export async function middleware(request: NextRequest) {
 
   // Rutas totalmente públicas: no requieren sesión.
   if (!esAdmin && !esPedidos) {
+    if (esVistaCliente(pathname)) {
+      return aplicarNoStore(NextResponse.next());
+    }
     return NextResponse.next();
   }
 
@@ -54,7 +68,7 @@ export async function middleware(request: NextRequest) {
 
   // Para /pedidos alcanza con estar autenticado (sin rol especial)
   if (esPedidos && !esAdmin) {
-    return response;
+    return aplicarNoStore(response);
   }
 
   // Verificar rol del usuario (área de administración)
@@ -88,5 +102,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // El middleware corre en la raíz, el área protegida y el flujo de pedidos.
-  matcher: ['/', '/admin/:path*', '/api/admin/:path*', '/pedidos/:path*'],
+  matcher: ['/', '/admin/:path*', '/api/admin/:path*', '/pedidos/:path*', '/menu/:path*'],
 };
